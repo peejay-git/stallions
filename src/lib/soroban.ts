@@ -74,18 +74,11 @@ export class SorobanService {
 
       // Initialize wallet connection if no public key provided
       if (!this.publicKey) {
-        freighterApi.isConnected().then(async (connected) => {
+        freighterApi.isConnected().then((connected) => {
           if (connected) {
-            // Verify network matches
-            const freighterNetwork = await freighterApi.getNetwork();
-            if (freighterNetwork !== this.network) {
-              console.error('Network mismatch:', {
-                expected: this.network,
-                actual: freighterNetwork
-              });
-              throw new Error(`Please switch your Freighter wallet to ${this.network}`);
-            }
-            this.publicKey = await freighterApi.getPublicKey();
+            freighterApi.getPublicKey().then((publicKey) => {
+              this.publicKey = publicKey;
+            });
           }
         });
       }

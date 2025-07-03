@@ -12,20 +12,41 @@ export function useAdminProtectedRoute() {
   useEffect(() => {
     if (!loading) {
       if (!user) {
-        // User not logged in, redirect to login
-        toast.error('Please login to access this page');
-        router.push('/login?redirect=/admin/dashboard');
+        // User not logged in, redirect to admin login
+        toast.error('Please login as admin to access this page');
+        router.push('/admin/login');
         return;
       }
 
       // Check if user has admin role
       if (user.role !== 'admin') {
         toast.error('You do not have permission to access this page');
-        router.push('/dashboard');
+        router.push('/');
         return;
       }
 
-      setIsAdmin(true);
+      // Verify admin status in real-time
+      const verifyAdmin = async () => {
+        try {
+          const response = await fetch('/api/admin/verify', {
+            headers: {
+              'Authorization': `Bearer ${user.uid}`,
+            }
+          });
+
+          if (!response.ok) {
+            throw new Error('Admin verification failed');
+          }
+
+          setIsAdmin(true);
+        } catch (error) {
+          console.error('Admin verification error:', error);
+          toast.error('Admin session expired. Please login again.');
+          router.push('/admin/login');
+        }
+      };
+
+      verifyAdmin();
     }
   }, [user, loading, router]);
 

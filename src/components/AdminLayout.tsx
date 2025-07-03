@@ -1,6 +1,10 @@
-import { ReactNode, useState } from 'react';
+'use client';
+
+import { useAdminProtectedRoute } from '@/hooks/useAdminProtectedRoute';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { LoadingSpinner } from './LoadingSpinner';
 import { 
   FiHome, 
   FiUsers, 
@@ -16,23 +20,22 @@ import useUserStore from '@/lib/stores/useUserStore';
 import { auth } from '@/lib/firebase';
 import toast from 'react-hot-toast';
 
-interface AdminLayoutProps {
-  children: ReactNode;
-}
-
-const AdminLayout = ({ children }: AdminLayoutProps) => {
+export default function AdminLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const { isAdmin, loading } = useAdminProtectedRoute();
   const pathname = usePathname();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const user = useUserStore((state) => state.user);
   const clearUser = useUserStore((state) => state.clearUser);
 
-  const navigationItems = [
-    { name: 'Dashboard', icon: FiHome, href: '/admin/dashboard' },
-    { name: 'Bounties', icon: FiLifeBuoy, href: '/admin/bounties' },
-    { name: 'Submissions', icon: FiFileText, href: '/admin/submissions' },
-    { name: 'Users', icon: FiUsers, href: '/admin/users' },
-    { name: 'Analytics', icon: FiActivity, href: '/admin/analytics' },
-    { name: 'Settings', icon: FiSettings, href: '/admin/settings' },
+  const navItems = [
+    { href: '/admin/dashboard', label: 'Dashboard' },
+    { href: '/admin/bounties', label: 'Bounties' },
+    { href: '/admin/submissions', label: 'Submissions' },
+    { href: '/admin/users', label: 'Users' },
   ];
 
   const handleSignOut = async () => {
@@ -46,88 +49,86 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
     }
   };
 
-  return (
-    <div className="min-h-screen bg-[#070708]">
-      {/* Mobile sidebar toggle */}
-      <div className="fixed top-4 left-4 z-50 md:hidden">
-        <button
-          onClick={() => setSidebarOpen(!sidebarOpen)}
-          className="p-2 rounded-md bg-gray-800 text-white"
-        >
-          {sidebarOpen ? <FiX size={24} /> : <FiMenu size={24} />}
-        </button>
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <LoadingSpinner />
       </div>
+    );
+  }
 
-      {/* Sidebar backdrop for mobile */}
-      {sidebarOpen && (
-        <div 
-          className="fixed inset-0 z-40 bg-black/50 md:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
+  if (!isAdmin) {
+    return null;
+  }
+
+  return (
+    <div className="min-h-screen bg-black text-white">
+      {/* Sidebar Toggle Button */}
+      <button
+        className="fixed top-4 left-4 z-50 p-2 bg-white/10 rounded-lg md:hidden"
+        onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+      >
+        <svg
+          className="w-6 h-6"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          {isSidebarOpen ? (
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M6 18L18 6M6 6l12 12"
+            />
+          ) : (
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M4 6h16M4 12h16M4 18h16"
+            />
+          )}
+        </svg>
+      </button>
 
       {/* Sidebar */}
-      <div 
-        className={`fixed top-0 left-0 z-40 h-full w-64 bg-gray-900 text-white transform transition-transform ease-in-out duration-300 ${
-          sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
-        }`}
+      <aside
+        className={`fixed top-0 left-0 z-40 w-64 h-screen transition-transform ${
+          isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
+        } md:translate-x-0`}
       >
-        <div className="p-6">
-          <Link href="/admin/dashboard" className="flex items-center space-x-2">
-            <img src="/images/unicorn-logo.svg" alt="Logo" className="w-8 h-8" />
-            <span className="text-xl font-bold">Admin Panel</span>
-          </Link>
-        </div>
+        <div className="h-full backdrop-blur-xl bg-white/10 border-r border-white/20 px-3 py-4">
+          <div className="mb-8 px-4">
+            <h1 className="text-2xl font-bold">Admin Panel</h1>
+          </div>
 
-        <div className="px-3 py-4">
-          <div className="space-y-1">
-            {navigationItems.map((item) => (
+          <nav className="space-y-2">
+            {navItems.map((item) => (
               <Link
-                key={item.name}
+                key={item.href}
                 href={item.href}
-                className={`flex items-center px-3 py-2.5 rounded-md ${
+                className={`flex items-center px-4 py-3 rounded-lg transition-colors ${
                   pathname === item.href
-                    ? 'bg-blue-600 text-white'
-                    : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+                    ? 'bg-white/20 text-white'
+                    : 'hover:bg-white/10'
                 }`}
               >
-                <item.icon className="w-5 h-5 mr-3" />
-                {item.name}
+                {item.label}
               </Link>
             ))}
-          </div>
+          </nav>
         </div>
+      </aside>
 
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-800">
-          <div className="flex items-center mb-4">
-            <div className="flex-shrink-0">
-              <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center font-bold">
-                {user?.firstName?.[0] || 'A'}
-              </div>
-            </div>
-            <div className="ml-3">
-              <p className="text-sm font-medium text-white">{user?.firstName || 'Admin'}</p>
-              <p className="text-xs text-gray-400">Administrator</p>
-            </div>
-          </div>
-          <button
-            onClick={handleSignOut}
-            className="w-full flex items-center px-3 py-2 text-sm text-red-400 rounded-md hover:bg-gray-800"
-          >
-            <FiLogOut className="w-5 h-5 mr-3" />
-            Sign out
-          </button>
-        </div>
-      </div>
-
-      {/* Main content */}
-      <div className={`md:pl-64 transition-all duration-300`}>
-        <main className="px-4 py-8 sm:px-6 lg:px-8">
-          {children}
-        </main>
-      </div>
+      {/* Main Content */}
+      <main
+        className={`transition-all ${
+          isSidebarOpen ? 'md:ml-64' : ''
+        } p-8`}
+      >
+        {children}
+      </main>
     </div>
   );
-};
-
-export default AdminLayout; 
+} 

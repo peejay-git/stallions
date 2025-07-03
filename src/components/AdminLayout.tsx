@@ -1,21 +1,9 @@
 'use client';
 
-import { useAdminProtectedRoute } from '@/hooks/useAdminProtectedRoute';
+import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useEffect, useState } from 'react';
 import { LoadingSpinner } from './LoadingSpinner';
-import { 
-  FiHome, 
-  FiUsers, 
-  FiSettings, 
-  FiLifeBuoy, 
-  FiFileText, 
-  FiActivity, 
-  FiMenu, 
-  FiX,
-  FiLogOut
-} from 'react-icons/fi';
 import useUserStore from '@/lib/stores/useUserStore';
 import { auth } from '@/lib/firebase';
 import toast from 'react-hot-toast';
@@ -25,11 +13,22 @@ export default function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { isAdmin, loading } = useAdminProtectedRoute();
-  const pathname = usePathname();
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const pathname = usePathname();
   const user = useUserStore((state) => state.user);
   const clearUser = useUserStore((state) => state.clearUser);
+
+  const handleSignOut = async () => {
+    try {
+      await auth.signOut();
+      clearUser();
+      toast.success('Signed out successfully');
+      window.location.href = '/admin/login';
+    } catch (error) {
+      console.error('Error signing out:', error);
+      toast.error('Failed to sign out');
+    }
+  };
 
   const navItems = [
     { href: '/admin/dashboard', label: 'Dashboard' },
@@ -37,29 +36,6 @@ export default function AdminLayout({
     { href: '/admin/submissions', label: 'Submissions' },
     { href: '/admin/users', label: 'Users' },
   ];
-
-  const handleSignOut = async () => {
-    try {
-      await auth.signOut();
-      clearUser();
-      toast.success('Signed out successfully');
-    } catch (error) {
-      console.error('Error signing out:', error);
-      toast.error('Failed to sign out');
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <LoadingSpinner />
-      </div>
-    );
-  }
-
-  if (!isAdmin) {
-    return null;
-  }
 
   return (
     <div className="min-h-screen bg-black text-white">
@@ -98,12 +74,12 @@ export default function AdminLayout({
           isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
         } md:translate-x-0`}
       >
-        <div className="h-full backdrop-blur-xl bg-white/10 border-r border-white/20 px-3 py-4">
-          <div className="mb-8 px-4">
+        <div className="h-full backdrop-blur-xl bg-white/10 border-r border-white/20 flex flex-col">
+          <div className="p-6 border-b border-white/20">
             <h1 className="text-2xl font-bold">Admin Panel</h1>
           </div>
 
-          <nav className="space-y-2">
+          <nav className="flex-1 p-4 space-y-2">
             {navItems.map((item) => (
               <Link
                 key={item.href}
@@ -118,6 +94,19 @@ export default function AdminLayout({
               </Link>
             ))}
           </nav>
+
+          <div className="p-4 border-t border-white/20">
+            <div className="mb-4">
+              <p className="text-sm text-white/60">Logged in as</p>
+              <p className="font-medium">{user?.email || 'Admin'}</p>
+            </div>
+            <button
+              onClick={handleSignOut}
+              className="w-full px-4 py-2 bg-red-500/20 text-red-300 border border-red-500/20 rounded-lg hover:bg-red-500/30 transition-colors"
+            >
+              Sign Out
+            </button>
+          </div>
         </div>
       </aside>
 

@@ -17,6 +17,7 @@ import {
   FiAlertCircle
 } from 'react-icons/fi';
 import toast from 'react-hot-toast';
+import AdminProtectedRoute from '@/components/AdminProtectedRoute';
 
 interface PlatformStats {
   totalUsers: number;
@@ -108,153 +109,41 @@ export default function AdminDashboardPage() {
   }
 
   return (
-    <AdminLayout>
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-white mb-2">Admin Dashboard</h1>
-        <p className="text-gray-400">Welcome to your admin control panel. View and manage all platform activities.</p>
-      </div>
-
-      {/* Stats Overview */}
-      {loading ? (
-        <StatsSkeleton />
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <div className="bg-blue-600/10 backdrop-blur-lg border border-blue-600/20 rounded-xl p-6">
-            <div className="w-12 h-12 bg-blue-600/20 rounded-full flex items-center justify-center mb-4">
-              <FiUsers className="text-blue-400 text-xl" />
+    <AdminProtectedRoute>
+      <AdminLayout>
+        <div className="space-y-6">
+          <h1 className="text-2xl font-bold">Admin Dashboard</h1>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {/* Stats Cards */}
+            <div className="backdrop-blur-xl bg-white/10 border border-white/20 rounded-xl p-6">
+              <h3 className="text-lg font-medium mb-2">Total Bounties</h3>
+              <p className="text-3xl font-bold">{stats?.totalBounties || 0}</p>
             </div>
-            <h3 className="text-sm text-gray-400 mb-1">Total Users</h3>
-            <p className="text-3xl font-bold text-white">{stats?.totalUsers || 0}</p>
+            
+            <div className="backdrop-blur-xl bg-white/10 border border-white/20 rounded-xl p-6">
+              <h3 className="text-lg font-medium mb-2">Active Bounties</h3>
+              <p className="text-3xl font-bold">{stats?.totalCompletedBounties || 0}</p>
+            </div>
+            
+            <div className="backdrop-blur-xl bg-white/10 border border-white/20 rounded-xl p-6">
+              <h3 className="text-lg font-medium mb-2">Total Users</h3>
+              <p className="text-3xl font-bold">{stats?.totalUsers || 0}</p>
+            </div>
+            
+            <div className="backdrop-blur-xl bg-white/10 border border-white/20 rounded-xl p-6">
+              <h3 className="text-lg font-medium mb-2">Total Submissions</h3>
+              <p className="text-3xl font-bold">{stats?.totalSubmissions || 0}</p>
+            </div>
           </div>
 
-          <div className="bg-purple-600/10 backdrop-blur-lg border border-purple-600/20 rounded-xl p-6">
-            <div className="w-12 h-12 bg-purple-600/20 rounded-full flex items-center justify-center mb-4">
-              <FiLifeBuoy className="text-purple-400 text-xl" />
-            </div>
-            <h3 className="text-sm text-gray-400 mb-1">Total Bounties</h3>
-            <p className="text-3xl font-bold text-white">{stats?.totalBounties || 0}</p>
-          </div>
-
-          <div className="bg-green-600/10 backdrop-blur-lg border border-green-600/20 rounded-xl p-6">
-            <div className="w-12 h-12 bg-green-600/20 rounded-full flex items-center justify-center mb-4">
-              <FiFileText className="text-green-400 text-xl" />
-            </div>
-            <h3 className="text-sm text-gray-400 mb-1">Total Submissions</h3>
-            <p className="text-3xl font-bold text-white">{stats?.totalSubmissions || 0}</p>
-          </div>
-
-          <div className="bg-teal-600/10 backdrop-blur-lg border border-teal-600/20 rounded-xl p-6">
-            <div className="w-12 h-12 bg-teal-600/20 rounded-full flex items-center justify-center mb-4">
-              <FiCheckCircle className="text-teal-400 text-xl" />
-            </div>
-            <h3 className="text-sm text-gray-400 mb-1">Completed Bounties</h3>
-            <p className="text-3xl font-bold text-white">{stats?.totalCompletedBounties || 0}</p>
+          {/* Recent Activity */}
+          <div className="backdrop-blur-xl bg-white/10 border border-white/20 rounded-xl p-6">
+            <h2 className="text-xl font-bold mb-4">Recent Activity</h2>
+            <div className="text-gray-400">No recent activity</div>
           </div>
         </div>
-      )}
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Recent Bounties Panel */}
-        <div className="lg:col-span-2">
-          <div className="bg-gray-800/30 backdrop-blur-lg rounded-xl overflow-hidden border border-gray-700">
-            <div className="px-6 py-4 border-b border-gray-700 flex justify-between items-center">
-              <h2 className="text-xl font-semibold text-white">Recent Bounties</h2>
-              <Link href="/admin/bounties" className="flex items-center text-sm text-blue-400 hover:text-blue-300">
-                View all <FiArrowRight className="ml-1" />
-              </Link>
-            </div>
-            <div className="p-6">
-              {loading ? (
-                <BountiesSkeleton />
-              ) : recentBounties.length === 0 ? (
-                <p className="text-gray-400">No bounties found.</p>
-              ) : (
-                <div className="space-y-4">
-                  {recentBounties.map((bounty) => (
-                    <div key={bounty.id} className="bg-gray-800/50 backdrop-blur-lg rounded-xl p-4">
-                      <div className="flex justify-between">
-                        <h3 className="font-medium text-white">{bounty.title}</h3>
-                        <span 
-                          className={`text-xs px-2 py-1 rounded-full ${
-                            bounty.status === 'OPEN' ? 'bg-green-900/40 text-green-300 border border-green-700/30' :
-                            bounty.status === 'IN_PROGRESS' ? 'bg-blue-900/40 text-blue-300 border border-blue-700/30' :
-                            bounty.status === 'COMPLETED' ? 'bg-gray-700/40 text-gray-300 border border-gray-600/30' :
-                            'bg-red-900/40 text-red-300 border border-red-700/30'
-                          }`}
-                        >
-                          {bounty.status}
-                        </span>
-                      </div>
-                      <div className="mt-2 text-sm text-gray-400">
-                        <p>Created: {formatDate(bounty.created)}</p>
-                        <p>Reward: {bounty.reward.amount} {bounty.reward.asset}</p>
-                      </div>
-                      <div className="mt-3 flex justify-end">
-                        <Link 
-                          href={`/admin/bounties/${bounty.id}`}
-                          className="text-sm text-blue-400 hover:text-blue-300"
-                        >
-                          Manage
-                        </Link>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Quick Actions Panel */}
-        <div className="bg-gray-800/30 backdrop-blur-lg rounded-xl overflow-hidden border border-gray-700">
-          <div className="px-6 py-4 border-b border-gray-700">
-            <h2 className="text-xl font-semibold text-white">Quick Actions</h2>
-          </div>
-          <div className="p-6">
-            <div className="space-y-4">
-              <Link href="/admin/bounties/create" className="flex items-center p-4 bg-gray-800/50 backdrop-blur-lg rounded-xl hover:bg-gray-800 transition-colors">
-                <div className="w-10 h-10 bg-purple-600/20 rounded-full flex items-center justify-center mr-4">
-                  <FiLifeBuoy className="text-purple-400" />
-                </div>
-                <div>
-                  <h3 className="font-medium text-white">Create Bounty</h3>
-                  <p className="text-sm text-gray-400">Create a new bounty for talents</p>
-                </div>
-              </Link>
-
-              <Link href="/admin/users" className="flex items-center p-4 bg-gray-800/50 backdrop-blur-lg rounded-xl hover:bg-gray-800 transition-colors">
-                <div className="w-10 h-10 bg-blue-600/20 rounded-full flex items-center justify-center mr-4">
-                  <FiUsers className="text-blue-400" />
-                </div>
-                <div>
-                  <h3 className="font-medium text-white">Manage Users</h3>
-                  <p className="text-sm text-gray-400">View and manage user accounts</p>
-                </div>
-              </Link>
-
-              <Link href="/admin/submissions" className="flex items-center p-4 bg-gray-800/50 backdrop-blur-lg rounded-xl hover:bg-gray-800 transition-colors">
-                <div className="w-10 h-10 bg-green-600/20 rounded-full flex items-center justify-center mr-4">
-                  <FiFileText className="text-green-400" />
-                </div>
-                <div>
-                  <h3 className="font-medium text-white">Review Submissions</h3>
-                  <p className="text-sm text-gray-400">Review pending submissions</p>
-                </div>
-              </Link>
-
-              <Link href="/admin/analytics" className="flex items-center p-4 bg-gray-800/50 backdrop-blur-lg rounded-xl hover:bg-gray-800 transition-colors">
-                <div className="w-10 h-10 bg-teal-600/20 rounded-full flex items-center justify-center mr-4">
-                  <FiActivity className="text-teal-400" />
-                </div>
-                <div>
-                  <h3 className="font-medium text-white">Analytics</h3>
-                  <p className="text-sm text-gray-400">Platform performance overview</p>
-                </div>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </div>
-    </AdminLayout>
+      </AdminLayout>
+    </AdminProtectedRoute>
   );
 } 

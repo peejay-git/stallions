@@ -150,6 +150,16 @@ const nextConfig = {
       },
     ];
   },
+  async rewrites() {
+    return {
+      beforeFiles: [
+        {
+          source: '/admin/:path*',
+          destination: '/admin/:path*',
+        }
+      ]
+    };
+  }
 };
 
 export default nextConfig;

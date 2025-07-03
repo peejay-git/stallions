@@ -39,7 +39,7 @@ export async function getAllBounties() {
 export async function getAllSubmissions() {
   try {
     const submissionsRef = collection(db, 'submissions');
-    const q = query(submissionsRef, orderBy('submittedAt', 'desc'));
+    const q = query(submissionsRef, orderBy('createdAt', 'desc'));
     const snapshot = await getDocs(q);
     
     const submissions = snapshot.docs.map(doc => {
@@ -49,9 +49,13 @@ export async function getAllSubmissions() {
         bountyId: data.bountyId || '',
         userId: data.userId || '',
         content: data.content || '',
-        submittedAt: data.submittedAt ? data.submittedAt.toDate().toISOString() : new Date().toISOString(),
+        createdAt: data.createdAt || new Date().toISOString(),
+        updatedAt: data.updatedAt || new Date().toISOString(),
         status: data.status || 'PENDING',
         bountyTitle: data.bountyTitle || '',
+        applicant: data.applicantAddress || '',
+        links: data.links || '',
+        ranking: data.ranking || null
       };
     });
     
@@ -71,8 +75,8 @@ export async function getAllUsers() {
     return snapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data(),
-      createdAt: doc.data().createdAt,
-      lastLogin: doc.data().lastLogin
+      createdAt: doc.data().createdAt || new Date().toISOString(),
+      lastLogin: doc.data().lastLogin || new Date().toISOString()
     }));
   } catch (error) {
     console.error('Error getting all users:', error);

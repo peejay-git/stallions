@@ -11,7 +11,7 @@ import { kit, getWalletKit } from './wallet';
 
 // Environment variables with defaults
 const CONTRACT_ID = process.env.NEXT_PUBLIC_BOUNTY_CONTRACT_ID || '';
-const NETWORK = "Test SDF Network ; September 2015";  // Always use testnet for now
+const NETWORK = process.env.NEXT_PUBLIC_STELLAR_TEST_NETWORK || 'Test SDF Network ; September 2015';
 
 const SOROBAN_RPC_URL =
   process.env.NEXT_PUBLIC_SOROBAN_RPC_URL ||

@@ -57,8 +57,9 @@ const createWalletKit = async () => {
 
   console.log("Initializing wallet kit...");
 
-  // Always use testnet for now
-  const network = "Test SDF Network ; September 2015" as WalletNetwork;
+  // Use TestNet network configuration
+  const networkPassphrase = process.env.NEXT_PUBLIC_STELLAR_TEST_NETWORK || "Test SDF Network ; September 2015";
+  const network = networkPassphrase as WalletNetwork;
   const appUrl = process.env.NEXT_PUBLIC_APP_URL;
   const trezorContactEmail = process.env.NEXT_PUBLIC_TREZOR_CONTACT_EMAIL;
 

@@ -1,0 +1,49 @@
+/* 
+  Performance Optimizations
+  - Reduce layout shifts
+  - Improve rendering
+  - Optimize animations
+*/
+
+/* Prevent layout shifts for navbars and fixed elements */
+header {
+  z-index: 40;
+}
+
+/* Improve rendering performance for animations */
+.animate-bounce,
+.animate-pulse,
+.animate-spin {
+  will-change: transform;
+}
+
+/* Force hardware acceleration for transitions */
+.transition-all,
+.transition-colors,
+.transition-opacity {
+  will-change: auto;
+  backface-visibility: hidden;
+  transform: translateZ(0);
+}
+
+/* Prevent container repaints */
+.layout-container {
+  isolation: isolate;
+  contain: content;
+}
+
+/* Reduce opacity transition animation costs */
+.opacity-0 {
+  visibility: hidden;
+}
+
+.opacity-100 {
+  visibility: visible;
+}
+
+/* Optimize for mobile devices */
+@media (width <= 768px) {
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+} 

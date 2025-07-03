@@ -1,0 +1,159 @@
+@import url('https://fonts.cdnfonts.com/css/druk-wide-trial');
+@import url('https://fonts.googleapis.com/css2?family=Itim&display=swap');
+@import url('./optimize.css');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --header-height: 80px;
+  }
+  
+  body {
+    @apply bg-[#070708] text-white antialiased transition-colors duration-300 ease-in-out;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-white text-black font-medium py-2 px-4 rounded-lg hover:bg-white/90 transition-colors;
+  }
+  
+  .btn-secondary {
+    @apply bg-white/10 backdrop-blur-xl border border-white/20 text-white font-medium py-2 px-4 rounded-lg hover:bg-white/20 transition-colors;
+  }
+  
+  .card {
+    @apply backdrop-blur-xl bg-white/10 border border-white/20 rounded-xl shadow-sm p-6 text-white;
+  }
+
+  .input {
+    @apply px-4 py-3 bg-white/10 backdrop-blur-xl border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-white/30 transition-all;
+  }
+
+  .btn-ordinary {
+    @apply backdrop-blur-xl bg-white/10 text-white font-medium py-2 px-4 rounded-lg hover:bg-white/20 transition-colors;
+  }
+
+  .wallet-option {
+    @apply bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all rounded-lg p-4 cursor-pointer;
+  }
+
+  .wallet-option.active {
+    @apply bg-white/10 border-white/30;
+  }
+}
+
+.gradient-text {
+  @apply text-white;
+}
+
+@keyframes scroll-text {
+  0% {
+    transform: translateX(0); /* Starts at initial position */
+  }
+
+  100% {
+    transform: translateX(-33.33%); /* Moves left by exactly 1/3 of the content width */
+  }
+}
+
+.animate-scroll {
+  animation: scroll-text 20s linear infinite;    
+}
+
+.hero-text{
+  font-family: Itim, cursive !important;
+  line-height: 100px;
+  font-weight: 400px;
+}
+
+.small-hero-text{
+  font-family: Itim, cursive;
+}
+
+@media (width <= 1250px) {
+  .stellar-logo{
+    left: 74%;
+  }
+}
+
+@media (width <= 1080px) {
+  .stellar-logo{
+    left: 78%;
+  }
+}
+
+@media (width <= 980px) {
+  .stellar-logo{
+    left: 80%;
+  }
+}
+
+@media (width <= 940px) {
+  .stellar-logo{
+   display: none;
+   top: 32% !important;
+   left: 82% !important;
+  }
+
+  .hero-text{
+    line-height: 80px;
+  }
+
+  .complete-profile{
+    font-size: 12px;
+  }
+}
+
+@media (width <= 855px) {
+  .nav-txt{
+    font-size: 12px;
+  }
+
+  .hero-text{
+    font-size: 40px;
+    line-height: 30px;
+  }
+
+  /* .stellar-logo{
+    width: 40px !important;
+    top: 30% !important;
+    left: 69% !important;
+    position: fixed;
+   } */
+}
+
+/* Responsive stallions banner */
+@media (width <= 1280px) {
+  .animate-scroll {
+    font-size: 100px;
+  }
+}
+
+@media (width <= 768px) {
+  .animate-scroll {
+    font-size: 70px;
+  }
+}
+
+@media (width <= 480px) {
+  .animate-scroll {
+    font-size: 40px;
+  }
+}
+
+/* Modal positioning fix */
+.fixed {
+  position: fixed !important;
+}
+
+.fixed.inset-0 {
+  inset: 0 !important;
+}
+
+body.overflow-hidden {
+  overflow: hidden !important;
+}

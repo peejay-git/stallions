@@ -1,0 +1,41 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Models for the Bounty platform
+
+model Bounty {
+  id                 String    @id // This will be the blockchain-generated ID
+  description        String    @db.Text
+  category           String
+  skills             String[]
+  extraRequirements  String?   @db.Text
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  
+  // References to related models
+  submissions        Submission[]
+}
+
+model Submission {
+  id                 String    @id @default(uuid())
+  bountyId           String
+  applicantAddress   String
+  content            String    @db.Text
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  
+  // Relations
+  bounty             Bounty    @relation(fields: [bountyId], references: [id])
+  
+  @@index([bountyId])
+  @@index([applicantAddress])
+} 

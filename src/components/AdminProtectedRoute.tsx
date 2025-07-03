@@ -1,10 +1,11 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import useUserStore from '@/lib/stores/useUserStore';
 import toast from 'react-hot-toast';
 import { LoadingSpinner } from './LoadingSpinner';
+import { auth } from '@/lib/firebase';
 
 export default function AdminProtectedRoute({
   children,
@@ -14,24 +15,45 @@ export default function AdminProtectedRoute({
   const router = useRouter();
   const user = useUserStore((state) => state.user);
   const loading = useUserStore((state) => state.loading);
+  const fetchUserFromFirestore = useUserStore((state) => state.fetchUserFromFirestore);
+  const [isChecking, setIsChecking] = useState(true);
 
   useEffect(() => {
-    if (!loading) {
-      if (!user) {
-        toast.error('Please login as admin');
-        router.push('/admin/login');
-        return;
-      }
+    async function checkAuth() {
+      console.log('Checking auth state...');
+      try {
+        if (!auth.currentUser) {
+          console.log('No current user, redirecting to login');
+          toast.error('Please login as admin');
+          router.push('/admin/login');
+          return;
+        }
 
-      if (user.role !== 'admin') {
-        toast.error('You do not have admin access');
-        router.push('/');
-        return;
+        if (!user && !loading) {
+          console.log('No user in store, fetching from Firestore');
+          await fetchUserFromFirestore();
+        }
+
+        if (user && user.role !== 'admin') {
+          console.log('User is not admin:', user);
+          toast.error('You do not have admin access');
+          router.push('/');
+          return;
+        }
+
+        console.log('Auth check complete:', { user, loading });
+        setIsChecking(false);
+      } catch (error) {
+        console.error('Error checking auth:', error);
+        toast.error('Authentication error');
+        router.push('/admin/login');
       }
     }
-  }, [user, loading, router]);
 
-  if (loading) {
+    checkAuth();
+  }, [user, loading, router, fetchUserFromFirestore]);
+
+  if (loading || isChecking) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <LoadingSpinner />

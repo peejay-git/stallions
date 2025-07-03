@@ -4,8 +4,9 @@ import { useEffect, useState } from 'react';
 import AdminLayout from '@/components/AdminLayout';
 import AdminProtectedRoute from '@/components/AdminProtectedRoute';
 import { db } from '@/lib/firebase';
-import { collection, getDocs } from '@/lib/firestore';
+import { collection, getDocs } from 'firebase/firestore';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
+import toast from 'react-hot-toast';
 
 interface DashboardStats {
   totalBounties: number;
@@ -25,23 +26,36 @@ export default function AdminDashboardPage() {
 
   useEffect(() => {
     async function fetchStats() {
+      console.log('Starting to fetch stats...');
       try {
         // Get bounties count
-        const bountiesSnapshot = await getDocs(collection(db, 'bounties'));
+        console.log('Fetching bounties...');
+        const bountiesRef = collection(db, 'bounties');
+        console.log('Bounties collection ref:', bountiesRef);
+        const bountiesSnapshot = await getDocs(bountiesRef);
+        console.log('Bounties snapshot:', bountiesSnapshot);
         const totalBounties = bountiesSnapshot.size;
+        console.log('Total bounties:', totalBounties);
         
         // Get active bounties count
         const activeBounties = bountiesSnapshot.docs.filter(
           doc => doc.data().status === 'OPEN'
         ).length;
+        console.log('Active bounties:', activeBounties);
 
         // Get users count
-        const usersSnapshot = await getDocs(collection(db, 'users'));
+        console.log('Fetching users...');
+        const usersRef = collection(db, 'users');
+        const usersSnapshot = await getDocs(usersRef);
         const totalUsers = usersSnapshot.size;
+        console.log('Total users:', totalUsers);
 
         // Get submissions count
-        const submissionsSnapshot = await getDocs(collection(db, 'submissions'));
+        console.log('Fetching submissions...');
+        const submissionsRef = collection(db, 'submissions');
+        const submissionsSnapshot = await getDocs(submissionsRef);
         const totalSubmissions = submissionsSnapshot.size;
+        console.log('Total submissions:', totalSubmissions);
 
         // Get recent activity
         const recentActivity = [
@@ -53,15 +67,20 @@ export default function AdminDashboardPage() {
           // Add more activity items as needed
         ];
 
-        setStats({
+        const statsData = {
           totalBounties,
           activeBounties,
           totalUsers,
           totalSubmissions,
           recentActivity
-        });
+        };
+        
+        console.log('Setting stats:', statsData);
+        setStats(statsData);
+        toast.success('Dashboard data loaded successfully');
       } catch (error) {
         console.error('Error fetching dashboard stats:', error);
+        toast.error('Failed to load dashboard data');
       } finally {
         setLoading(false);
       }

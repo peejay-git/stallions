@@ -3,7 +3,7 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp, getApps, type FirebaseApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider, browserLocalPersistence, setPersistence, type Auth } from "firebase/auth";
-import { getFirestore, type Firestore } from "firebase/firestore/lite";
+import { getFirestore, type Firestore } from "firebase/firestore";
 import { getStorage, type FirebaseStorage } from "firebase/storage";
 
 // Create dummy implementations for server-side
@@ -68,6 +68,7 @@ if (typeof window !== 'undefined') {
   console.log("Current hostname:", window.location.hostname);
 }
 
+// Initialize Firebase only on the client side
 let app: FirebaseApp;
 let auth: Auth;
 let db: Firestore;
@@ -75,31 +76,54 @@ let storage: FirebaseStorage;
 let googleProvider: GoogleAuthProvider;
 
 if (typeof window !== 'undefined') {
-  // Initialize Firebase
-  app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
-  auth = getAuth(app);
-  db = getFirestore(app);
-  storage = getStorage(app);
-  googleProvider = new GoogleAuthProvider();
+  try {
+    // Log initialization attempt
+    console.log('Initializing Firebase...');
+    console.log('Firebase Config:', {
+      authDomain: firebaseConfig.authDomain,
+      projectId: firebaseConfig.projectId,
+      storageBucket: firebaseConfig.storageBucket,
+    });
 
-  // Set auth persistence
-  setPersistence(auth, browserLocalPersistence).catch((error) => {
-    console.error("Firebase auth persistence error:", error);
-  });
+    // Initialize Firebase
+    if (!getApps().length) {
+      app = initializeApp(firebaseConfig);
+      console.log('Firebase app initialized');
+    } else {
+      app = getApps()[0];
+      console.log('Using existing Firebase app');
+    }
 
-  // Configure Google provider
-  googleProvider.addScope('https://www.googleapis.com/auth/userinfo.email');
-  googleProvider.addScope('https://www.googleapis.com/auth/userinfo.profile');
-  googleProvider.setCustomParameters({
-    prompt: 'select_account'
-  });
+    // Initialize services
+    auth = getAuth(app);
+    db = getFirestore(app);
+    storage = getStorage(app);
+    googleProvider = new GoogleAuthProvider();
+
+    // Set auth persistence
+    setPersistence(auth, browserLocalPersistence)
+      .then(() => console.log('Auth persistence set to local'))
+      .catch((error) => console.error('Auth persistence error:', error));
+
+    // Configure Google provider
+    googleProvider.addScope('https://www.googleapis.com/auth/userinfo.email');
+    googleProvider.addScope('https://www.googleapis.com/auth/userinfo.profile');
+    googleProvider.setCustomParameters({
+      prompt: 'select_account'
+    });
+
+    console.log('Firebase services initialized successfully');
+  } catch (error) {
+    console.error('Error initializing Firebase:', error);
+    throw error;
+  }
 } else {
   // Server-side initialization with dummy implementations
+  console.log('Using dummy Firebase implementations for server-side rendering');
   auth = dummyAuth as unknown as Auth;
   db = dummyFirestore as unknown as Firestore;
   storage = dummyStorage as unknown as FirebaseStorage;
   googleProvider = new GoogleAuthProvider();
-  console.log("Using dummy Firebase implementations for server-side rendering");
 }
 
 export { auth, db, storage, googleProvider };

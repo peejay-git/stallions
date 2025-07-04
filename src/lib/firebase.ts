@@ -85,7 +85,7 @@ if (typeof window !== 'undefined') {
       storageBucket: firebaseConfig.storageBucket,
     });
 
-    // Initialize Firebase
+  // Initialize Firebase
     if (!getApps().length) {
       app = initializeApp(firebaseConfig);
       console.log('Firebase app initialized');
@@ -95,22 +95,22 @@ if (typeof window !== 'undefined') {
     }
 
     // Initialize services
-    auth = getAuth(app);
-    db = getFirestore(app);
-    storage = getStorage(app);
-    googleProvider = new GoogleAuthProvider();
+  auth = getAuth(app);
+  db = getFirestore(app);
+  storage = getStorage(app);
+  googleProvider = new GoogleAuthProvider();
 
-    // Set auth persistence
+  // Set auth persistence
     setPersistence(auth, browserLocalPersistence)
       .then(() => console.log('Auth persistence set to local'))
       .catch((error) => console.error('Auth persistence error:', error));
 
-    // Configure Google provider
-    googleProvider.addScope('https://www.googleapis.com/auth/userinfo.email');
-    googleProvider.addScope('https://www.googleapis.com/auth/userinfo.profile');
-    googleProvider.setCustomParameters({
-      prompt: 'select_account'
-    });
+  // Configure Google provider
+  googleProvider.addScope('https://www.googleapis.com/auth/userinfo.email');
+  googleProvider.addScope('https://www.googleapis.com/auth/userinfo.profile');
+  googleProvider.setCustomParameters({
+    prompt: 'select_account'
+  });
 
     console.log('Firebase services initialized successfully');
   } catch (error) {

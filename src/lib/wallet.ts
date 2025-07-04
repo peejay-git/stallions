@@ -79,7 +79,7 @@ const createWalletKit = async () => {
                 return;
               }
             }
-            resolve(true);
+          resolve(true);
           } catch (error) {
             console.error('Error checking Freighter:', error);
             resolve(false);

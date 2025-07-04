@@ -40,7 +40,7 @@ export default function AdminLayout({
   return (
     <div className="min-h-screen bg-black text-white">
       {/* Sidebar Toggle Button */}
-      <button
+        <button
         className="fixed top-4 left-4 z-50 p-2 bg-white/10 rounded-lg md:hidden"
         onClick={() => setIsSidebarOpen(!isSidebarOpen)}
       >
@@ -77,7 +77,7 @@ export default function AdminLayout({
         <div className="h-full backdrop-blur-xl bg-white/10 border-r border-white/20 flex flex-col">
           <div className="p-6 border-b border-white/20">
             <h1 className="text-2xl font-bold">Admin Panel</h1>
-          </div>
+        </div>
 
           <nav className="flex-1 p-4 space-y-2">
             {navItems.map((item) => (
@@ -99,15 +99,15 @@ export default function AdminLayout({
             <div className="mb-4">
               <p className="text-sm text-white/60">Logged in as</p>
               <p className="font-medium">{user?.email || 'Admin'}</p>
-            </div>
-            <button
-              onClick={handleSignOut}
-              className="w-full px-4 py-2 bg-red-500/20 text-red-300 border border-red-500/20 rounded-lg hover:bg-red-500/30 transition-colors"
-            >
-              Sign Out
-            </button>
           </div>
+          <button
+            onClick={handleSignOut}
+              className="w-full px-4 py-2 bg-red-500/20 text-red-300 border border-red-500/20 rounded-lg hover:bg-red-500/30 transition-colors"
+          >
+              Sign Out
+          </button>
         </div>
+      </div>
       </aside>
 
       {/* Main Content */}
@@ -116,8 +116,8 @@ export default function AdminLayout({
           isSidebarOpen ? 'md:ml-64' : ''
         } p-8`}
       >
-        {children}
-      </main>
+          {children}
+        </main>
     </div>
   );
 } 

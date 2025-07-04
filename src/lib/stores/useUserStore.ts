@@ -22,7 +22,7 @@ interface UserState {
     clearUser: () => void;
     setLoading: (value: boolean) => void;
     fetchUserFromFirestore: () => Promise<void>;
-    initializeAuthListener: () => void;
+    initializeAuthListener: () => () => void;
 }
 
 const useUserStore = create<UserState>()((set) => ({
@@ -80,47 +80,54 @@ const useUserStore = create<UserState>()((set) => ({
         }
     },
     initializeAuthListener: () => {
-        if (typeof window === 'undefined') return;
+        if (typeof window === 'undefined') return () => {};
 
         console.log('Initializing auth listener...');
         const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-            if (firebaseUser) {
-                console.log('Auth state changed - user logged in:', firebaseUser.uid);
-                const docRef = doc(db, 'users', firebaseUser.uid);
-                const docSnap = await getDoc(docRef);
-                
-                if (docSnap.exists()) {
-                    const userData = docSnap.data();
-                    const userProfile = {
-                        uid: firebaseUser.uid,
-                        email: firebaseUser.email || undefined,
-                        ...userData.profileData,
-                        role: userData.role,
-                        walletConnected: !!userData.wallet,
-                        wallet: userData.wallet || null
-                    };
+            try {
+                if (firebaseUser) {
+                    console.log('Auth state changed - user logged in:', firebaseUser.uid);
+                    const docRef = doc(db, 'users', firebaseUser.uid);
+                    const docSnap = await getDoc(docRef);
                     
-                    set({ user: userProfile, loading: false });
-                    localStorage.setItem('user', JSON.stringify(userProfile));
+                    if (docSnap.exists()) {
+                        const userData = docSnap.data();
+                        const userProfile = {
+                            uid: firebaseUser.uid,
+                            email: firebaseUser.email || undefined,
+                            ...userData.profileData,
+                            role: userData.role,
+                            walletConnected: !!userData.wallet,
+                            wallet: userData.wallet || null
+                        };
+                        
+                        set({ user: userProfile, loading: false });
+                        localStorage.setItem('user', JSON.stringify(userProfile));
+                    } else {
+                        console.log('User document not found in Firestore');
+                        set({ user: null, loading: false });
+                        localStorage.removeItem('user');
+                    }
                 } else {
+                    console.log('Auth state changed - no user');
                     set({ user: null, loading: false });
+                    localStorage.removeItem('user');
                 }
-            } else {
-                console.log('Auth state changed - no user');
+            } catch (error) {
+                console.error('Error in auth state change:', error);
                 set({ user: null, loading: false });
+                localStorage.removeItem('user');
             }
         });
 
-        // Clean up subscription on unmount
-        if (typeof window !== 'undefined') {
-            window.addEventListener('beforeunload', unsubscribe);
-        }
+        return unsubscribe;
     }
 }));
 
 // Initialize auth listener when the store is created
 if (typeof window !== 'undefined') {
-    useUserStore.getState().initializeAuthListener();
+    const cleanup = useUserStore.getState().initializeAuthListener();
+    window.addEventListener('unload', cleanup);
 }
 
 export default useUserStore;

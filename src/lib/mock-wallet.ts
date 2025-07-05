@@ -1,15 +1,20 @@
 // Mock implementation of wallet functions for server-side rendering
 export const WalletNetwork = {
-  PUBLIC: 'Public Global Stellar Network ; September 2015',
-  TESTNET: 'Test SDF Network ; September 2015'
+  TESTNET: "Test SDF Network ; September 2015",
 };
 
 export class StellarWalletsKit {
   constructor() {}
   setWallet() {}
-  getAddress() { return { address: '' }; }
-  getNetwork() { return { networkPassphrase: WalletNetwork.TESTNET }; }
-  signTransaction() { return ''; }
+  getAddress() {
+    return { address: "" };
+  }
+  getNetwork() {
+    return { networkPassphrase: WalletNetwork.TESTNET };
+  }
+  signTransaction() {
+    return "";
+  }
   disconnect() {}
   openModal() {}
 }
@@ -25,5 +30,5 @@ export class WalletConnectModule {
 }
 
 export const WalletConnectAllowedMethods = {
-  SIGN: 'sign'
-}; 
+  SIGN: "sign",
+};

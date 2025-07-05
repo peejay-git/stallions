@@ -238,6 +238,11 @@ export class SorobanService {
             throw new Error('Wallet not initialized');
           }
 
+          // Add debug log for network passphrase before signing
+          console.log('DEBUG: About to sign transaction. Network passphrase:', this.network);
+          // Add debug log for transaction XDR
+          console.log('DEBUG: Transaction XDR to be signed:', tx.toXDR());
+
           const sentTx = await result.signAndSend({
             signTransaction: async (transaction) => {
               try {

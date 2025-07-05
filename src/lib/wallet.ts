@@ -28,6 +28,12 @@ let walletKit: StellarWalletsKit | null = null;
 let initializationPromise: Promise<StellarWalletsKit | null> | null = null;
 
 const TESTNET_PASSPHRASE = "Test SDF Network ; September 2015";
+const TESTNET_ALIASES = [
+  TESTNET_PASSPHRASE,
+  "Testnet",
+  "TESTNET",
+  "testnet"
+];
 
 const createWalletKit = async () => {
   if (typeof window === "undefined") {
@@ -72,7 +78,8 @@ const createWalletKit = async () => {
             const isConnected = await freighterApi.isConnected();
             if (isConnected) {
               const network = await freighterApi.getNetwork();
-              if (network !== TESTNET_PASSPHRASE) {
+              console.log("Freighter network passphrase:", network);
+              if (!TESTNET_ALIASES.map(x => x.toLowerCase()).includes(network.toLowerCase())) {
                 console.warn('Freighter is not on TestNet');
                 toast.error('Please switch Freighter to TestNet');
                 resolve(false);
@@ -135,7 +142,8 @@ const createWalletKit = async () => {
           try {
             // Verify network before proceeding
             const network = await freighterApi.getNetwork();
-            if (network !== TESTNET_PASSPHRASE) {
+            console.log("Freighter network passphrase:", network);
+            if (!TESTNET_ALIASES.map(x => x.toLowerCase()).includes(network.toLowerCase())) {
               throw new Error('Please switch Freighter to TestNet');
             }
 
@@ -159,7 +167,8 @@ const createWalletKit = async () => {
     newKit.getNetwork = async () => {
       try {
         const result = await originalGetNetwork();
-        if (result.networkPassphrase !== TESTNET_PASSPHRASE) {
+        console.log("Freighter network passphrase:", result.networkPassphrase);
+        if (!TESTNET_ALIASES.map(x => x.toLowerCase()).includes(result.networkPassphrase.toLowerCase())) {
           throw new Error('Please switch to TestNet');
         }
         return result;
@@ -168,7 +177,8 @@ const createWalletKit = async () => {
         if (await freighterApi.isConnected()) {
           try {
             const networkPassphrase = await freighterApi.getNetwork();
-            if (networkPassphrase !== TESTNET_PASSPHRASE) {
+            console.log("Freighter network passphrase:", networkPassphrase);
+            if (!TESTNET_ALIASES.map(x => x.toLowerCase()).includes(networkPassphrase.toLowerCase())) {
               throw new Error('Please switch Freighter to TestNet');
             }
             return { network: 'testnet', networkPassphrase };
@@ -187,7 +197,8 @@ const createWalletKit = async () => {
         try {
           // Verify network before signing
           const network = await freighterApi.getNetwork();
-          if (network !== TESTNET_PASSPHRASE) {
+          console.log("Freighter network passphrase:", network);
+          if (!TESTNET_ALIASES.map(x => x.toLowerCase()).includes(network.toLowerCase())) {
             throw new Error('Please switch Freighter to TestNet');
           }
 

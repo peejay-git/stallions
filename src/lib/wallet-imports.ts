@@ -2,20 +2,29 @@
 let walletKit: any = null;
 
 export const importWalletKit = async () => {
-  if (typeof window === 'undefined') {
+  if (typeof window === "undefined") {
     return {
       StellarWalletsKit: class {
         constructor() {}
         setWallet() {}
-        getAddress() { return Promise.resolve({ address: '' }); }
-        getNetwork() { return Promise.resolve({ networkPassphrase: 'Test SDF Network ; September 2015' }); }
-        signTransaction() { return Promise.resolve({ signedTxXdr: '', signerAddress: '' }); }
+        getAddress() {
+          return Promise.resolve({ address: "" });
+        }
+        getNetwork() {
+          return Promise.resolve({
+            networkPassphrase: "Test SDF Network ; September 2015",
+          });
+        }
+        signTransaction() {
+          return Promise.resolve({ signedTxXdr: "", signerAddress: "" });
+        }
         disconnect() {}
-        openModal() { return Promise.resolve(); }
+        openModal() {
+          return Promise.resolve();
+        }
       },
       WalletNetwork: {
-        PUBLIC: 'Public Global Stellar Network ; September 2015',
-        TESTNET: 'Test SDF Network ; September 2015'
+        TESTNET: "Test SDF Network ; September 2015",
       },
       allowAllModules: () => [],
       TrezorModule: class {
@@ -25,8 +34,8 @@ export const importWalletKit = async () => {
         constructor() {}
       },
       WalletConnectAllowedMethods: {
-        SIGN: 'sign'
-      }
+        SIGN: "sign",
+      },
     };
   }
 
@@ -34,11 +43,11 @@ export const importWalletKit = async () => {
     const [
       { StellarWalletsKit, WalletNetwork, allowAllModules },
       { TrezorModule },
-      { WalletConnectModule, WalletConnectAllowedMethods }
+      { WalletConnectModule, WalletConnectAllowedMethods },
     ] = await Promise.all([
-      import('@creit.tech/stellar-wallets-kit'),
-      import('@creit.tech/stellar-wallets-kit/modules/trezor.module'),
-      import('@creit.tech/stellar-wallets-kit/modules/walletconnect.module')
+      import("@creit.tech/stellar-wallets-kit"),
+      import("@creit.tech/stellar-wallets-kit/modules/trezor.module"),
+      import("@creit.tech/stellar-wallets-kit/modules/walletconnect.module"),
     ]);
 
     walletKit = {
@@ -47,7 +56,7 @@ export const importWalletKit = async () => {
       allowAllModules,
       TrezorModule,
       WalletConnectModule,
-      WalletConnectAllowedMethods
+      WalletConnectAllowedMethods,
     };
   }
 
@@ -55,7 +64,7 @@ export const importWalletKit = async () => {
 };
 
 // Import Freighter API as a CommonJS module
-import freighterApi from '@stellar/freighter-api';
+import freighterApi from "@stellar/freighter-api";
 
 // Re-export the functions we need
 export const {
@@ -63,8 +72,8 @@ export const {
   getPublicKey: getAddress, // Freighter uses getPublicKey instead of getAddress
   signTransaction,
   signAuthEntry,
-  getNetwork
+  getNetwork,
 } = freighterApi;
 
 // Export the default import as well
-export default freighterApi; 
+export default freighterApi;

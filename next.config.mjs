@@ -7,7 +7,6 @@ const nextConfig = {
   },
   env: {
     NEXT_PUBLIC_STELLAR_NETWORK: process.env.STELLAR_NETWORK || 'Testnet',
-    NEXT_PUBLIC_STELLER_PUBLIC_NETWORK: process.env.STELLAR_PUBLIC_NETWORK || 'Public Global Stellar Network ; September 2015',
     NEXT_PUBLIC_STELLAR_TEST_NETWORK: process.env.STELLAR_TEST_NETWORK || 'Test SDF Network ; September 2015',
     NEXT_PUBLIC_SOROBAN_RPC_URL: process.env.SOROBAN_RPC_URL || 'https://soroban-testnet.stellar.org',
     NEXT_PUBLIC_AUTH_DOMAIN: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || "earnstallions.xyz",

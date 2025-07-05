@@ -223,6 +223,17 @@ export default function DashboardPage() {
     }
   };
 
+  // Guard: Only render dashboard if user state is loaded
+  if (user === undefined || user === null) {
+    return (
+      <Layout>
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="text-white text-lg">Loading...</div>
+        </div>
+      </Layout>
+    );
+  }
+
   // Show wallet connection prompt for sponsors
   if (isSponsor && !isConnected && !user?.wallet) {
     return (

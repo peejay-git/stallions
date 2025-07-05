@@ -1,6 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { collection, getDocs } from '@/lib/firestore';
 import { db } from '@/lib/firebase';
+import { collection, getDocs } from '@/lib/firestore';
+import { NextRequest, NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -13,9 +13,9 @@ export async function GET(request: NextRequest) {
     // Get all submissions from database
     const submissionsRef = collection(db, 'submissions');
     const snapshot = await getDocs(submissionsRef);
-    
+
     // Map the submissions to a readable format
-    const submissions = snapshot.docs.map(doc => {
+    const submissions = snapshot.docs.map((doc) => {
       const data = doc.data();
       return {
         id: doc.id,
@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
         updatedAt: data.updatedAt ? data.updatedAt.toString() : null,
       };
     });
-    
+
     return NextResponse.json(submissions);
   } catch (error) {
     console.error('Error fetching submissions:', error);
@@ -33,7 +33,4 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     );
   }
-} 
- 
- 
- 
+}

@@ -7,16 +7,6 @@ import toast from 'react-hot-toast';
  * Utility functions for frontend blockchain operations
  */
 
-// Token address mapping for blockchain contract integration
-// Using the actual token contract addresses on the Stellar network
-const TOKEN_ADDRESSES: Record<string, string> = {
-  // These are asset contract IDs for the Stellar testnet
-  USDC: 'CBIELTK6YBZJU5UP2WWQEUCYKLPU6AUNZ2BQ4WWFEIE3USCIHMXQDAMA',
-  NGNC: 'CBYFV4W2LTMXYZ3XWFX5BK2BY255DU2DSXNAE4FJ5A5VYUWGIBJDOIGG',
-  KALE: 'CB23WRDQWGSP6YPMY4UV5C4OW5CBTXKYN3XEATG7KJEZCXMJBYEHOUOV',
-  XLM: 'CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC',
-};
-
 // Max retries for blockchain operations
 const MAX_RETRIES = 3;
 const RETRY_DELAY = 1000; // ms
@@ -247,9 +237,14 @@ export async function submitWorkOnChain({
     // Generate a unique submission ID using user's address, bounty ID and timestamp
     // This replaces the blockchain transaction
     const timestamp = Date.now();
-    const submissionId = `${userPublicKey.substring(0, 8)}-${bountyId}-${timestamp}`;
-    
-    console.log(`Generated submission ID: ${submissionId} (database-only approach)`);
+    const submissionId = `${userPublicKey.substring(
+      0,
+      8
+    )}-${bountyId}-${timestamp}`;
+
+    console.log(
+      `Generated submission ID: ${submissionId} (database-only approach)`
+    );
 
     return submissionId;
   } catch (error) {

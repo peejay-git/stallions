@@ -1,6 +1,12 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import {
+  createContext,
+  ReactNode,
+  useContext,
+  useEffect,
+  useState,
+} from 'react';
 
 type Theme = 'dark' | 'light';
 
@@ -17,8 +23,10 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     // Check for saved theme preference or use system preference
     const savedTheme = localStorage.getItem('theme') as Theme | null;
-    const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    
+    const systemPrefersDark = window.matchMedia(
+      '(prefers-color-scheme: dark)'
+    ).matches;
+
     if (savedTheme) {
       setTheme(savedTheme);
     } else if (systemPrefersDark) {
@@ -35,7 +43,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     } else {
       document.documentElement.classList.remove('dark');
     }
-    
+
     // Save preference to localStorage
     localStorage.setItem('theme', theme);
   }, [theme]);
@@ -57,4 +65,4 @@ export function useTheme() {
     throw new Error('useTheme must be used within a ThemeProvider');
   }
   return context;
-} 
+}

@@ -5,12 +5,11 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "prisma generate && next build",
+    "build": "next build",
     "start": "next start",
     "lint": "next lint",
     "lint:css": "stylelint \"src/**/*.css\"",
     "test": "jest",
-    "postinstall": "prisma generate",
     "init-firebase": "node scripts/init-firebase.js",
     "init-firebase-auth": "node scripts/init-firebase-auth.js"
   },
@@ -24,7 +23,6 @@
   "license": "MIT",
   "dependencies": {
     "@creit.tech/stellar-wallets-kit": "^1.7.5",
-    "@prisma/client": "^6.9.0",
     "@stellar/freighter-api": "1.7.1",
     "@stellar/stellar-base": "^12.1.1",
     "@stellar/stellar-sdk": "^13.3.0",
@@ -32,6 +30,7 @@
     "@tsparticles/engine": "^3.8.1",
     "@types/js-cookie": "^3.0.6",
     "clsx": "^2.1.1",
+    "date-fns": "^4.1.0",
     "firebase": "^11.9.1",
     "firebase-admin": "^13.4.0",
     "framer-motion": "^12.18.1",
@@ -66,7 +65,6 @@
     "jest": "29.7.0",
     "null-loader": "^4.0.1",
     "postcss": "8.4.31",
-    "prisma": "^6.9.0",
     "process": "^0.11.10",
     "stream-browserify": "^3.0.0",
     "string-replace-loader": "^3.2.0",

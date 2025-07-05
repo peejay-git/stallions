@@ -1,18 +1,17 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { FaTelegram, FaXTwitter } from 'react-icons/fa6';
-import Link from 'next/link';
-import Image from 'next/image';
-import { FiUpload } from 'react-icons/fi';
-import { auth } from '@/lib/firebase';
+import { PasswordInput } from '@/components';
 import { registerSponsor } from '@/lib/authService';
+import { auth } from '@/lib/firebase';
 import useUserStore from '@/lib/stores/useUserStore';
 import { FirebaseError } from 'firebase/app';
+import Image from 'next/image';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 import toast from 'react-hot-toast';
-import { motion } from 'framer-motion';
-import PasswordInput from '@/components/PasswordInput';
+import { FaTelegram, FaXTwitter } from 'react-icons/fa6';
+import { FiUpload } from 'react-icons/fi';
 
 export default function SponsorRegisterPage() {
   const router = useRouter();
@@ -38,7 +37,6 @@ export default function SponsorRegisterPage() {
     walletAddress: '',
   });
 
-
   type FieldErrors = Partial<Record<keyof typeof formData, string>>;
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const requiredFields = [
@@ -56,14 +54,19 @@ export default function SponsorRegisterPage() {
     field.replace(/([A-Z])/g, ' $1').replace(/^./, (str) => str.toUpperCase());
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
 
     // Validate only if it's a required field
     if (requiredFields.includes(name) && value.trim() === '') {
-      setFieldErrors((prev) => ({ ...prev, [name]: `${formatField(name)} is required.` }));
+      setFieldErrors((prev) => ({
+        ...prev,
+        [name]: `${formatField(name)} is required.`,
+      }));
     } else {
       setFieldErrors((prev) => ({ ...prev, [name]: '' }));
     }
@@ -71,12 +74,15 @@ export default function SponsorRegisterPage() {
     // Custom validation for companyUrl (only if user entered a value)
     if (name === 'companyUrl') {
       if (value.trim() && !value.startsWith('https://')) {
-        setFieldErrors((prev) => ({ ...prev, companyUrl: 'Company URL must start with https://.' }));
+        setFieldErrors((prev) => ({
+          ...prev,
+          companyUrl: 'Company URL must start with https://.',
+        }));
       } else {
         setFieldErrors((prev) => ({ ...prev, companyUrl: '' }));
       }
     }
-  }
+  };
 
   const handleFileChange = (name: string, file: File | null) => {
     setFormData((prev) => ({ ...prev, [name]: file }));
@@ -88,16 +94,25 @@ export default function SponsorRegisterPage() {
     setIsSubmitting(true);
 
     const newErrors: FieldErrors = {};
-    ['firstName', 'lastName', 'username', 'email', 'password', 'confirmPassword', 'companyName'].forEach((field) => {
+    [
+      'firstName',
+      'lastName',
+      'username',
+      'email',
+      'password',
+      'confirmPassword',
+      'companyName',
+    ].forEach((field) => {
       if (!formData[field as keyof typeof formData]) {
-        newErrors[field as keyof typeof formData] = `${formatField(field)} is required.`;
+        newErrors[field as keyof typeof formData] = `${formatField(
+          field
+        )} is required.`;
       }
     });
 
     if (formData.password !== formData.confirmPassword) {
       newErrors.confirmPassword = 'Passwords do not match.';
     }
-
 
     // if (!formData.profileImage) newErrors.profileImage = 'Profile Picture is required.';
     // if (!formData.companyLogo) newErrors.companyLogo = 'Company Logo is required.';
@@ -164,13 +179,11 @@ export default function SponsorRegisterPage() {
     } finally {
       setIsSubmitting(false);
     }
-
   };
 
   return (
     <>
       <header className=" relative bg-gradient-to-r from-stellar-blue to-stellar-navy  sticky top-0 z-50">
-
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="flex justify-between items-center py-4 md:py-6">
             {/* Logo */}
@@ -189,30 +202,61 @@ export default function SponsorRegisterPage() {
               </Link>
             </div>
           </div>
-
-
         </div>
       </header>
       <div className="max-w-7xl mx-auto px-4 py-10">
-        <h2 className="text-2xl font-bold mb-2 text-center">Complete Your Sponsor Profile</h2>
+        <h2 className="text-2xl font-bold mb-2 text-center">
+          Complete Your Sponsor Profile
+        </h2>
         <p className="text-sm text-gray-500 text-center mb-6">
-          Help us personalize your experience and match you with the right talents and opportunities.
+          Help us personalize your experience and match you with the right
+          talents and opportunities.
         </p>
         <form onSubmit={handleSubmit} className="space-y-8">
           <section>
             <h2 className="text-xl font-semibold mb-4">About You</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <input name="firstName" value={formData.firstName} onChange={handleChange} placeholder="First Name" className="input" />
-                {fieldErrors.firstName && <p className="text-sm text-red-500 mt-1">{fieldErrors.firstName}</p>}
+                <input
+                  name="firstName"
+                  value={formData.firstName}
+                  onChange={handleChange}
+                  placeholder="First Name"
+                  className="input"
+                />
+                {fieldErrors.firstName && (
+                  <p className="text-sm text-red-500 mt-1">
+                    {fieldErrors.firstName}
+                  </p>
+                )}
               </div>
               <div>
-                <input name="lastName" value={formData.lastName} onChange={handleChange} placeholder="Last Name" className="input" />
-                {fieldErrors.lastName && <p className="text-sm text-red-500 mt-1">{fieldErrors.lastName}</p>}
+                <input
+                  name="lastName"
+                  value={formData.lastName}
+                  onChange={handleChange}
+                  placeholder="Last Name"
+                  className="input"
+                />
+                {fieldErrors.lastName && (
+                  <p className="text-sm text-red-500 mt-1">
+                    {fieldErrors.lastName}
+                  </p>
+                )}
               </div>
               <div>
-                <input name="username" value={formData.username} onChange={handleChange} placeholder="Username" className="input" />
-                {fieldErrors.username && <p className="text-sm text-red-500 mt-1">{fieldErrors.username}</p>}
+                <input
+                  name="username"
+                  value={formData.username}
+                  onChange={handleChange}
+                  placeholder="Username"
+                  className="input"
+                />
+                {fieldErrors.username && (
+                  <p className="text-sm text-red-500 mt-1">
+                    {fieldErrors.username}
+                  </p>
+                )}
               </div>
               <div className="">
                 <div className="flex items-center gap-2">
@@ -226,11 +270,12 @@ export default function SponsorRegisterPage() {
                   />
                 </div>
 
-                {fieldErrors.telegram && <p className="text-sm text-red-500 mt-1 col-span-2">{fieldErrors.telegram}</p>}
+                {fieldErrors.telegram && (
+                  <p className="text-sm text-red-500 mt-1 col-span-2">
+                    {fieldErrors.telegram}
+                  </p>
+                )}
               </div>
-
-
-
             </div>
             <div className="my-4">
               <div>
@@ -242,7 +287,11 @@ export default function SponsorRegisterPage() {
                   placeholder="Email"
                   className="input"
                 />
-                {fieldErrors.email && <p className="text-sm text-red-500 mt-1">{fieldErrors.email}</p>}
+                {fieldErrors.email && (
+                  <p className="text-sm text-red-500 mt-1">
+                    {fieldErrors.email}
+                  </p>
+                )}
               </div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -254,7 +303,11 @@ export default function SponsorRegisterPage() {
                   placeholder="Password"
                   className="input"
                 />
-                {fieldErrors.password && <p className="text-sm text-red-500 mt-1">{fieldErrors.password}</p>}
+                {fieldErrors.password && (
+                  <p className="text-sm text-red-500 mt-1">
+                    {fieldErrors.password}
+                  </p>
+                )}
               </div>
               <div>
                 <PasswordInput
@@ -264,23 +317,46 @@ export default function SponsorRegisterPage() {
                   placeholder="Confirm Password"
                   className="input"
                 />
-                {fieldErrors.confirmPassword && <p className="text-sm text-red-500 mt-1">{fieldErrors.confirmPassword}</p>}
+                {fieldErrors.confirmPassword && (
+                  <p className="text-sm text-red-500 mt-1">
+                    {fieldErrors.confirmPassword}
+                  </p>
+                )}
               </div>
             </div>
 
             <div className="mt-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">Profile Picture</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Profile Picture
+              </label>
               <div className="border-2 border-dashed rounded-lg p-6 text-center cursor-pointer bg-gray-50">
-                <input type="file" accept="image/*" onChange={(e) => handleFileChange('profileImage', e.target.files?.[0] || null)} className="hidden" id="profileImage" />
-                <label htmlFor="profileImage" className="cursor-pointer space-y-2 flex flex-col items-center">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) =>
+                    handleFileChange(
+                      'profileImage',
+                      e.target.files?.[0] || null
+                    )
+                  }
+                  className="hidden"
+                  id="profileImage"
+                />
+                <label
+                  htmlFor="profileImage"
+                  className="cursor-pointer space-y-2 flex flex-col items-center"
+                >
                   {formData.profileImage ? (
-                    <img src={URL.createObjectURL(formData.profileImage)} alt="Profile Preview" className="w-24 h-24 rounded-full object-cover" />
+                    <img
+                      src={URL.createObjectURL(formData.profileImage)}
+                      alt="Profile Preview"
+                      className="w-24 h-24 rounded-full object-cover"
+                    />
                   ) : (
                     <div className="flex items-center gap-2 text-gray-400">
                       <FiUpload className="text-xl" />
                       <span>Choose or drag and drop media</span>
                     </div>
-
                   )}
                   <div className="text-xs text-gray-400">Maximum size 5 MB</div>
                 </label>
@@ -295,11 +371,27 @@ export default function SponsorRegisterPage() {
             <h2 className="text-xl font-semibold mb-4">About Your Company</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <input name="companyName" value={formData.companyName} onChange={handleChange} placeholder="Company Name" className="input" />
-                {fieldErrors.companyName && <p className="text-sm text-red-500 mt-1">{fieldErrors.companyName}</p>}
+                <input
+                  name="companyName"
+                  value={formData.companyName}
+                  onChange={handleChange}
+                  placeholder="Company Name"
+                  className="input"
+                />
+                {fieldErrors.companyName && (
+                  <p className="text-sm text-red-500 mt-1">
+                    {fieldErrors.companyName}
+                  </p>
+                )}
               </div>
               <div>
-                <input name="companyUsername" value={formData.companyUsername} onChange={handleChange} placeholder="Company Username" className="input" />
+                <input
+                  name="companyUsername"
+                  value={formData.companyUsername}
+                  onChange={handleChange}
+                  placeholder="Company Username"
+                  className="input"
+                />
               </div>
               <div className="flex flex-col">
                 <input
@@ -310,7 +402,9 @@ export default function SponsorRegisterPage() {
                   className="input"
                 />
                 {fieldErrors.companyUrl && (
-                  <p className="text-sm text-red-500 mt-1">{fieldErrors.companyUrl}</p>
+                  <p className="text-sm text-red-500 mt-1">
+                    {fieldErrors.companyUrl}
+                  </p>
                 )}
               </div>
               <div>
@@ -326,23 +420,44 @@ export default function SponsorRegisterPage() {
                 </div>
               </div>
 
-
-              <input name="entityName" value={formData.entityName} onChange={handleChange} placeholder="Full Entity Name" className="input md:col-span-2" />
+              <input
+                name="entityName"
+                value={formData.entityName}
+                onChange={handleChange}
+                placeholder="Full Entity Name"
+                className="input md:col-span-2"
+              />
             </div>
 
             <div className="mt-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">Company Logo</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Company Logo
+              </label>
               <div className="border-2 border-dashed rounded-lg p-6 text-center cursor-pointer bg-gray-50">
-                <input type="file" accept="image/*" onChange={(e) => handleFileChange('companyLogo', e.target.files?.[0] || null)} className="hidden" id="companyLogo" />
-                <label htmlFor="companyLogo" className="cursor-pointer space-y-2 flex flex-col items-center">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) =>
+                    handleFileChange('companyLogo', e.target.files?.[0] || null)
+                  }
+                  className="hidden"
+                  id="companyLogo"
+                />
+                <label
+                  htmlFor="companyLogo"
+                  className="cursor-pointer space-y-2 flex flex-col items-center"
+                >
                   {formData.companyLogo ? (
-                    <img src={URL.createObjectURL(formData.companyLogo)} alt="Logo Preview" className="w-24 h-24 rounded object-cover" />
+                    <img
+                      src={URL.createObjectURL(formData.companyLogo)}
+                      alt="Logo Preview"
+                      className="w-24 h-24 rounded object-cover"
+                    />
                   ) : (
                     <div className="flex items-center gap-2 text-gray-400">
                       <FiUpload className="text-xl" />
                       <span>Choose or drag and drop media</span>
                     </div>
-
                   )}
                   <div className="text-xs text-gray-400">Maximum size 5 MB</div>
                 </label>
@@ -351,13 +466,22 @@ export default function SponsorRegisterPage() {
             </div>
 
             <div className="mt-4">
-              <select name="industry" value={formData.industry} onChange={handleChange} className="input w-full">
+              <select
+                name="industry"
+                value={formData.industry}
+                onChange={handleChange}
+                className="input w-full"
+              >
                 <option value="">Select Industry</option>
                 <option value="finance">Finance</option>
                 <option value="healthcare">Healthcare</option>
                 <option value="education">Education</option>
               </select>
-              {fieldErrors.industry && <p className="text-sm text-red-500 mt-1">{fieldErrors.industry}</p>}
+              {fieldErrors.industry && (
+                <p className="text-sm text-red-500 mt-1">
+                  {fieldErrors.industry}
+                </p>
+              )}
             </div>
 
             <div className="mt-4">
@@ -369,11 +493,17 @@ export default function SponsorRegisterPage() {
                 placeholder="What does your company do?"
                 className="input w-full h-24"
               />
-              <p className="text-xs text-gray-400 text-right">{180 - formData.shortBio.length} characters left</p>
+              <p className="text-xs text-gray-400 text-right">
+                {180 - formData.shortBio.length} characters left
+              </p>
             </div>
           </section>
 
-          <button type="submit" className="btn-primary w-full py-2 mt-6" disabled={isSubmitting}>
+          <button
+            type="submit"
+            className="btn-primary w-full py-2 mt-6"
+            disabled={isSubmitting}
+          >
             {isSubmitting ? 'Creating...' : 'Create Sponsor'}
           </button>
         </form>

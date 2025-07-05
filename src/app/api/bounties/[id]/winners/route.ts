@@ -1,6 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
 import { BountyService } from '@/lib/bountyService';
 import { BlockchainError } from '@/utils/error-handler';
+import { NextRequest, NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -23,7 +23,7 @@ export async function GET(
 
     // Create bounty service
     const bountyService = new BountyService();
-    
+
     // Get the winners for the bounty
     const winners = await bountyService.getBountyWinners(id);
 
@@ -71,7 +71,10 @@ export async function POST(
 
     // Validate required fields
     if (!winnerAddresses || !Array.isArray(winnerAddresses) || !userPublicKey) {
-      console.log('Error: Invalid request body', { winnerAddresses, userPublicKey });
+      console.log('Error: Invalid request body', {
+        winnerAddresses,
+        userPublicKey,
+      });
       return NextResponse.json(
         { error: 'Winner addresses and user public key are required' },
         { status: 400 }
@@ -81,29 +84,29 @@ export async function POST(
     console.log('Selecting winners for bounty:', {
       bountyId: id,
       userPublicKey,
-      winnerAddresses
+      winnerAddresses,
     });
 
     // Create bounty service
     const bountyService = new BountyService();
-    
+
     try {
       // Select winners for the bounty - this will call the blockchain to process payments
-    await bountyService.selectBountyWinners(
-      parseInt(id),
-      winnerAddresses,
-      userPublicKey
-    );
+      await bountyService.selectBountyWinners(
+        parseInt(id),
+        winnerAddresses,
+        userPublicKey
+      );
 
       console.log('Winners selected successfully');
-    return NextResponse.json({
-      success: true,
+      return NextResponse.json({
+        success: true,
         message: 'Winners selected and payments are being processed',
-        winnerAddresses
+        winnerAddresses,
       });
     } catch (error: any) {
       console.error('Error selecting winners:', error);
-      
+
       // Return a more specific error message
       if (error.message?.includes('Only the bounty owner')) {
         return NextResponse.json(
@@ -111,7 +114,7 @@ export async function POST(
           { status: 403 }
         );
       }
-      
+
       throw error;
     }
   } catch (error) {
@@ -123,8 +126,11 @@ export async function POST(
       );
     }
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Failed to select winners' },
+      {
+        error:
+          error instanceof Error ? error.message : 'Failed to select winners',
+      },
       { status: 500 }
     );
   }
-} 
+}

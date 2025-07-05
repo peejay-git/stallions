@@ -1,6 +1,11 @@
-import { getApps, initializeApp, cert, type ServiceAccount } from 'firebase-admin/app';
-import { getFirestore, type Firestore } from 'firebase-admin/firestore';
+import {
+  cert,
+  getApps,
+  initializeApp,
+  type ServiceAccount,
+} from 'firebase-admin/app';
 import { getAuth, type Auth } from 'firebase-admin/auth';
+import { getFirestore, type Firestore } from 'firebase-admin/firestore';
 
 // Log environment variables (without sensitive data)
 console.log('Firebase Admin Environment Variables:', {
@@ -56,11 +61,12 @@ const serviceAccount: ServiceAccount = {
 
 let firebaseAdmin;
 try {
-  firebaseAdmin = apps.length === 0 
-    ? initializeApp({
-        credential: cert(serviceAccount),
-      })
-    : apps[0];
+  firebaseAdmin =
+    apps.length === 0
+      ? initializeApp({
+          credential: cert(serviceAccount),
+        })
+      : apps[0];
   console.log('Firebase Admin initialized successfully');
 } catch (error) {
   console.error('Error initializing Firebase Admin:', error);
@@ -91,4 +97,4 @@ try {
   throw new Error('Failed to initialize Auth');
 }
 
-export { adminDb, adminAuth }; 
+export { adminAuth, adminDb };

@@ -1,12 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
-import Link from 'next/link';
-import { verifyPasswordResetCode, confirmPasswordReset } from 'firebase/auth';
+import { PasswordInput } from '@/components';
 import { auth } from '@/lib/firebase';
-import { FiCheckCircle, FiAlertTriangle } from 'react-icons/fi';
-import PasswordInput from '@/components/PasswordInput';
+import { confirmPasswordReset, verifyPasswordResetCode } from 'firebase/auth';
+import Link from 'next/link';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { FiAlertTriangle, FiCheckCircle } from 'react-icons/fi';
 
 export default function ResetSuccessPage() {
   const [isLoading, setIsLoading] = useState(true);
@@ -18,21 +18,23 @@ export default function ResetSuccessPage() {
   const [isResetting, setIsResetting] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
-  
+
   const oobCode = searchParams?.get('oobCode');
   const mode = searchParams?.get('mode');
 
   useEffect(() => {
-    console.log("Reset parameters:", { oobCode, mode });
-    
+    console.log('Reset parameters:', { oobCode, mode });
+
     if (!oobCode) {
-      setError('Missing password reset code. Please use the link from your email.');
+      setError(
+        'Missing password reset code. Please use the link from your email.'
+      );
       setIsLoading(false);
       return;
     }
 
     if (mode !== 'resetPassword') {
-      console.log("Incorrect mode:", mode);
+      console.log('Incorrect mode:', mode);
       setError('Invalid password reset link. Please request a new one.');
       setIsLoading(false);
       return;
@@ -41,47 +43,52 @@ export default function ResetSuccessPage() {
     // Verify the password reset code
     verifyPasswordResetCode(auth, oobCode)
       .then((email) => {
-        console.log("Reset code verified for email:", email);
+        console.log('Reset code verified for email:', email);
         setIsLoading(false);
       })
       .catch((error) => {
         console.error('Error verifying reset code:', error);
-        setError('This password reset link has expired or already been used. Please request a new one.');
+        setError(
+          'This password reset link has expired or already been used. Please request a new one.'
+        );
         setIsLoading(false);
       });
   }, [oobCode, mode]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Reset errors
     setPasswordError(null);
-    
+
     // Validate passwords
     if (newPassword.length < 6) {
       setPasswordError('Password must be at least 6 characters');
       return;
     }
-    
+
     if (newPassword !== confirmPassword) {
       setPasswordError('Passwords do not match');
       return;
     }
-    
+
     if (!oobCode) {
       setError('Missing reset code');
       return;
     }
-    
+
     setIsResetting(true);
-    console.log("Attempting to confirm password reset with code:", oobCode?.substring(0, 5) + "...");
-    
+    console.log(
+      'Attempting to confirm password reset with code:',
+      oobCode?.substring(0, 5) + '...'
+    );
+
     try {
       // Complete the password reset
       await confirmPasswordReset(auth, oobCode, newPassword);
-      console.log("Password reset confirmed successfully");
+      console.log('Password reset confirmed successfully');
       setSuccess(true);
-      
+
       // Redirect to login after 3 seconds
       setTimeout(() => {
         router.push('/');
@@ -103,7 +110,9 @@ export default function ResetSuccessPage() {
           <div className="flex justify-center">
             <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-white"></div>
           </div>
-          <p className="text-white text-center mt-4">Verifying your reset link...</p>
+          <p className="text-white text-center mt-4">
+            Verifying your reset link...
+          </p>
         </div>
       </div>
     );
@@ -116,10 +125,15 @@ export default function ResetSuccessPage() {
           <div className="flex justify-center text-red-400">
             <FiAlertTriangle size={64} />
           </div>
-          <h1 className="text-2xl font-bold text-white text-center mt-6">Password Reset Failed</h1>
+          <h1 className="text-2xl font-bold text-white text-center mt-6">
+            Password Reset Failed
+          </h1>
           <p className="text-gray-300 text-center mt-2">{error}</p>
           <div className="mt-8">
-            <Link href="/" className="block w-full text-center py-3 px-4 bg-white text-black font-medium rounded-lg hover:bg-white/90 transition-colors">
+            <Link
+              href="/"
+              className="block w-full text-center py-3 px-4 bg-white text-black font-medium rounded-lg hover:bg-white/90 transition-colors"
+            >
               Return to Home
             </Link>
           </div>
@@ -135,9 +149,15 @@ export default function ResetSuccessPage() {
           <div className="flex justify-center text-green-400">
             <FiCheckCircle size={64} />
           </div>
-          <h1 className="text-2xl font-bold text-white text-center mt-6">Password Reset Successful</h1>
-          <p className="text-gray-300 text-center mt-2">Your password has been reset successfully.</p>
-          <p className="text-gray-300 text-center mt-2">Redirecting to login...</p>
+          <h1 className="text-2xl font-bold text-white text-center mt-6">
+            Password Reset Successful
+          </h1>
+          <p className="text-gray-300 text-center mt-2">
+            Your password has been reset successfully.
+          </p>
+          <p className="text-gray-300 text-center mt-2">
+            Redirecting to login...
+          </p>
         </div>
       </div>
     );
@@ -146,12 +166,21 @@ export default function ResetSuccessPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-900 to-black">
       <div className="w-full max-w-md p-8 rounded-xl backdrop-blur-xl bg-white/10 border border-white/20 shadow-2xl">
-        <h1 className="text-2xl font-bold text-white text-center">Reset Your Password</h1>
-        <p className="text-gray-300 text-center mt-2 mb-6">Enter your new password below</p>
-        
+        <h1 className="text-2xl font-bold text-white text-center">
+          Reset Your Password
+        </h1>
+        <p className="text-gray-300 text-center mt-2 mb-6">
+          Enter your new password below
+        </p>
+
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
-            <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-1">New Password</label>
+            <label
+              htmlFor="password"
+              className="block text-sm font-medium text-gray-300 mb-1"
+            >
+              New Password
+            </label>
             <PasswordInput
               name="password"
               value={newPassword}
@@ -161,9 +190,14 @@ export default function ResetSuccessPage() {
               required
             />
           </div>
-          
+
           <div className="mb-6">
-            <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-300 mb-1">Confirm New Password</label>
+            <label
+              htmlFor="confirmPassword"
+              className="block text-sm font-medium text-gray-300 mb-1"
+            >
+              Confirm New Password
+            </label>
             <PasswordInput
               name="confirmPassword"
               value={confirmPassword}
@@ -176,7 +210,7 @@ export default function ResetSuccessPage() {
               <p className="text-red-400 text-sm mt-1">{passwordError}</p>
             )}
           </div>
-          
+
           <button
             type="submit"
             className="w-full py-3 px-4 bg-white text-black font-medium rounded-lg hover:bg-white/90 transition-colors"
@@ -188,4 +222,4 @@ export default function ResetSuccessPage() {
       </div>
     </div>
   );
-} 
+}

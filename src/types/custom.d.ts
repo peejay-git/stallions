@@ -11,4 +11,4 @@ declare module 'react-icons/fa6';
 
 // Other modules
 declare module 'framer-motion';
-declare module 'stellar-sdk'; 
+declare module 'stellar-sdk';

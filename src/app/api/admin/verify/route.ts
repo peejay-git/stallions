@@ -1,6 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { doc, getDoc } from '@/lib/firestore';
 import { adminDb } from '@/lib/firebase-admin';
+import { NextRequest, NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -26,16 +25,13 @@ export async function GET(request: NextRequest) {
     // Get user data from Firestore
     const userRef = adminDb.collection('users').doc(userId);
     const userSnap = await userRef.get();
-    
+
     if (!userSnap.exists) {
-      return NextResponse.json(
-        { error: 'User not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
     const userData = userSnap.data();
-    
+
     // Verify admin role
     if (!userData || userData.role !== 'admin') {
       return NextResponse.json(
@@ -46,7 +42,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: 'Admin verified successfully'
+      message: 'Admin verified successfully',
     });
   } catch (error) {
     console.error('Admin verification error:', error);
@@ -55,4 +51,4 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     );
   }
-} 
+}

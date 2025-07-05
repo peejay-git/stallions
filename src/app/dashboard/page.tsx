@@ -1,21 +1,21 @@
 'use client';
 
-import { assetSymbols } from '@/components/BountyCard';
-import Layout from '@/components/Layout';
-import TalentWalletConnector from '@/components/TalentWalletConnector';
+import {
+  Layout,
+  SponsorWalletPrompt,
+  TalentWalletConnector,
+} from '@/components';
+import { assetSymbols } from '@/components/core/bounty/BountyCard';
 import { useProtectedRoute } from '@/hooks/useProtectedRoute';
 import { useWallet } from '@/hooks/useWallet';
-import { getAllBounties } from '@/lib/adminService';
-import { getBountiesByOwner, getBountyById } from '@/lib/bounties';
+import { getBountiesByOwner } from '@/lib/bounties';
 import { db } from '@/lib/firebase';
+import { doc, getDoc } from '@/lib/firestore';
 import useUserStore from '@/lib/stores/useUserStore';
 import { BountyStatus } from '@/types/bounty';
-import { mockBounties } from '@/utils/mock-data';
 import { getAuth, signOut } from 'firebase/auth';
-import { doc, getDoc } from '@/lib/firestore';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import SponsorWalletPrompt from '@/components/SponsorWalletPrompt';
 
 export default function DashboardPage() {
   useProtectedRoute();
@@ -31,7 +31,7 @@ export default function DashboardPage() {
   const fetchUser = useUserStore((state) => state.fetchUserFromFirestore);
   const [userSubmissions, setUserSubmissions] = useState<any[]>([]);
   const [loadingSubmissions, setLoadingSubmissions] = useState(false);
-  
+
   // Determine if user is a sponsor or talent
   const isSponsor = user?.role === 'sponsor';
   const isTalent = user?.role === 'talent';
@@ -40,7 +40,7 @@ export default function DashboardPage() {
   const loadUserData = async () => {
     try {
       if (!user) return;
-      
+
       // If already connected, don't try to reconnect
       if (isConnected) return;
 
@@ -89,25 +89,28 @@ export default function DashboardPage() {
         setLoading(true);
         console.log('Fetching bounties for user:', user.uid);
         console.log('User public key:', publicKey);
-        
+
         // Try to fetch bounties using both user.uid and publicKey
         let data: any[] = [];
-        
+
         // For sponsors, we need both user.uid and wallet
         if (isSponsor) {
           console.log('Fetching bounties for sponsor');
-          
+
           // Always fetch bounties by UID first
           const uidBounties = await getBountiesByOwner(user.uid);
           data = [...uidBounties];
-          
+
           // If wallet is connected, also fetch by public key
           if (publicKey) {
-            console.log('Fetching additional bounties by publicKey:', publicKey);
+            console.log(
+              'Fetching additional bounties by publicKey:',
+              publicKey
+            );
             const keyBounties = await getBountiesByOwner(publicKey);
             // Add any bounties not already included
-            keyBounties.forEach(bounty => {
-              if (!data.find(b => b.id === bounty.id)) {
+            keyBounties.forEach((bounty) => {
+              if (!data.find((b) => b.id === bounty.id)) {
                 data.push(bounty);
               }
             });
@@ -118,18 +121,18 @@ export default function DashboardPage() {
           const uidBounties = await getBountiesByOwner(user.uid);
           data = [...uidBounties];
         }
-        
+
         console.log('All bounties fetched:', JSON.stringify(data, null, 2));
-        
+
         // Ensure each bounty has required fields
-        const processedBounties = data.map(bounty => ({
+        const processedBounties = data.map((bounty) => ({
           ...bounty,
           title: bounty.title || 'Untitled Bounty',
           reward: bounty.reward || { amount: '0', asset: 'USDC' },
           status: bounty.status || 'OPEN',
-          deadline: bounty.deadline || new Date().toISOString()
+          deadline: bounty.deadline || new Date().toISOString(),
         }));
-        
+
         setBounty(processedBounties);
       } catch (err: any) {
         console.error('Error fetching bounties:', err);
@@ -147,25 +150,27 @@ export default function DashboardPage() {
     const fetchUserSubmissions = async () => {
       try {
         if (!user?.uid && !publicKey) return;
-        
+
         setLoadingSubmissions(true);
-        
+
         // Build query parameters
         const queryParams = new URLSearchParams();
-    if (user?.uid) {
+        if (user?.uid) {
           queryParams.append('userId', user.uid);
         }
         if (publicKey) {
           queryParams.append('walletAddress', publicKey);
         }
-        
+
         // Fetch submissions from API
-        const response = await fetch(`/api/user/submissions?${queryParams.toString()}`);
-        
+        const response = await fetch(
+          `/api/user/submissions?${queryParams.toString()}`
+        );
+
         if (!response.ok) {
           throw new Error('Failed to fetch submissions');
-    }
-        
+        }
+
         const data = await response.json();
         console.log('User submissions:', data);
         setUserSubmissions(data);
@@ -175,23 +180,9 @@ export default function DashboardPage() {
         setLoadingSubmissions(false);
       }
     };
-    
+
     fetchUserSubmissions();
   }, [user?.uid, publicKey]);
-
-  // Filter bounties to simulate user's created bounties (in a real app, this would fetch from contract)
-  const userCreatedBounties = mockBounties.filter(
-    (_, index) => index % 2 === 0
-  );
-
-  // Mock user submissions (in a real app, this would come from the contract)
-  // const userSubmissions: {
-  //   id: string;
-  //   bountyId: string;
-  //   bountyTitle: string;
-  //   status: string;
-  //   submitted: string;
-  // }[] = [];
 
   // Format date to be more readable
   const formatDate = (dateString: string) => {
@@ -322,12 +313,12 @@ export default function DashboardPage() {
                 <div className="flex gap-3">
                   {/* Only show Create Bounty button for sponsors */}
                   {isSponsor && (
-                  <Link
-                    href="/create"
-                    className="bg-white text-black font-medium py-2 px-4 rounded-lg hover:bg-white/90 transition-colors"
-                  >
-                    Create Bounty
-                  </Link>
+                    <Link
+                      href="/create"
+                      className="bg-white text-black font-medium py-2 px-4 rounded-lg hover:bg-white/90 transition-colors"
+                    >
+                      Create Bounty
+                    </Link>
                   )}
                   <Link
                     href="/bounties"
@@ -348,58 +339,58 @@ export default function DashboardPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x divide-gray-600">
               {/* Only show Bounties Created for sponsors */}
               {isSponsor && (
-              <div className="p-6 text-center">
-                <div className="w-12 h-12 rounded-full bg-blue-500/20 flex items-center justify-center mx-auto mb-2">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-6 w-6 text-blue-300"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                    />
-                  </svg>
+                <div className="p-6 text-center">
+                  <div className="w-12 h-12 rounded-full bg-blue-500/20 flex items-center justify-center mx-auto mb-2">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-6 w-6 text-blue-300"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                      />
+                    </svg>
+                  </div>
+                  <p className="text-gray-300 text-sm mb-1">Bounties Created</p>
+                  <p className="text-2xl font-semibold text-white">
+                    {bounty.length}
+                  </p>
                 </div>
-                <p className="text-gray-300 text-sm mb-1">Bounties Created</p>
-                <p className="text-2xl font-semibold text-white">
-                  {bounty.length}
-                </p>
-              </div>
               )}
 
               {/* Only show Submissions Made for talents */}
               {isTalent && (
-              <div className="p-6 text-center">
-                <div className="w-12 h-12 rounded-full bg-green-500/20 flex items-center justify-center mx-auto mb-2">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-6 w-6 text-green-300"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M7 11.5V14m0-2.5v-6a1.5 1.5 0 113 0m-3 6a1.5 1.5 0 00-3 0v2a7.5 7.5 0 0015 0v-5a1.5 1.5 0 00-3 0m-6-3V11m0-5.5v-1a1.5 1.5 0 013 0v1m0 0V11m0-5.5a1.5 1.5 0 013 0v3m0 0V11"
-                    />
-                  </svg>
-                </div>
-                <p className="text-gray-300 text-sm mb-1">Submissions Made</p>
-                <p className="text-2xl font-semibold text-white">
+                <div className="p-6 text-center">
+                  <div className="w-12 h-12 rounded-full bg-green-500/20 flex items-center justify-center mx-auto mb-2">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-6 w-6 text-green-300"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M7 11.5V14m0-2.5v-6a1.5 1.5 0 113 0m-3 6a1.5 1.5 0 00-3 0v2a7.5 7.5 0 0015 0v-5a1.5 1.5 0 00-3 0m-6-3V11m0-5.5v-1a1.5 1.5 0 013 0v1m0 0V11m0-5.5a1.5 1.5 0 013 0v3m0 0V11"
+                      />
+                    </svg>
+                  </div>
+                  <p className="text-gray-300 text-sm mb-1">Submissions Made</p>
+                  <p className="text-2xl font-semibold text-white">
                     {loadingSubmissions ? (
                       <span className="inline-block w-6 h-6 rounded-full border-2 border-green-300 border-t-transparent animate-spin"></span>
                     ) : (
                       userSubmissions.length
                     )}
-                </p>
-              </div>
+                  </p>
+                </div>
               )}
 
               <div className="p-6 text-center">
@@ -421,7 +412,7 @@ export default function DashboardPage() {
                 </div>
                 {/* Show different text based on user role */}
                 <p className="text-gray-300 text-sm mb-1">
-                  {isSponsor ? "Total Spent" : "Total Earned"}
+                  {isSponsor ? 'Total Spent' : 'Total Earned'}
                 </p>
                 <p className="text-2xl font-semibold text-white">$0 USDC</p>
               </div>
@@ -432,16 +423,16 @@ export default function DashboardPage() {
             <div className="flex border-b border-gray-600">
               {/* Only show Your Bounties tab for sponsors */}
               {isSponsor && (
-              <button
-                className={`px-6 py-4 font-medium text-sm focus:outline-none transition-all duration-300 ${
-                  activeTab === 'created'
-                    ? 'text-white border-b-2 border-white'
-                    : 'text-gray-400 hover:text-white'
-                }`}
-                onClick={() => setActiveTab('created')}
-              >
-                Your Bounties
-              </button>
+                <button
+                  className={`px-6 py-4 font-medium text-sm focus:outline-none transition-all duration-300 ${
+                    activeTab === 'created'
+                      ? 'text-white border-b-2 border-white'
+                      : 'text-gray-400 hover:text-white'
+                  }`}
+                  onClick={() => setActiveTab('created')}
+                >
+                  Your Bounties
+                </button>
               )}
               <button
                 className={`px-6 py-4 font-medium text-sm focus:outline-none transition-all duration-300 ${

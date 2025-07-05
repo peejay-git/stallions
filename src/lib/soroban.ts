@@ -1,17 +1,18 @@
 import { Distribution } from '@/types/bounty';
 import { BlockchainError } from '@/utils/error-handler';
-import { WalletNetwork } from '@creit.tech/stellar-wallets-kit';
 import freighterApi from '@stellar/freighter-api';
 import {
   Status as BountyStatus,
   Bounty as ContractBounty,
   Client as SorobanClient,
 } from '../../packages/stallion/src/index';
-import { kit, getWalletKit } from './wallet';
+import { getWalletKit } from './wallet';
 
 // Environment variables with defaults
 const CONTRACT_ID = process.env.NEXT_PUBLIC_BOUNTY_CONTRACT_ID || '';
-const NETWORK = process.env.NEXT_PUBLIC_STELLAR_TEST_NETWORK || 'Test SDF Network ; September 2015';
+const NETWORK =
+  process.env.NEXT_PUBLIC_STELLAR_TEST_NETWORK ||
+  'Test SDF Network ; September 2015';
 
 const SOROBAN_RPC_URL =
   process.env.NEXT_PUBLIC_SOROBAN_RPC_URL ||
@@ -145,7 +146,8 @@ export class SorobanService {
 
       // Set judging deadline to 365 days after submission deadline
       // This effectively means "no deadline" as owners can select winners anytime
-      const calculatedJudgingDeadline = submissionDeadline + (365 * 24 * 60 * 60 * 1000);
+      const calculatedJudgingDeadline =
+        submissionDeadline + 365 * 24 * 60 * 60 * 1000;
 
       console.log(`=== CREATE BOUNTY DETAILS ===`);
       console.log(`Owner: ${owner}`);
@@ -239,7 +241,10 @@ export class SorobanService {
           }
 
           // Add debug log for network passphrase before signing
-          console.log('DEBUG: About to sign transaction. Network passphrase:', this.network);
+          console.log(
+            'DEBUG: About to sign transaction. Network passphrase:',
+            this.network
+          );
           // Add debug log for transaction XDR
           console.log('DEBUG: Transaction XDR to be signed:', tx.toXDR());
 
@@ -486,18 +491,18 @@ export class SorobanService {
       // Convert the Map to an array of objects
       if (submissions && typeof submissions === 'object') {
         const submissionsList: { applicant: string; submission: string }[] = [];
-        
+
         // Handle the case where submissions might be a Map-like object
         for (const [applicant, submission] of Object.entries(submissions)) {
           submissionsList.push({
-          applicant,
+            applicant,
             submission: String(submission),
           });
         }
-        
-      return submissionsList;
+
+        return submissionsList;
       }
-      
+
       return [];
     } catch (error) {
       console.error('Error getting bounty submissions:', error);
@@ -632,7 +637,7 @@ export class SorobanService {
         bountyId,
         owner,
         winners,
-        publicKey: this.publicKey
+        publicKey: this.publicKey,
       });
 
       // Create the transaction for selecting winners

@@ -1,13 +1,15 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import {
+  Layout,
+  SignUpWithWallet,
+  TabOption,
+  WalletConnectionHelper,
+} from '@/components';
 import { useWallet } from '@/hooks/useWallet';
 import { motion } from 'framer-motion';
-import { TabOption } from '@/components/TabOption';
-import WalletConnectionHelper from '@/components/WalletConnectionHelper';
-import { SignUpWithWallet } from '@/components/SignUpWithWallet';
-import Layout from '@/components/Layout';
+import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 
 type Tab = 'link' | 'create';
 
@@ -15,7 +17,7 @@ export default function WalletSignupPage() {
   const router = useRouter();
   const { isConnected, publicKey } = useWallet();
   const [activeTab, setActiveTab] = useState<Tab>('link');
-  
+
   // Redirect if wallet isn't connected
   useEffect(() => {
     if (!isConnected) {
@@ -40,7 +42,9 @@ export default function WalletSignupPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
           >
-            <h2 className="text-3xl font-bold mb-2 text-white text-center">Complete Your Account</h2>
+            <h2 className="text-3xl font-bold mb-2 text-white text-center">
+              Complete Your Account
+            </h2>
             <p className="text-gray-300 text-center mb-8">
               Your wallet is connected. Now complete your account setup.
             </p>
@@ -82,4 +86,4 @@ export default function WalletSignupPage() {
       </div>
     </Layout>
   );
-} 
+}

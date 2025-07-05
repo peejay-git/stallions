@@ -1,7 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { BlockchainError } from '@/utils/error-handler';
 import { BountyService } from '@/lib/bountyService';
 import { adminDb } from '@/lib/firebase-admin';
+import { NextRequest, NextResponse } from 'next/server';
 
 interface Submission {
   applicant: string;
@@ -21,7 +20,7 @@ export async function GET(
   try {
     const { id } = params;
     console.log(`API: Getting submissions for bounty ID ${id}`);
-    
+
     if (!id) {
       return NextResponse.json(
         { error: 'Bounty ID is required' },
@@ -31,7 +30,7 @@ export async function GET(
 
     // Create bounty service
     const bountyService = new BountyService();
-    
+
     // First get the bounty to check if it exists
     let bounty;
     try {
@@ -40,27 +39,24 @@ export async function GET(
       console.error(`Error fetching bounty ${id}:`, error);
       // Get bounty from database only
       const docSnap = await adminDb.collection('bounties').doc(id).get();
-      
+
       if (!docSnap.exists) {
         return NextResponse.json(
           { error: 'Bounty not found in database' },
           { status: 404 }
         );
       }
-      
+
       bounty = {
         id: parseInt(id),
         ...docSnap.data(),
         owner: docSnap.data()?.owner || '',
-        sponsorName: docSnap.data()?.sponsorName || ''
+        sponsorName: docSnap.data()?.sponsorName || '',
       };
     }
-    
+
     if (!bounty) {
-      return NextResponse.json(
-        { error: 'Bounty not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Bounty not found' }, { status: 404 });
     }
 
     // Check if this is just a count request (no auth needed)
@@ -82,19 +78,16 @@ export async function GET(
 
     const token = authHeader.split('Bearer ')[1];
     if (!token) {
-      return NextResponse.json(
-        { error: 'Invalid token' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
     }
 
     // Get user role and check if sponsor
     const userRole = request.headers.get('x-user-role');
     const isSponsor = userRole === 'sponsor';
-    
+
     // Get the user's wallet address from the headers
     const walletAddress = request.headers.get('x-wallet-address') || '';
-    
+
     // Check if the user is the bounty owner (by wallet) or a sponsor
     const isOwnerByWallet = bounty.owner === walletAddress;
 
@@ -130,7 +123,7 @@ export async function POST(
   try {
     console.log('POST /api/bounties/[id]/submissions - Start', {
       id: params.id,
-      headers: Object.fromEntries(request.headers.entries())
+      headers: Object.fromEntries(request.headers.entries()),
     });
 
     const { id: bountyId } = params;
@@ -144,7 +137,7 @@ export async function POST(
     // Parse the request body
     const body = await request.text();
     console.log('Request body:', body);
-    
+
     let requestData;
     try {
       requestData = JSON.parse(body);
@@ -156,13 +149,8 @@ export async function POST(
       );
     }
 
-    const { 
-      applicantAddress, 
-      userId,
-      content,
-      submissionId,
-      links 
-    } = requestData;
+    const { applicantAddress, userId, content, submissionId, links } =
+      requestData;
 
     // Log parsed data
     console.log('Parsed submission data:', {
@@ -171,7 +159,7 @@ export async function POST(
       userId,
       content: content?.substring(0, 50) + '...',
       links,
-      submissionId
+      submissionId,
     });
 
     // Validate required fields
@@ -190,8 +178,14 @@ export async function POST(
     }
 
     // Additional validation for applicantAddress
-    if (typeof applicantAddress !== 'string' || applicantAddress.trim() === '') {
-      console.error('ERROR: Invalid applicantAddress format:', applicantAddress);
+    if (
+      typeof applicantAddress !== 'string' ||
+      applicantAddress.trim() === ''
+    ) {
+      console.error(
+        'ERROR: Invalid applicantAddress format:',
+        applicantAddress
+      );
       return NextResponse.json(
         { error: 'Invalid applicant address format' },
         { status: 400 }
@@ -205,15 +199,20 @@ export async function POST(
     try {
       // Check if user or wallet has already submitted
       console.log('Checking for existing submissions...');
-      const existingSubmissions = await bountyService.getBountySubmissions(bountyId);
+      const existingSubmissions = await bountyService.getBountySubmissions(
+        bountyId
+      );
       const hasSubmitted = existingSubmissions.some(
-        (submission: Submission) => 
-          submission.applicant === applicantAddress || 
+        (submission: Submission) =>
+          submission.applicant === applicantAddress ||
           (userId && submission.userId === userId)
       );
 
       if (hasSubmitted) {
-        console.log('User has already submitted:', { applicantAddress, userId });
+        console.log('User has already submitted:', {
+          applicantAddress,
+          userId,
+        });
         return NextResponse.json(
           { error: 'You have already submitted work for this bounty' },
           { status: 400 }
@@ -226,14 +225,14 @@ export async function POST(
       if (bounty.submissionDeadline < Date.now()) {
         console.log('Submission deadline has passed:', {
           deadline: bounty.submissionDeadline,
-          now: Date.now()
+          now: Date.now(),
         });
         return NextResponse.json(
           { error: 'Submission deadline has passed' },
           { status: 400 }
         );
       }
-      
+
       // Save submission to database
       console.log('Saving submission to database...');
       await bountyService.saveSubmissionToDatabase(
@@ -255,7 +254,7 @@ export async function POST(
       console.error('Service error:', {
         error: serviceError,
         message: serviceError.message,
-        stack: serviceError.stack
+        stack: serviceError.stack,
       });
       return NextResponse.json(
         { error: serviceError.message || 'Failed to process submission' },
@@ -266,7 +265,7 @@ export async function POST(
     console.error('Unhandled error:', {
       error,
       message: error.message,
-      stack: error.stack
+      stack: error.stack,
     });
     return NextResponse.json(
       { error: 'An unexpected error occurred. Please try again.' },

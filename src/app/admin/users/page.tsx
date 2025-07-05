@@ -1,11 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { AdminLayout } from '@/components';
 import { useAdminProtectedRoute } from '@/hooks/useAdminProtectedRoute';
-import AdminLayout from '@/components/AdminLayout';
 import { getAllUsers, makeUserAdmin } from '@/lib/adminService';
-import { FiSearch, FiUser, FiShield, FiCheck } from 'react-icons/fi';
+import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
+import { FiCheck, FiSearch, FiShield } from 'react-icons/fi';
 
 interface User {
   id: string;
@@ -63,12 +63,14 @@ export default function AdminUsersPage() {
     try {
       setProcessingUser(userId);
       await makeUserAdmin(userId);
-      
+
       // Update local state
-      setUsers(users.map(user => 
-        user.id === userId ? { ...user, role: 'admin' } : user
-      ));
-      
+      setUsers(
+        users.map((user) =>
+          user.id === userId ? { ...user, role: 'admin' } : user
+        )
+      );
+
       toast.success('User has been made an admin');
     } catch (error) {
       console.error('Error making user admin:', error);
@@ -79,15 +81,15 @@ export default function AdminUsersPage() {
   };
 
   // Filter users based on search term
-  const filteredUsers = users.filter(user => {
+  const filteredUsers = users.filter((user) => {
     const searchString = (
-      (user.profileData?.firstName || '') + 
-      (user.profileData?.lastName || '') + 
-      (user.profileData?.username || '') + 
-      user.email + 
+      (user.profileData?.firstName || '') +
+      (user.profileData?.lastName || '') +
+      (user.profileData?.username || '') +
+      user.email +
       user.role
     ).toLowerCase();
-    
+
     return searchString.includes(searchTerm.toLowerCase());
   });
 
@@ -109,7 +111,9 @@ export default function AdminUsersPage() {
     <AdminLayout>
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-white mb-2">Manage Users</h1>
-        <p className="text-gray-400">View and manage user accounts on the platform</p>
+        <p className="text-gray-400">
+          View and manage user accounts on the platform
+        </p>
       </div>
 
       {/* Search */}
@@ -135,19 +139,51 @@ export default function AdminUsersPage() {
           </div>
         ) : filteredUsers.length === 0 ? (
           <div className="p-8 text-center">
-            <p className="text-gray-400">No users found matching your criteria.</p>
+            <p className="text-gray-400">
+              No users found matching your criteria.
+            </p>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-700">
               <thead className="bg-gray-800">
                 <tr>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">User</th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Email</th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Role</th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Joined</th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Last Login</th>
-                  <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-400 uppercase tracking-wider">Actions</th>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider"
+                  >
+                    User
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider"
+                  >
+                    Email
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider"
+                  >
+                    Role
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider"
+                  >
+                    Joined
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider"
+                  >
+                    Last Login
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-right text-xs font-medium text-gray-400 uppercase tracking-wider"
+                  >
+                    Actions
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-700">
@@ -156,11 +192,13 @@ export default function AdminUsersPage() {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         <div className="flex-shrink-0 h-10 w-10 rounded-full bg-gray-600 flex items-center justify-center">
-                          {user.profileData?.firstName?.[0] || user.email[0].toUpperCase()}
+                          {user.profileData?.firstName?.[0] ||
+                            user.email[0].toUpperCase()}
                         </div>
                         <div className="ml-4">
                           <div className="text-sm font-medium text-white">
-                            {user.profileData?.firstName} {user.profileData?.lastName}
+                            {user.profileData?.firstName}{' '}
+                            {user.profileData?.lastName}
                           </div>
                           <div className="text-sm text-gray-400">
                             @{user.profileData?.username || 'unknown'}
@@ -172,13 +210,15 @@ export default function AdminUsersPage() {
                       {user.email}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        user.role === 'admin' 
-                          ? 'bg-purple-900/40 text-purple-300 border border-purple-700/30' 
-                          : user.role === 'sponsor'
+                      <span
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                          user.role === 'admin'
+                            ? 'bg-purple-900/40 text-purple-300 border border-purple-700/30'
+                            : user.role === 'sponsor'
                             ? 'bg-blue-900/40 text-blue-300 border border-blue-700/30'
                             : 'bg-green-900/40 text-green-300 border border-green-700/30'
-                      }`}>
+                        }`}
+                      >
                         {user.role}
                       </span>
                     </td>
@@ -194,7 +234,9 @@ export default function AdminUsersPage() {
                           onClick={() => handleMakeAdmin(user.id)}
                           disabled={processingUser === user.id}
                           className={`text-purple-400 hover:text-purple-300 flex items-center gap-1 ml-auto ${
-                            processingUser === user.id ? 'opacity-50 cursor-not-allowed' : ''
+                            processingUser === user.id
+                              ? 'opacity-50 cursor-not-allowed'
+                              : ''
                           }`}
                           title="Make Admin"
                         >
@@ -205,7 +247,7 @@ export default function AdminUsersPage() {
                             </>
                           ) : (
                             <>
-                              <FiShield size={18} /> 
+                              <FiShield size={18} />
                               Make Admin
                             </>
                           )}
@@ -227,4 +269,4 @@ export default function AdminUsersPage() {
       </div>
     </AdminLayout>
   );
-} 
+}

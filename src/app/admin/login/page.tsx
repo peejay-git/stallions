@@ -1,10 +1,10 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { auth, db } from '@/lib/firebase';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore/lite';
-import { auth, db } from '@/lib/firebase';
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 import toast from 'react-hot-toast';
 
 export default function AdminLoginPage() {
@@ -19,7 +19,11 @@ export default function AdminLoginPage() {
 
     try {
       // Sign in with Firebase
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const userCredential = await signInWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
       const user = userCredential.user;
 
       // Check if user has admin role
@@ -47,8 +51,10 @@ export default function AdminLoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-black">
       <div className="backdrop-blur-xl bg-white/10 p-8 rounded-xl border border-white/20 w-full max-w-md">
-        <h1 className="text-2xl font-bold text-white mb-6 text-center">Admin Login</h1>
-        
+        <h1 className="text-2xl font-bold text-white mb-6 text-center">
+          Admin Login
+        </h1>
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-white mb-2">Email</label>
@@ -83,4 +89,4 @@ export default function AdminLoginPage() {
       </div>
     </div>
   );
-} 
+}

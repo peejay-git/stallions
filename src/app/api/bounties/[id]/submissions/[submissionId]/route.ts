@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { db } from '@/lib/firebase';
+import { doc, getDoc, updateDoc } from '@/lib/firestore';
 import { SorobanService } from '@/lib/soroban';
 import { BlockchainError } from '@/utils/error-handler';
-import { doc, getDoc, updateDoc } from '@/lib/firestore';
-import { db } from '@/lib/firebase';
+import { NextRequest, NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -94,7 +94,7 @@ export async function PATCH(
 
     // Validate the request
     const { action, userId, ranking } = body;
-    
+
     if (!userId) {
       return NextResponse.json(
         { error: 'User ID is required' },
@@ -105,31 +105,25 @@ export async function PATCH(
     // Get the bounty to verify ownership
     const bountyRef = doc(db, 'bounties', id);
     const bountySnap = await getDoc(bountyRef);
-    
+
     if (!bountySnap.exists()) {
-      return NextResponse.json(
-        { error: 'Bounty not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Bounty not found' }, { status: 404 });
     }
-    
+
     const bountyData = bountySnap.data();
-    
+
     // Get user data to check if they're a sponsor
     const userRef = doc(db, 'users', userId);
     const userSnap = await getDoc(userRef);
-    
+
     if (!userSnap.exists()) {
-      return NextResponse.json(
-        { error: 'User not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
-    
+
     const userData = userSnap.data();
     const isSponsor = userData.role === 'sponsor';
     const isOwner = bountyData.owner === userId;
-    
+
     // Only allow owners or sponsors to rank submissions
     if (!isOwner && !isSponsor) {
       return NextResponse.json(
@@ -141,18 +135,18 @@ export async function PATCH(
     // Check if it's a ranking update
     if (action === 'rank' && ranking !== undefined) {
       console.log(`Ranking submission ${submissionId} as ${ranking}`);
-      
+
       // Update the ranking in the database
       const submissionRef = doc(db, 'submissions', submissionId);
       const submissionSnap = await getDoc(submissionRef);
-      
+
       if (!submissionSnap.exists()) {
         return NextResponse.json(
           { error: 'Submission not found' },
           { status: 404 }
         );
       }
-      
+
       // Verify the submission belongs to this bounty
       const submissionData = submissionSnap.data();
       if (submissionData.bountyId !== id) {
@@ -161,15 +155,15 @@ export async function PATCH(
           { status: 400 }
         );
       }
-      
+
       // Update the ranking in the database
-      await updateDoc(submissionRef, { 
+      await updateDoc(submissionRef, {
         ranking: ranking,
-        updatedAt: new Date().toISOString()
+        updatedAt: new Date().toISOString(),
       });
-      
+
       console.log(`Updated submission ${submissionId} ranking to ${ranking}`);
-      
+
       return NextResponse.json({
         success: true,
         message: 'Submission ranked successfully',
@@ -188,20 +182,20 @@ export async function PATCH(
           { status: 403 }
         );
       }
-      
+
       console.log(`Accepting submission ${submissionId}`);
-      
+
       // Update the status in the database
       const submissionRef = doc(db, 'submissions', submissionId);
       const submissionSnap = await getDoc(submissionRef);
-      
+
       if (!submissionSnap.exists()) {
         return NextResponse.json(
           { error: 'Submission not found' },
           { status: 404 }
         );
       }
-      
+
       // Verify the submission belongs to this bounty
       const submissionData = submissionSnap.data();
       if (submissionData.bountyId !== id) {
@@ -210,15 +204,15 @@ export async function PATCH(
           { status: 400 }
         );
       }
-      
+
       // Update the status in the database
-      await updateDoc(submissionRef, { 
+      await updateDoc(submissionRef, {
         status: 'ACCEPTED',
-        updatedAt: new Date().toISOString()
+        updatedAt: new Date().toISOString(),
       });
-      
+
       console.log(`Updated submission ${submissionId} status to ACCEPTED`);
-      
+
       return NextResponse.json({
         success: true,
         message: 'Submission accepted successfully',
@@ -227,7 +221,7 @@ export async function PATCH(
         status: 'ACCEPTED',
       });
     }
-    
+
     return NextResponse.json(
       { error: 'Valid action (accept or rank) is required' },
       { status: 400 }

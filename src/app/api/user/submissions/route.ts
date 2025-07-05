@@ -1,7 +1,14 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { collection, doc, getDoc, getDocs, query, where } from '@/lib/firestore';
 import { db } from '@/lib/firebase';
+import {
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  query,
+  where,
+} from '@/lib/firestore';
 import { BlockchainError } from '@/utils/error-handler';
+import { NextRequest, NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -40,51 +47,58 @@ export async function GET(request: NextRequest) {
 
     // Get submissions from database
     const submissionsRef = collection(db, 'submissions');
-    
+
     // Build query conditions
     const conditions = [];
-    
+
     if (userId) {
       conditions.push(query(submissionsRef, where('userId', '==', userId)));
     }
-    
+
     if (walletAddress) {
-      conditions.push(query(submissionsRef, where('applicantAddress', '==', walletAddress)));
+      conditions.push(
+        query(submissionsRef, where('applicantAddress', '==', walletAddress))
+      );
     }
-    
+
     // Execute queries and combine results
     const allSubmissions: SubmissionData[] = [];
-    
+
     for (const q of conditions) {
       const snapshot = await getDocs(q);
-      
+
       if (!snapshot.empty) {
         // Add each submission to the results, avoiding duplicates
-        snapshot.docs.forEach(docSnapshot => {
+        snapshot.docs.forEach((docSnapshot) => {
           const data = docSnapshot.data() as Omit<SubmissionData, 'id'>;
-          console.log(`DEBUG: Raw submission data for ${docSnapshot.id}:`, JSON.stringify(data));
-          
+          console.log(
+            `DEBUG: Raw submission data for ${docSnapshot.id}:`,
+            JSON.stringify(data)
+          );
+
           if (!data.applicantAddress) {
-            console.error(`ERROR: Missing applicantAddress in submission ${docSnapshot.id}`);
+            console.error(
+              `ERROR: Missing applicantAddress in submission ${docSnapshot.id}`
+            );
           }
-          
-          if (!allSubmissions.some(s => s.id === docSnapshot.id)) {
+
+          if (!allSubmissions.some((s) => s.id === docSnapshot.id)) {
             allSubmissions.push({
               id: docSnapshot.id,
-              ...data
+              ...data,
             });
           }
         });
       }
     }
-    
+
     // If there are no submissions, return empty array
     if (allSubmissions.length === 0) {
       return NextResponse.json([]);
     }
-    
+
     console.log(`DEBUG: Found ${allSubmissions.length} submissions for user`);
-    
+
     // Get bounty titles for each submission
     const submissions = await Promise.all(
       allSubmissions.map(async (submission) => {
@@ -99,10 +113,10 @@ export async function GET(request: NextRequest) {
         } catch (error) {
           console.error(`Error fetching bounty ${submission.bountyId}:`, error);
         }
-        
+
         // Ensure applicantAddress is present
         const applicantAddress = submission.applicantAddress || 'Unknown';
-        
+
         return {
           id: submission.id,
           bountyId: submission.bountyId,
@@ -111,12 +125,15 @@ export async function GET(request: NextRequest) {
           walletAddress: applicantAddress, // Add this field explicitly for consistency
           content: submission.content || '',
           links: submission.links || '',
-          submitted: submission.createdAt || submission.submittedAt?.toDate?.()?.toISOString() || new Date().toISOString(),
+          submitted:
+            submission.createdAt ||
+            submission.submittedAt?.toDate?.()?.toISOString() ||
+            new Date().toISOString(),
           status: submission.status || 'PENDING',
         };
       })
     );
-    
+
     return NextResponse.json(submissions);
   } catch (error) {
     console.error('Error fetching user submissions:', error);
@@ -131,4 +148,4 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     );
   }
-} 
+}

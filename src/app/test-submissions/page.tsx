@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useEffect, useState } from 'react';
 
 export default function TestSubmissionsPage() {
   const [submissions, setSubmissions] = useState<any[]>([]);
@@ -30,7 +30,7 @@ export default function TestSubmissionsPage() {
 
   const fetchBountySubmissions = async () => {
     if (!bountyId) return;
-    
+
     setLoading(true);
     setError(null);
     try {
@@ -131,19 +131,25 @@ export default function TestSubmissionsPage() {
                           Applicant Address
                         </h4>
                         <p className="text-gray-300 break-all">
-                          {submission.applicantAddress || submission.applicant || 'N/A'}
+                          {submission.applicantAddress ||
+                            submission.applicant ||
+                            'N/A'}
                         </p>
                       </div>
                       <div>
                         <h4 className="text-sm text-gray-400 mb-1">User ID</h4>
-                        <p className="text-gray-300">{submission.userId || 'N/A'}</p>
+                        <p className="text-gray-300">
+                          {submission.userId || 'N/A'}
+                        </p>
                       </div>
                     </div>
 
                     <div className="mb-4">
                       <h4 className="text-sm text-gray-400 mb-1">Content</h4>
                       <div className="bg-black/30 p-3 rounded text-gray-300 whitespace-pre-wrap">
-                        {submission.content || submission.details || 'No content'}
+                        {submission.content ||
+                          submission.details ||
+                          'No content'}
                       </div>
                     </div>
 
@@ -155,7 +161,8 @@ export default function TestSubmissionsPage() {
                     </div>
 
                     <div className="text-sm text-gray-400">
-                      Created: {submission.createdAt || submission.created || 'N/A'}
+                      Created:{' '}
+                      {submission.createdAt || submission.created || 'N/A'}
                     </div>
                   </div>
                 ))}
@@ -166,7 +173,4 @@ export default function TestSubmissionsPage() {
       </div>
     </div>
   );
-} 
- 
- 
- 
+}

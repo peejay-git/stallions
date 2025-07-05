@@ -1,8 +1,6 @@
 import { BountyService } from '@/lib/bountyService';
-import { BlockchainError } from '@/utils/error-handler';
-import { NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase-admin';
-import type { Firestore } from 'firebase-admin/firestore';
+import { NextRequest, NextResponse } from 'next/server';
 
 // Force dynamic rendering for APIs to work properly in production
 export const dynamic = 'force-dynamic';
@@ -10,13 +8,20 @@ export const dynamic = 'force-dynamic';
 // Log environment variables (without sensitive data)
 console.log('API Route - Environment Variables:', {
   FIREBASE_PROJECT_ID: process.env.FIREBASE_PROJECT_ID || '(missing)',
-  FIREBASE_CLIENT_EMAIL: process.env.FIREBASE_CLIENT_EMAIL ? '(set)' : '(missing)',
-  FIREBASE_PRIVATE_KEY: process.env.FIREBASE_PRIVATE_KEY ? '(set)' : '(missing)',
+  FIREBASE_CLIENT_EMAIL: process.env.FIREBASE_CLIENT_EMAIL
+    ? '(set)'
+    : '(missing)',
+  FIREBASE_PRIVATE_KEY: process.env.FIREBASE_PRIVATE_KEY
+    ? '(set)'
+    : '(missing)',
   NODE_ENV: process.env.NODE_ENV,
   // Add more detailed logging
-  ENV_KEYS: Object.keys(process.env).filter(key => key.startsWith('FIREBASE_')),
+  ENV_KEYS: Object.keys(process.env).filter((key) =>
+    key.startsWith('FIREBASE_')
+  ),
   PRIVATE_KEY_LENGTH: process.env.FIREBASE_PRIVATE_KEY?.length || 0,
-  PRIVATE_KEY_SAMPLE: process.env.FIREBASE_PRIVATE_KEY?.substring(0, 50) + '...',
+  PRIVATE_KEY_SAMPLE:
+    process.env.FIREBASE_PRIVATE_KEY?.substring(0, 50) + '...',
 });
 
 // Verify Firebase Admin is initialized
@@ -90,7 +95,7 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   console.log('POST /api/bounties - Starting request handling');
-  
+
   try {
     // Verify Firebase Admin is initialized
     if (!adminDb) {
@@ -114,7 +119,7 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
-    
+
     const {
       blockchainBountyId,
       description,
@@ -140,7 +145,7 @@ export async function POST(request: NextRequest) {
       title,
       reward,
       submissionDeadline,
-      status
+      status,
     });
 
     // Validate required fields
@@ -153,7 +158,8 @@ export async function POST(request: NextRequest) {
       !owner
     ) {
       const missingFields = [];
-      if (blockchainBountyId === null || blockchainBountyId === undefined) missingFields.push('blockchainBountyId');
+      if (blockchainBountyId === null || blockchainBountyId === undefined)
+        missingFields.push('blockchainBountyId');
       if (!description) missingFields.push('description');
       if (!category) missingFields.push('category');
       if (!skills) missingFields.push('skills');
@@ -169,7 +175,10 @@ export async function POST(request: NextRequest) {
     // Ensure blockchainBountyId is a number
     const numericBountyId = Number(blockchainBountyId);
     if (isNaN(numericBountyId)) {
-      console.error('Invalid blockchainBountyId:', { blockchainBountyId, type: typeof blockchainBountyId });
+      console.error('Invalid blockchainBountyId:', {
+        blockchainBountyId,
+        type: typeof blockchainBountyId,
+      });
       return NextResponse.json(
         { error: 'Invalid blockchainBountyId format' },
         { status: 400 }
@@ -190,12 +199,16 @@ export async function POST(request: NextRequest) {
         extraRequirements: extraRequirements || '',
         owner: owner || '',
         title: title || '',
-        reward: typeof reward === 'object' ? JSON.stringify(reward) : reward || '',
+        reward:
+          typeof reward === 'object' ? JSON.stringify(reward) : reward || '',
         deadline: deadline || new Date().toISOString(),
-        submissionDeadline: submissionDeadline || deadline || new Date().toISOString(),
-        judgingDeadline: judgingDeadline || new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
+        submissionDeadline:
+          submissionDeadline || deadline || new Date().toISOString(),
+        judgingDeadline:
+          judgingDeadline ||
+          new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
         status: status || 'OPEN',
-        updatedAt: new Date().toISOString()
+        updatedAt: new Date().toISOString(),
       });
 
       console.log('Bounty saved successfully:', numericBountyId);
@@ -206,30 +219,36 @@ export async function POST(request: NextRequest) {
       });
     } catch (dbError) {
       console.error('Database error:', dbError);
-      console.error('Database error stack:', dbError instanceof Error ? dbError.stack : 'No stack trace');
+      console.error(
+        'Database error stack:',
+        dbError instanceof Error ? dbError.stack : 'No stack trace'
+      );
       return NextResponse.json(
-        { 
+        {
           error: 'Database error',
           details: dbError instanceof Error ? dbError.message : String(dbError),
-          stack: dbError instanceof Error ? dbError.stack : 'No stack trace'
+          stack: dbError instanceof Error ? dbError.stack : 'No stack trace',
         },
         { status: 500 }
       );
     }
   } catch (error) {
     console.error('Unhandled error in POST handler:', error);
-    console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace');
+    console.error(
+      'Error stack:',
+      error instanceof Error ? error.stack : 'No stack trace'
+    );
     console.error('Error details:', {
       name: error instanceof Error ? error.name : 'Unknown',
       message: error instanceof Error ? error.message : String(error),
-      stack: error instanceof Error ? error.stack : 'No stack trace'
+      stack: error instanceof Error ? error.stack : 'No stack trace',
     });
 
     return NextResponse.json(
-      { 
+      {
         error: 'Failed to create bounty',
         details: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : 'No stack trace'
+        stack: error instanceof Error ? error.stack : 'No stack trace',
       },
       { status: 500 }
     );

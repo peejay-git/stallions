@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import useUserStore from '@/lib/stores/useUserStore';
+import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 
 export function useAdminProtectedRoute() {
@@ -22,10 +22,10 @@ export function useAdminProtectedRoute() {
       try {
         const response = await fetch('/api/admin/verify', {
           headers: {
-            'Authorization': `Bearer ${user.uid}`,
+            Authorization: `Bearer ${user.uid}`,
           },
           // Add cache: 'no-store' to prevent caching
-          cache: 'no-store'
+          cache: 'no-store',
         });
 
         if (!response.ok) {
@@ -76,4 +76,4 @@ export function useAdminProtectedRoute() {
   }, [user, loading, router]);
 
   return { isAdmin, loading: loading || verifying };
-} 
+}

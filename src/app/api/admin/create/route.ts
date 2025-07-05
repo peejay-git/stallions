@@ -1,5 +1,5 @@
+import { adminAuth, adminDb } from '@/lib/firebase-admin';
 import { NextRequest, NextResponse } from 'next/server';
-import { adminDb, adminAuth } from '@/lib/firebase-admin';
 
 export const dynamic = 'force-dynamic';
 
@@ -30,18 +30,21 @@ export async function POST(request: NextRequest) {
     });
 
     // Create admin user in Firestore using admin SDK
-    await adminDb.collection('users').doc(userRecord.uid).set({
-      uid: userRecord.uid,
-      email,
-      role: 'admin',
-      profileData: {
-        firstName: 'Admin',
-        lastName: 'User',
-        username: 'admin',
-      },
-      createdAt: new Date().toISOString(),
-      lastLogin: new Date().toISOString(),
-    });
+    await adminDb
+      .collection('users')
+      .doc(userRecord.uid)
+      .set({
+        uid: userRecord.uid,
+        email,
+        role: 'admin',
+        profileData: {
+          firstName: 'Admin',
+          lastName: 'User',
+          username: 'admin',
+        },
+        createdAt: new Date().toISOString(),
+        lastLogin: new Date().toISOString(),
+      });
 
     return NextResponse.json({
       success: true,
@@ -51,11 +54,11 @@ export async function POST(request: NextRequest) {
   } catch (error: any) {
     console.error('Error creating admin user:', error);
     return NextResponse.json(
-      { 
+      {
         error: 'Failed to create admin user',
-        details: error.message 
+        details: error.message,
       },
       { status: 500 }
     );
   }
-} 
+}

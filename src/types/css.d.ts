@@ -13,4 +13,4 @@ interface CSSRule {
 
 interface CSSStyleDeclaration {
   [key: string]: string;
-} 
+}

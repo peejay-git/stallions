@@ -2,21 +2,21 @@
 let walletKit: any = null;
 
 export const importWalletKit = async () => {
-  if (typeof window === "undefined") {
+  if (typeof window === 'undefined') {
     return {
       StellarWalletsKit: class {
         constructor() {}
         setWallet() {}
         getAddress() {
-          return Promise.resolve({ address: "" });
+          return Promise.resolve({ address: '' });
         }
         getNetwork() {
           return Promise.resolve({
-            networkPassphrase: "Test SDF Network ; September 2015",
+            networkPassphrase: 'Test SDF Network ; September 2015',
           });
         }
         signTransaction() {
-          return Promise.resolve({ signedTxXdr: "", signerAddress: "" });
+          return Promise.resolve({ signedTxXdr: '', signerAddress: '' });
         }
         disconnect() {}
         openModal() {
@@ -24,7 +24,7 @@ export const importWalletKit = async () => {
         }
       },
       WalletNetwork: {
-        TESTNET: "Test SDF Network ; September 2015",
+        TESTNET: 'Test SDF Network ; September 2015',
       },
       allowAllModules: () => [],
       TrezorModule: class {
@@ -34,7 +34,7 @@ export const importWalletKit = async () => {
         constructor() {}
       },
       WalletConnectAllowedMethods: {
-        SIGN: "sign",
+        SIGN: 'sign',
       },
     };
   }
@@ -45,9 +45,9 @@ export const importWalletKit = async () => {
       { TrezorModule },
       { WalletConnectModule, WalletConnectAllowedMethods },
     ] = await Promise.all([
-      import("@creit.tech/stellar-wallets-kit"),
-      import("@creit.tech/stellar-wallets-kit/modules/trezor.module"),
-      import("@creit.tech/stellar-wallets-kit/modules/walletconnect.module"),
+      import('@creit.tech/stellar-wallets-kit'),
+      import('@creit.tech/stellar-wallets-kit/modules/trezor.module'),
+      import('@creit.tech/stellar-wallets-kit/modules/walletconnect.module'),
     ]);
 
     walletKit = {
@@ -64,7 +64,7 @@ export const importWalletKit = async () => {
 };
 
 // Import Freighter API as a CommonJS module
-import freighterApi from "@stellar/freighter-api";
+import freighterApi from '@stellar/freighter-api';
 
 // Re-export the functions we need
 export const {

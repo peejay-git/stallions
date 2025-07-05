@@ -9,7 +9,7 @@ export enum BountyStatus {
   IN_PROGRESS = 'IN_PROGRESS',
   REVIEW = 'REVIEW',
   COMPLETED = 'COMPLETED',
-  CANCELLED = 'CANCELLED'
+  CANCELLED = 'CANCELLED',
 }
 
 export enum BountyCategory {
@@ -17,7 +17,7 @@ export enum BountyCategory {
   DESIGN = 'DESIGN',
   MARKETING = 'MARKETING',
   RESEARCH = 'RESEARCH',
-  OTHER = 'OTHER'
+  OTHER = 'OTHER',
 }
 
 export interface Distribution {

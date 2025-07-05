@@ -1,16 +1,16 @@
 'use client';
 
-import Layout from '@/components/Layout';
+import { Layout } from '@/components';
 import { useProtectedRoute } from '@/hooks/useProtectedRoute';
 import { useWallet } from '@/hooks/useWallet';
 import { connectWallet } from '@/lib/authService';
+import { auth, db } from '@/lib/firebase';
+import { doc, getDoc } from '@/lib/firestore';
 import useUserStore from '@/lib/stores/useUserStore';
 import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
-import { doc, getDoc } from '@/lib/firestore';
-import { db, auth } from '@/lib/firebase';
 
 export default function ConnectWalletPage() {
   useProtectedRoute();
@@ -25,18 +25,18 @@ export default function ConnectWalletPage() {
   useEffect(() => {
     const checkUserWallet = async () => {
       if (!auth.currentUser) return;
-      
+
       try {
         const userRef = doc(db, 'users', auth.currentUser.uid);
         const userSnap = await getDoc(userRef);
-        
+
         if (userSnap.exists()) {
           const userData = userSnap.data();
           setUserRole(userData.role);
-          
+
           const hasWalletAddress = userData.wallet && userData.wallet.address;
           setHasStoredWallet(hasWalletAddress);
-          
+
           // If talent has a wallet address stored, redirect to dashboard
           if (userData.role === 'talent' && hasWalletAddress) {
             toast('You already have a wallet connected to your account.');
@@ -47,7 +47,7 @@ export default function ConnectWalletPage() {
         console.error('Error checking user wallet:', error);
       }
     };
-    
+
     checkUserWallet();
   }, [router]);
 
@@ -96,11 +96,15 @@ export default function ConnectWalletPage() {
       router.push('/dashboard');
     } catch (error: any) {
       console.error('Error connecting wallet:', error);
-      if (error.message?.includes('Talents cannot change their wallet address')) {
-        toast.error('You already have a wallet address linked to your account.');
+      if (
+        error.message?.includes('Talents cannot change their wallet address')
+      ) {
+        toast.error(
+          'You already have a wallet address linked to your account.'
+        );
         router.push('/dashboard');
       } else {
-      toast.error('Failed to connect wallet. Please try again.');
+        toast.error('Failed to connect wallet. Please try again.');
       }
     } finally {
       setIsSubmitting(false);

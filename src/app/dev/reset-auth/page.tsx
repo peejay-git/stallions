@@ -38,15 +38,20 @@ export default function ResetAuthPage() {
     <div className="min-h-screen flex items-center justify-center bg-gray-900">
       <div className="bg-white/10 backdrop-blur-xl border border-white/20 p-8 rounded-xl max-w-md w-full">
         <div className="bg-red-900/20 border border-red-700/30 p-4 rounded-lg mb-6">
-          <h2 className="text-red-300 font-medium mb-2">Development Tool - Remove After Use</h2>
+          <h2 className="text-red-300 font-medium mb-2">
+            Development Tool - Remove After Use
+          </h2>
           <p className="text-gray-300 text-sm">
-            This page is for solving the "email already in use" issue when Firebase Authentication
-            and Firestore are out of sync. It should be removed after resolving the issue.
+            This page is for solving the "email already in use" issue when
+            Firebase Authentication and Firestore are out of sync. It should be
+            removed after resolving the issue.
           </p>
         </div>
 
-        <h1 className="text-2xl font-bold text-white mb-4">Reset Firebase Auth</h1>
-        
+        <h1 className="text-2xl font-bold text-white mb-4">
+          Reset Firebase Auth
+        </h1>
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-gray-300 mb-1">Email with Issue</label>
@@ -59,9 +64,11 @@ export default function ResetAuthPage() {
               placeholder="Enter email that's causing problems"
             />
           </div>
-          
+
           <div>
-            <label className="block text-gray-300 mb-1">Password (if known)</label>
+            <label className="block text-gray-300 mb-1">
+              Password (if known)
+            </label>
             <input
               type="password"
               value={password}
@@ -73,7 +80,7 @@ export default function ResetAuthPage() {
               Providing the password increases chances of successful deletion
             </p>
           </div>
-          
+
           <button
             type="submit"
             disabled={isProcessing || !email}
@@ -86,16 +93,20 @@ export default function ResetAuthPage() {
             {isProcessing ? 'Processing...' : 'Reset Auth for Email'}
           </button>
         </form>
-        
+
         {result && (
-          <div className={`mt-6 p-4 rounded-lg ${
-            result.success 
-              ? 'bg-green-900/20 border border-green-700/30' 
-              : 'bg-yellow-900/20 border border-yellow-700/30'
-          }`}>
-            <h3 className={`font-medium mb-2 ${
-              result.success ? 'text-green-300' : 'text-yellow-300'
-            }`}>
+          <div
+            className={`mt-6 p-4 rounded-lg ${
+              result.success
+                ? 'bg-green-900/20 border border-green-700/30'
+                : 'bg-yellow-900/20 border border-yellow-700/30'
+            }`}
+          >
+            <h3
+              className={`font-medium mb-2 ${
+                result.success ? 'text-green-300' : 'text-yellow-300'
+              }`}
+            >
               {result.success ? 'Success' : 'Action Required'}
             </h3>
             <p className="text-gray-300 text-sm">{result.message}</p>
@@ -103,15 +114,29 @@ export default function ResetAuthPage() {
               <p className="text-gray-300 text-sm mt-2">{result.action}</p>
             )}
             {result.code && (
-              <p className="text-gray-400 text-xs mt-2">Error code: {result.code}</p>
+              <p className="text-gray-400 text-xs mt-2">
+                Error code: {result.code}
+              </p>
             )}
           </div>
         )}
-        
+
         <div className="mt-6 border-t border-white/10 pt-4">
-          <h3 className="text-white font-medium mb-2">Manual Steps (If Automated Reset Fails)</h3>
+          <h3 className="text-white font-medium mb-2">
+            Manual Steps (If Automated Reset Fails)
+          </h3>
           <ol className="text-gray-300 text-sm list-decimal list-inside space-y-1">
-            <li>Go to the <a href="https://console.firebase.google.com/" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">Firebase Console</a></li>
+            <li>
+              Go to the{' '}
+              <a
+                href="https://console.firebase.google.com/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-400 hover:underline"
+              >
+                Firebase Console
+              </a>
+            </li>
             <li>Select your project</li>
             <li>Go to Authentication → Users</li>
             <li>Find the problematic email address</li>
@@ -123,4 +148,4 @@ export default function ResetAuthPage() {
       </div>
     </div>
   );
-} 
+}

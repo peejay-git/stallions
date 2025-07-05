@@ -1,18 +1,10 @@
-import { Bounty, BountyStatus, BountyCategory } from '@/types/bounty';
-import {
-  collection,
-  doc,
-  getDoc,
-  getDocs,
-  query,
-  setDoc,
-  where,
-  type CollectionReference,
-  type DocumentReference,
+import { Bounty, BountyCategory, BountyStatus } from '@/types/bounty';
+import type {
+  DocumentData,
+  QueryDocumentSnapshot,
 } from 'firebase/firestore/lite';
 import { db } from './firebase';
 import { adminDb } from './firebase-admin';
-import type { DocumentData, QueryDocumentSnapshot } from 'firebase/firestore/lite';
 
 interface FirestoreBountyData {
   owner: string;
@@ -90,7 +82,7 @@ export class BountyService {
       }
 
       const data = docSnap.data() as FirestoreBountyData;
-      
+
       // Return the bounty data
       return {
         id: numericId,
@@ -120,7 +112,7 @@ export class BountyService {
   async getAllBounties(filters?: any): Promise<Bounty[]> {
     try {
       const snapshot = await this.bountiesRef.get();
-      
+
       if (snapshot.empty) {
         return [];
       }
@@ -251,7 +243,10 @@ export class BountyService {
       const submissions = await this.getBountySubmissions(bountyId);
       const rankedSubmissions = submissions
         .filter((sub: SubmissionWithRanking) => sub.ranking !== null)
-        .sort((a: SubmissionWithRanking, b: SubmissionWithRanking) => (a.ranking || 0) - (b.ranking || 0));
+        .sort(
+          (a: SubmissionWithRanking, b: SubmissionWithRanking) =>
+            (a.ranking || 0) - (b.ranking || 0)
+        );
 
       // Match the winners with the distribution percentages
       return bounty.distribution.map((dist, index) => {
@@ -313,8 +308,8 @@ export class BountyService {
         submissionDeadline: data.submissionDeadline,
         data: {
           ...data,
-          description: data.description.substring(0, 50) + '...'
-        }
+          description: data.description.substring(0, 50) + '...',
+        },
       });
 
       // Parse reward if it's a string
@@ -331,7 +326,9 @@ export class BountyService {
       }
 
       // Convert deadline strings to timestamps
-      const submissionDeadlineTimestamp = new Date(data.submissionDeadline).getTime();
+      const submissionDeadlineTimestamp = new Date(
+        data.submissionDeadline
+      ).getTime();
       const judgingDeadlineTimestamp = new Date(data.judgingDeadline).getTime();
 
       // Prepare the bounty data
@@ -372,13 +369,18 @@ export class BountyService {
         id: bountyId,
         title: bountyData.title,
         reward: bountyData.reward,
-        submissionDeadline: new Date(bountyData.submissionDeadline).toISOString()
+        submissionDeadline: new Date(
+          bountyData.submissionDeadline
+        ).toISOString(),
       });
-      
+
       return bountyId;
     } catch (error) {
       console.error('Error saving bounty to database:', error);
-      throw new Error('Failed to save bounty to database: ' + (error instanceof Error ? error.message : String(error)));
+      throw new Error(
+        'Failed to save bounty to database: ' +
+          (error instanceof Error ? error.message : String(error))
+      );
     }
   }
 
@@ -393,7 +395,7 @@ export class BountyService {
     try {
       // Get the bounty to verify ownership
       const bounty = await this.getBountyById(bountyId);
-      
+
       // Verify the user is the bounty owner
       if (bounty.owner !== userPublicKey) {
         throw new Error('Only the bounty owner can select winners');
@@ -403,14 +405,17 @@ export class BountyService {
       const bountyRef = this.bountiesRef.doc(bountyId.toString());
       await bountyRef.update({
         status: 'COMPLETED',
-        updatedAt: new Date().toISOString()
+        updatedAt: new Date().toISOString(),
       });
 
       // Get ranked submissions
       const submissions = await this.getBountySubmissions(bountyId);
       const rankedSubmissions = submissions
         .filter((sub: SubmissionWithRanking) => sub.ranking !== null)
-        .sort((a: SubmissionWithRanking, b: SubmissionWithRanking) => (a.ranking || 0) - (b.ranking || 0));
+        .sort(
+          (a: SubmissionWithRanking, b: SubmissionWithRanking) =>
+            (a.ranking || 0) - (b.ranking || 0)
+        );
 
       // Update submission statuses to COMPLETED for winners
       for (let i = 0; i < winnerAddresses.length; i++) {
@@ -419,7 +424,7 @@ export class BountyService {
           const submissionRef = this.submissionsRef.doc(winningSubmission.id);
           await submissionRef.update({
             status: 'COMPLETED',
-            updatedAt: new Date().toISOString()
+            updatedAt: new Date().toISOString(),
           });
         }
       }

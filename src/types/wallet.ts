@@ -9,4 +9,4 @@ export interface FreighterResponse {
   error?: string;
   network?: string;
   networkPassphrase?: string;
-} 
+}

@@ -1,12 +1,10 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import CreateBountyForm from "@/components/CreateBountyForm";
-import Layout from "@/components/Layout";
-import { useWallet } from "@/hooks/useWallet";
-import useUserStore from "@/lib/stores/useUserStore";
-import { IoWalletOutline, IoInformationCircleOutline } from "react-icons/io5";
+import { CreateBountyForm, Layout } from '@/components';
+import { useWallet } from '@/hooks/useWallet';
+import useUserStore from '@/lib/stores/useUserStore';
+import { useRouter } from 'next/navigation';
+import { IoInformationCircleOutline, IoWalletOutline } from 'react-icons/io5';
 
 export default function CreateBountyPage() {
   const router = useRouter();
@@ -31,7 +29,7 @@ export default function CreateBountyPage() {
                     until the work is completed and accepted.
                   </p>
                   <button
-                    onClick={() => (window.location.href = "/connect-wallet")}
+                    onClick={() => (window.location.href = '/connect-wallet')}
                     className="bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-lg transition-colors"
                   >
                     Connect Wallet
@@ -45,7 +43,7 @@ export default function CreateBountyPage() {
     );
   }
 
-  if (!user || user.role !== "sponsor") {
+  if (!user || user.role !== 'sponsor') {
     return (
       <Layout>
         <div className="min-h-screen py-12 px-4 sm:px-6 lg:px-8">
@@ -63,7 +61,7 @@ export default function CreateBountyPage() {
                   </p>
                   <button
                     onClick={() =>
-                      (window.location.href = "/register?role=sponsor")
+                      (window.location.href = '/register?role=sponsor')
                     }
                     className="bg-red-500 hover:bg-red-600 text-white font-medium py-2 px-4 rounded-lg transition-colors"
                   >

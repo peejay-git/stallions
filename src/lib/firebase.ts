@@ -1,10 +1,15 @@
 'use client';
 
-// Import the functions you need from the SDKs you need
-import { initializeApp, getApps, type FirebaseApp } from "firebase/app";
-import { getAuth, GoogleAuthProvider, browserLocalPersistence, setPersistence, type Auth } from "firebase/auth";
-import { getFirestore, type Firestore } from "firebase/firestore";
-import { getStorage, type FirebaseStorage } from "firebase/storage";
+import { getApps, initializeApp, type FirebaseApp } from 'firebase/app';
+import {
+  browserLocalPersistence,
+  getAuth,
+  GoogleAuthProvider,
+  setPersistence,
+  type Auth,
+} from 'firebase/auth';
+import { getFirestore, type Firestore } from 'firebase/firestore';
+import { getStorage, type FirebaseStorage } from 'firebase/storage';
 
 // Create dummy implementations for server-side
 const dummyAuth = {
@@ -28,25 +33,29 @@ const dummyFirestore = {
 const dummyStorage = {
   ref: () => ({
     put: async () => {},
-    getDownloadURL: async () => "",
+    getDownloadURL: async () => '',
   }),
 };
 
 // Function to determine the best authDomain to use
 const getBestAuthDomain = () => {
   if (typeof window === 'undefined') {
-    return process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || "";
+    return process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || '';
   }
-  
+
   const hostname = window.location.hostname;
-  
+
   // For production domains, use the current hostname directly
-  if (hostname === 'earnstallions.xyz' || hostname === 'www.earnstallions.xyz' || hostname === 'earnstallions.com') {
+  if (
+    hostname === 'earnstallions.xyz' ||
+    hostname === 'www.earnstallions.xyz' ||
+    hostname === 'earnstallions.com'
+  ) {
     return hostname;
   }
-  
+
   // For localhost, use the default Firebase authDomain
-  return process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || "";
+  return process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || '';
 };
 
 // Your web app's Firebase configuration
@@ -58,14 +67,14 @@ const firebaseConfig = {
   storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
   messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
-  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
+  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
 };
 
 // Log Firebase config for debugging (without sensitive data)
 if (typeof window !== 'undefined') {
-  console.log("Firebase authDomain:", firebaseConfig.authDomain);
-  console.log("Current origin:", window.location.origin);
-  console.log("Current hostname:", window.location.hostname);
+  console.log('Firebase authDomain:', firebaseConfig.authDomain);
+  console.log('Current origin:', window.location.origin);
+  console.log('Current hostname:', window.location.hostname);
 }
 
 // Initialize Firebase only on the client side
@@ -85,7 +94,7 @@ if (typeof window !== 'undefined') {
       storageBucket: firebaseConfig.storageBucket,
     });
 
-  // Initialize Firebase
+    // Initialize Firebase
     if (!getApps().length) {
       app = initializeApp(firebaseConfig);
       console.log('Firebase app initialized');
@@ -95,22 +104,22 @@ if (typeof window !== 'undefined') {
     }
 
     // Initialize services
-  auth = getAuth(app);
-  db = getFirestore(app);
-  storage = getStorage(app);
-  googleProvider = new GoogleAuthProvider();
+    auth = getAuth(app);
+    db = getFirestore(app);
+    storage = getStorage(app);
+    googleProvider = new GoogleAuthProvider();
 
-  // Set auth persistence
+    // Set auth persistence
     setPersistence(auth, browserLocalPersistence)
       .then(() => console.log('Auth persistence set to local'))
       .catch((error) => console.error('Auth persistence error:', error));
 
-  // Configure Google provider
-  googleProvider.addScope('https://www.googleapis.com/auth/userinfo.email');
-  googleProvider.addScope('https://www.googleapis.com/auth/userinfo.profile');
-  googleProvider.setCustomParameters({
-    prompt: 'select_account'
-  });
+    // Configure Google provider
+    googleProvider.addScope('https://www.googleapis.com/auth/userinfo.email');
+    googleProvider.addScope('https://www.googleapis.com/auth/userinfo.profile');
+    googleProvider.setCustomParameters({
+      prompt: 'select_account',
+    });
 
     console.log('Firebase services initialized successfully');
   } catch (error) {
@@ -126,4 +135,4 @@ if (typeof window !== 'undefined') {
   googleProvider = new GoogleAuthProvider();
 }
 
-export { auth, db, storage, googleProvider };
+export { auth, db, googleProvider, storage };

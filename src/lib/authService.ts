@@ -1,26 +1,23 @@
-import { FormDataType } from '@/components/RegisterModal';
-import { auth, db, googleProvider } from './firebase';
+import { FormDataType } from '@/components/core/auth/RegisterModal';
+import {
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  query,
+  setDoc,
+  updateDoc,
+  where,
+} from '@/lib/firestore';
 import {
   createUserWithEmailAndPassword,
+  onAuthStateChanged,
+  sendPasswordResetEmail,
   signInWithEmailAndPassword,
   signInWithPopup,
   signOut,
-  GoogleAuthProvider,
-  onAuthStateChanged,
-  UserCredential,
-  sendPasswordResetEmail,
 } from 'firebase/auth';
-import {
-  doc,
-  setDoc,
-  getDoc,
-  updateDoc,
-  collection,
-  query,
-  where,
-  getDocs,
-} from '@/lib/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { auth, db, googleProvider } from './firebase';
 import useUserStore from './stores/useUserStore';
 
 type TalentRegistrationData = Omit<
@@ -306,18 +303,24 @@ export async function connectWallet(walletData: WalletData) {
 
   const userRef = doc(db, 'users', user.uid);
   const userDoc = await getDoc(userRef);
-  
+
   if (!userDoc.exists()) {
     throw new Error('User document not found');
   }
-  
+
   const userData = userDoc.data();
-  
+
   // Prevent talents from overriding their stored wallet address
-  if (userData.role === 'talent' && userData.wallet && userData.wallet.address) {
-    throw new Error('Talents cannot change their wallet address after signup. Please use your original wallet address.');
+  if (
+    userData.role === 'talent' &&
+    userData.wallet &&
+    userData.wallet.address
+  ) {
+    throw new Error(
+      'Talents cannot change their wallet address after signup. Please use your original wallet address.'
+    );
   }
-  
+
   await updateDoc(userRef, {
     wallet: walletData,
   });

@@ -3,8 +3,8 @@
 import { ISupportedWallet } from '@creit.tech/stellar-wallets-kit';
 import { createContext, useContext, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
-import { initializeWallet, getWalletKit } from '../lib/wallet';
 import useUserStore from '../lib/stores/useUserStore';
+import { getWalletKit, initializeWallet } from '../lib/wallet';
 
 // Wallet context type definition
 interface WalletContextType {
@@ -45,7 +45,9 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
   const [isConnected, setIsConnected] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
   const [publicKey, setPublicKey] = useState<string | null>(null);
-  const [networkPassphrase, setNetworkPassphrase] = useState<string | null>(null);
+  const [networkPassphrase, setNetworkPassphrase] = useState<string | null>(
+    null
+  );
   const [walletId, setWalletId] = useState<string | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
   const user = useUserStore((state) => state.user);

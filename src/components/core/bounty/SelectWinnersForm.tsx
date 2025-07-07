@@ -1,7 +1,7 @@
 import { Submission } from '@/types/bounty';
-import freighterApi from '@stellar/freighter-api';
 import { useEffect, useState } from 'react';
 import { FiArrowRight, FiAward, FiCheck, FiUser } from 'react-icons/fi';
+import { useWallet } from '@/hooks/useWallet';
 
 interface SelectWinnersFormProps {
   bountyId: number;
@@ -16,6 +16,7 @@ export default function SelectWinnersForm({
   distributions,
   onSelectionComplete,
 }: SelectWinnersFormProps) {
+  const { isConnected, publicKey } = useWallet();
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -81,13 +82,9 @@ export default function SelectWinnersForm({
       setIsSubmitting(true);
 
       // Check if wallet is connected
-      const connected = await freighterApi.isConnected();
-      if (!connected) {
+      if (!isConnected || publicKey) {
         throw new Error('Wallet not connected');
       }
-
-      // Get user's public key
-      const userPublicKey = await freighterApi.getPublicKey();
 
       // Convert selected winners to array format for API
       const winnerAddresses = distributions
@@ -102,7 +99,7 @@ export default function SelectWinnersForm({
         },
         body: JSON.stringify({
           winnerAddresses,
-          userPublicKey,
+          userPublicKey: publicKey,
         }),
       });
 

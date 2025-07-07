@@ -10,7 +10,6 @@ import {
   WalletConnectAllowedMethods,
   WalletConnectModule,
 } from '@creit.tech/stellar-wallets-kit/modules/walletconnect.module';
-import freighterApi from '@stellar/freighter-api';
 import toast from 'react-hot-toast';
 
 // Add Freighter type to window object
@@ -27,8 +26,16 @@ declare global {
 let walletKit: StellarWalletsKit | null = null;
 let initializationPromise: Promise<StellarWalletsKit | null> | null = null;
 
-const TESTNET_PASSPHRASE = 'Test SDF Network ; September 2015';
-const TESTNET_ALIASES = [TESTNET_PASSPHRASE, 'Testnet', 'TESTNET', 'testnet'];
+// Define the network passphrase as a constant to ensure consistency across the app
+export const TESTNET_PASSPHRASE = 'Test SDF Network ; September 2015';
+// Define aliases that might be returned by different wallet implementations
+export const TESTNET_ALIASES = [
+  TESTNET_PASSPHRASE,
+  'Testnet',
+  'TESTNET',
+  'testnet',
+];
+export const NETWORK = TESTNET_PASSPHRASE;
 
 const createWalletKit = async () => {
   if (typeof window === 'undefined') {
@@ -54,8 +61,6 @@ const createWalletKit = async () => {
     return null;
   }
 
-  console.log('Initializing wallet kit...');
-
   // Always use TestNet
   const network = TESTNET_PASSPHRASE as WalletNetwork;
   const appUrl = process.env.NEXT_PUBLIC_APP_URL;
@@ -67,47 +72,7 @@ const createWalletKit = async () => {
   }
 
   try {
-    // Check if Freighter is available and on TestNet
-    const isFreighterAvailable = await new Promise<boolean>(async (resolve) => {
-      const checkFreighter = async () => {
-        if (window.freighter) {
-          try {
-            const isConnected = await freighterApi.isConnected();
-            if (isConnected) {
-              const network = await freighterApi.getNetwork();
-              console.log('Freighter network passphrase:', network);
-              if (
-                !TESTNET_ALIASES.map((x) => x.toLowerCase()).includes(
-                  network.toLowerCase()
-                )
-              ) {
-                console.warn('Freighter is not on TestNet');
-                toast.error('Please switch Freighter to TestNet');
-                resolve(false);
-                return;
-              }
-            }
-            resolve(true);
-          } catch (error) {
-            console.error('Error checking Freighter:', error);
-            resolve(false);
-          }
-        } else {
-          resolve(false);
-        }
-      };
-
-      // Check immediately
-      if (window.freighter) {
-        await checkFreighter();
-      } else {
-        // Set a timeout as fallback
-        setTimeout(checkFreighter, 1000);
-      }
-    });
-
-    console.log('Freighter availability:', isFreighterAvailable);
-
+    // Initialize the kit with all modules
     const newKit = new StellarWalletsKit({
       network,
       modules: [
@@ -129,130 +94,53 @@ const createWalletKit = async () => {
       ],
     });
 
-    // Add Freighter compatibility layer with better error handling and network verification
-    const originalGetAddress = newKit.getAddress.bind(newKit);
-    newKit.getAddress = async () => {
-      try {
-        // First try the original method
-        return await originalGetAddress();
-      } catch (error) {
-        console.error('Original getAddress error:', error);
-
-        // If it fails, try Freighter's method
-        if (await freighterApi.isConnected()) {
-          try {
-            // Verify network before proceeding
-            const network = await freighterApi.getNetwork();
-            console.log('Freighter network passphrase:', network);
-            if (
-              !TESTNET_ALIASES.map((x) => x.toLowerCase()).includes(
-                network.toLowerCase()
-              )
-            ) {
-              throw new Error('Please switch Freighter to TestNet');
-            }
-
-            const address = await freighterApi.getPublicKey();
-            if (!address) {
-              throw new Error('Freighter returned empty address');
-            }
-            return { address };
-          } catch (freighterError) {
-            console.error('Freighter getPublicKey error:', freighterError);
-            throw new Error(
-              freighterError instanceof Error
-                ? freighterError.message
-                : 'Failed to get address from Freighter'
-            );
-          }
-        }
-
-        throw new Error('No compatible wallet found or wallet not connected');
-      }
-    };
-
-    // Add network check to ensure we're on TestNet
+    // Add network verification middleware
     const originalGetNetwork = newKit.getNetwork.bind(newKit);
     newKit.getNetwork = async () => {
       try {
         const result = await originalGetNetwork();
-        console.log('Freighter network passphrase:', result.networkPassphrase);
+
+        // Verify the network is TestNet
         if (
           !TESTNET_ALIASES.map((x) => x.toLowerCase()).includes(
             result.networkPassphrase.toLowerCase()
           )
         ) {
+          toast.error('Please switch your wallet to TestNet');
           throw new Error('Please switch to TestNet');
         }
         return result;
       } catch (error) {
-        // If original fails, try Freighter
-        if (await freighterApi.isConnected()) {
-          try {
-            const networkPassphrase = await freighterApi.getNetwork();
-            console.log('Freighter network passphrase:', networkPassphrase);
-            if (
-              !TESTNET_ALIASES.map((x) => x.toLowerCase()).includes(
-                networkPassphrase.toLowerCase()
-              )
-            ) {
-              throw new Error('Please switch Freighter to TestNet');
-            }
-            return { network: 'testnet', networkPassphrase };
-          } catch (freighterError) {
-            console.error('Freighter getNetwork error:', freighterError);
-            throw new Error(
-              freighterError instanceof Error
-                ? freighterError.message
-                : 'Failed to get network from Freighter'
-            );
-          }
-        }
-        throw error;
+        console.error('Error getting network:', error);
+        throw new Error(
+          error instanceof Error
+            ? error.message
+            : 'Failed to get network from wallet'
+        );
       }
     };
 
-    // Add transaction signing with network verification
-    newKit.signTransaction = async (transaction: string) => {
-      if (await freighterApi.isConnected()) {
-        try {
-          // Verify network before signing
-          const network = await freighterApi.getNetwork();
-          console.log('Freighter network passphrase:', network);
-          if (
-            !TESTNET_ALIASES.map((x) => x.toLowerCase()).includes(
-              network.toLowerCase()
-            )
-          ) {
-            throw new Error('Please switch Freighter to TestNet');
-          }
-
-          const signedXdr = await freighterApi.signTransaction(transaction);
-          if (!signedXdr) {
-            throw new Error('Failed to sign transaction');
-          }
-          return {
-            signedTxXdr: signedXdr,
-            signerAddress: await freighterApi.getPublicKey(),
-          };
-        } catch (error) {
-          console.error('Transaction signing error:', error);
-          throw new Error(
-            error instanceof Error
-              ? error.message
-              : 'Failed to sign transaction. Please check your Freighter wallet.'
-          );
+    // Add error handling for address retrieval
+    const originalGetAddress = newKit.getAddress.bind(newKit);
+    newKit.getAddress = async () => {
+      try {
+        const result = await originalGetAddress();
+        if (!result || !result.address) {
+          throw new Error('No address returned from wallet');
         }
+        return result;
+      } catch (error) {
+        console.error('Error getting address:', error);
+        throw new Error(
+          error instanceof Error
+            ? error.message
+            : 'Failed to get address from wallet'
+        );
       }
-      throw new Error(
-        'Wallet not connected. Please connect your Freighter wallet.'
-      );
     };
 
-    console.log('Wallet kit created successfully');
     return newKit;
   } catch (error) {
-    console.error('Error creating wallet kit:', error);
     return null;
   }
 };
@@ -271,7 +159,6 @@ const initializeWallet = async () => {
       while (retries > 0) {
         walletKit = await createWalletKit();
         if (walletKit) {
-          console.log('Wallet kit initialized successfully');
           break;
         }
         console.warn(
@@ -299,6 +186,70 @@ if (typeof window !== 'undefined') {
   initializeWallet().catch(console.error);
 }
 
+// Sign transactions using the wallet kit
+export const signTransaction = async (
+  xdr: string,
+  networkPassphrase: string
+): Promise<{
+  signedTxXdr: string;
+  signerAddress?: string;
+}> => {
+  if (typeof window === 'undefined') {
+    throw new Error('signTransaction can only be called in browser');
+  }
+
+  try {
+    const wallet = await getWalletKit();
+    if (!wallet) {
+      throw new Error(
+        'Wallet not initialized. Please connect your wallet first.'
+      );
+    }
+
+    // Verify network passphrase matches expected TestNet
+    if (networkPassphrase !== TESTNET_PASSPHRASE) {
+      console.warn('Network mismatch when signing transaction');
+      console.warn('Expected:', TESTNET_PASSPHRASE);
+      console.warn('Received:', networkPassphrase);
+      toast.error(
+        'Network mismatch detected. Please make sure your wallet is on TestNet.'
+      );
+    }
+
+    // Use the wallet kit for signing
+    const signedTx = await wallet.signTransaction(xdr, {
+      networkPassphrase,
+    });
+
+    if (!signedTx) {
+      throw new Error('Failed to get signed transaction from wallet');
+    }
+
+    return signedTx;
+  } catch (error) {
+    console.error('Transaction signing error:', error);
+
+    // Show a user-friendly error
+    if (error instanceof Error) {
+      if (
+        error.message.includes('User declined') ||
+        error.message.includes('rejected') ||
+        error.message.includes('denied')
+      ) {
+        toast.error('Transaction was rejected by wallet');
+      } else if (error.message.includes('network')) {
+        toast.error('Network mismatch. Please switch your wallet to TestNet');
+      } else {
+        toast.error('Failed to sign transaction: ' + error.message);
+      }
+    } else {
+      toast.error('Unknown error while signing transaction');
+    }
+
+    throw new Error(
+      error instanceof Error ? error.message : 'Unknown signing error'
+    );
+  }
+};
+
 export { getWalletKit, initializeWallet };
-// Remove synchronous export
-export const kit = null;

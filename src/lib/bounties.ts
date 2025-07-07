@@ -1,3 +1,5 @@
+'use client';
+
 import { db } from '@/lib/firebase';
 import {
   addDoc,
@@ -17,7 +19,7 @@ import { Bounty, BountyCategory, BountyStatus } from '@/types/bounty';
 interface SubmitBountyInput {
   bountyId: string;
   userId: string;
-  submissionData: any; // Define the structure of submissionData based on your requirements
+  submissionData: any;
 }
 interface FilterOptions {
   statusFilters?: ('OPEN' | 'CLOSE')[];
@@ -127,16 +129,12 @@ export async function getBountyById(id: string): Promise<Bounty | null> {
 }
 
 export async function getBountiesByOwner(ownerId: string): Promise<Bounty[]> {
-  console.log(`Fetching bounties for owner: ${ownerId}`);
-
   const q = query(collection(db, 'bounties'), where('owner', '==', ownerId));
 
   const snapshot = await getDocs(q);
-  console.log(`Found ${snapshot.docs.length} bounties for owner ${ownerId}`);
 
   return snapshot.docs.map((doc) => {
     const data = doc.data();
-    console.log(`Bounty data for ID ${doc.id}:`, data);
 
     return {
       id: parseInt(doc.id), // Convert string ID to number

@@ -189,7 +189,6 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
     } catch (e) {
       console.error('Error connecting wallet:', e);
       if ((e as any).code !== -3) {
-        console.log('WJWII', (e as any).code);
         toast.error('Error connecting wallet: ' + (e as Error).message);
       }
       return null;

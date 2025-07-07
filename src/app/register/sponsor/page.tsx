@@ -260,13 +260,13 @@ export default function SponsorRegisterPage() {
               </div>
               <div className="">
                 <div className="flex items-center gap-2">
-                  <FaTelegram className="text-gray-500 text-xl mt-[2px]" />
+                  <FaTelegram className="text-gray-500 text-xl" />
                   <input
                     name="telegram"
                     value={formData.telegram}
                     onChange={handleChange}
                     placeholder="Telegram Username"
-                    className="input flex-1 py-2"
+                    className="input"
                   />
                 </div>
 

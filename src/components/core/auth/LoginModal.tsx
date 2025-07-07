@@ -13,7 +13,7 @@ import useUserStore from '@/lib/stores/useUserStore';
 import { getWalletKit } from '@/lib/wallet';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { AnimatePresence, motion } from 'framer-motion';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { FcGoogle } from 'react-icons/fc';
@@ -39,6 +39,7 @@ export default function LoginModal({
   onSwitchToRegister,
 }: Props) {
   const router = useRouter();
+  const location = usePathname();
   const { publicKey, isConnected, connect } = useWallet();
   const [formData, setFormData] = useState({ email: '', password: '' });
   const [fieldErrors, setFieldErrors] = useState({ email: '', password: '' });
@@ -98,9 +99,6 @@ export default function LoginModal({
     try {
       setIsGoogleSubmitting(true);
 
-      // Log attempt
-      console.log('Attempting Google sign-in from:', window.location.hostname);
-
       const { user, isNewUser } = await signInWithGoogle();
 
       toast.success('Login successful!');
@@ -108,9 +106,9 @@ export default function LoginModal({
 
       if (isNewUser) {
         // If it's a new user, prompt them to connect their wallet
-        router.push('/connect-wallet');
+        router.push(`/connect-wallet?redirect=${encodeURIComponent(location)}`);
       } else {
-        router.push('/dashboard');
+        router.push(`/dashboard?redirect=${encodeURIComponent(location)}`);
       }
     } catch (err: any) {
       console.error('Google sign-in error:', err);
@@ -217,7 +215,7 @@ FIREBASE DOMAIN FIX INSTRUCTIONS
       if (result.success) {
         toast.success('Login successful!');
         onClose();
-        router.push('/dashboard');
+        router.push(`/dashboard?redirect=${encodeURIComponent(location)}`);
       } else {
         // Account not found, prompt to create one
         toast.error(
@@ -249,8 +247,6 @@ FIREBASE DOMAIN FIX INSTRUCTIONS
     const storedWalletId = localStorage.getItem('walletId');
 
     try {
-      console.log('Attempting login with Firebase...');
-
       // Try direct Firebase auth first
       let userCredential;
       try {
@@ -259,22 +255,15 @@ FIREBASE DOMAIN FIX INSTRUCTIONS
           formData.email,
           formData.password
         );
-        console.log('Direct Firebase login successful');
       } catch (authError: any) {
-        console.error('Direct Firebase login error:', authError);
         throw authError;
       }
-
-      console.log('Firebase login successful, getting user data...');
 
       const uid = userCredential.user.uid;
       const docRef = doc(db, 'users', uid);
 
-      console.log('Fetching user document from Firestore...');
       const userSnap = await getDoc(docRef);
-
       if (!userSnap.exists()) {
-        console.error('User document not found in Firestore');
         throw new Error('User profile not found.');
       }
 
@@ -283,16 +272,12 @@ FIREBASE DOMAIN FIX INSTRUCTIONS
         await updateDoc(docRef, {
           lastLogin: new Date().toISOString(),
         });
-        console.log('Updated last login timestamp');
       } catch (updateError) {
         console.error('Failed to update last login timestamp:', updateError);
       }
 
       const userData = userSnap.data();
-      console.log('User data retrieved:', JSON.stringify(userData, null, 2));
-
       if (!userData?.role || !userData?.profileData) {
-        console.error('User data missing required fields:', userData);
         throw new Error('Incomplete user profile.');
       }
 
@@ -304,18 +289,13 @@ FIREBASE DOMAIN FIX INSTRUCTIONS
       };
 
       // Store in Zustand
-      console.log('Setting user in store...');
       useUserStore.getState().setUser(userProfile);
-
-      // Store in localStorage
-      localStorage.setItem('user', JSON.stringify(userProfile));
 
       // Restore wallet ID if it was previously connected
       if (storedWalletId) {
         localStorage.setItem('walletId', storedWalletId);
       }
 
-      console.log('Login process completed successfully');
       toast.success('Login successful!');
       onClose();
 
@@ -346,10 +326,6 @@ FIREBASE DOMAIN FIX INSTRUCTIONS
                   walletConnected: true,
                 };
                 useUserStore.getState().setUser(updatedUserProfile);
-                localStorage.setItem(
-                  'user',
-                  JSON.stringify(updatedUserProfile)
-                );
 
                 toast.success('Wallet connected successfully!');
               }
@@ -366,11 +342,7 @@ FIREBASE DOMAIN FIX INSTRUCTIONS
         router.push('/dashboard');
       }, 100);
     } catch (err: any) {
-      console.error('Login error details:', err);
-
       if (err.code) {
-        console.error(`Firebase error code: ${err.code}`);
-
         switch (err.code) {
           case 'auth/user-not-found':
             toast.error(
@@ -421,7 +393,6 @@ FIREBASE DOMAIN FIX INSTRUCTIONS
             break;
         }
       } else {
-        console.error('Non-Firebase error during login:', err);
         toast.error(err.message || 'Login failed. Please try again later.');
       }
     } finally {
@@ -450,7 +421,6 @@ FIREBASE DOMAIN FIX INSTRUCTIONS
         toast.error(result.message);
       }
     } catch (error) {
-      console.error('Password reset error:', error);
       toast.error('Failed to send password reset email. Please try again.');
     } finally {
       setIsResettingPassword(false);

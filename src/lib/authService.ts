@@ -35,7 +35,14 @@ interface WalletData {
 
 // #region Sponsor Register Controller
 export async function registerSponsor(data: any) {
-  const { email, password, profileImageFile, companyLogoFile, ...rest } = data;
+  const {
+    email,
+    password,
+    profileImageFile,
+    companyLogoFile,
+    walletAddress,
+    ...rest
+  } = data;
   const userCredential = await createUserWithEmailAndPassword(
     auth,
     email,
@@ -56,10 +63,8 @@ export async function registerSponsor(data: any) {
     email,
     profileData: {
       ...rest,
-      // profileImage: profileUrl,
-      // companyLogo: logoUrl,
     },
-    wallet: null,
+    wallet: walletAddress,
     createdAt: new Date().toISOString(),
     lastLogin: new Date().toISOString(),
   });
@@ -149,16 +154,9 @@ export async function signInWithGoogle() {
       login_hint: window.location.hostname,
     });
 
-    // Add hostname to console for debugging
-    console.log(
-      'Attempting Google sign-in from domain:',
-      window.location.hostname
-    );
-
     // Get auth domain from Firebase config
     // @ts-ignore - accessing auth domain
     const firebaseAuthDomain = auth.app.options.authDomain;
-    console.log('Firebase auth domain:', firebaseAuthDomain);
 
     // Try with popup first
     let result;
@@ -170,11 +168,9 @@ export async function signInWithGoogle() {
       if (auth._config) {
         // @ts-ignore - this is a workaround
         auth._config.authDomain = window.location.hostname;
-        console.log('Forced auth domain update to:', window.location.hostname);
       }
 
       result = await signInWithPopup(auth, googleProvider);
-      console.log('Google sign-in successful!');
     } catch (popupError: any) {
       errorOccurred = true;
       console.error('Popup sign-in failed:', popupError);
@@ -244,7 +240,7 @@ export async function signInWithGoogle() {
         firstName: userData.profileData.firstName,
         role: userData.role,
         walletConnected: false,
-        profileImage: user.photoURL,
+        profileImage: user.photoURL || '',
       };
 
       useUserStore.getState().setUser(userProfile);

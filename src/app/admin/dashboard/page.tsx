@@ -2,8 +2,15 @@
 
 import { AdminLayout, AdminProtectedRoute, LoadingSpinner } from '@/components';
 import { db } from '@/lib/firebase';
-import { collection, getDocs, limit, orderBy, query } from 'firebase/firestore';
+import {
+  collection,
+  getDocs,
+  limit,
+  orderBy,
+  query,
+} from 'firebase/firestore/lite';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 
@@ -35,6 +42,7 @@ interface RecentSubmission {
 }
 
 export default function AdminDashboardPage() {
+  const router = useRouter();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [recentBounties, setRecentBounties] = useState<RecentBounty[]>([]);
   const [recentSubmissions, setRecentSubmissions] = useState<
@@ -153,7 +161,7 @@ export default function AdminDashboardPage() {
                   Create Bounty
                 </Link>
                 <button
-                  onClick={() => window.location.reload()}
+                  onClick={() => router.refresh()}
                   className="inline-flex items-center px-4 py-2 bg-white/10 text-white rounded-lg hover:bg-white/20 transition-colors"
                 >
                   <svg

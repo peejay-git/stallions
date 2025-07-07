@@ -2,7 +2,6 @@ import { AppClientWrapper } from '@/components/base';
 import { WalletProvider } from '@/hooks/useWallet';
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
-import Script from 'next/script';
 import './globals.css';
 
 // Use font with subset to reduce bundle size
@@ -37,13 +36,6 @@ export default function RootLayout({
           href="https://albedo.link/albedo-intent.js"
           as="script"
           crossOrigin="anonymous"
-        />
-
-        {/* Load Albedo script with appropriate strategy for wallet functionality */}
-        <Script
-          src="https://albedo.link/albedo-intent.js"
-          strategy="afterInteractive"
-          id="albedo-script"
         />
       </head>
       <body className={`${inter.className} bg-[#070708]`}>

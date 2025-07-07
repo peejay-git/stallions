@@ -11,6 +11,8 @@ import {
   updateDoc,
   where,
 } from 'firebase/firestore/lite';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 
@@ -32,6 +34,7 @@ export default function SubmitWorkForm({
     | 'already-submitted'
     | 'expired'
   >('checking');
+  const router = useRouter();
   const [submissionId, setSubmissionId] = useState<string | null>(null);
   const [userWalletAddress, setUserWalletAddress] = useState<string | null>(
     null
@@ -61,9 +64,6 @@ export default function SubmitWorkForm({
           const userData = userSnap.data();
           if (userData.wallet && userData.wallet.address) {
             setUserWalletAddress(userData.wallet.address);
-            console.log('Found user wallet address:', userData.wallet.address);
-          } else {
-            console.log('No wallet address found in user profile');
           }
         }
       } catch (error) {
@@ -92,7 +92,6 @@ export default function SubmitWorkForm({
 
           // Check if bounty is already marked as COMPLETED
           if (bountyData.status === 'COMPLETED') {
-            console.log('Bounty is already marked as COMPLETED');
             setStep('expired');
             return;
           }
@@ -104,15 +103,12 @@ export default function SubmitWorkForm({
             const now = new Date();
 
             if (now > deadlineDate) {
-              console.log('Bounty deadline has passed:', deadlineDate);
-
               // Update bounty status to COMPLETED
               try {
                 await updateDoc(bountyRef, {
                   status: 'COMPLETED',
                   updatedAt: new Date().toISOString(),
                 });
-                console.log('Updated bounty status to COMPLETED');
               } catch (updateError) {
                 console.error('Error updating bounty status:', updateError);
               }
@@ -133,7 +129,6 @@ export default function SubmitWorkForm({
         const snapshot = await getDocs(q);
 
         if (!snapshot.empty) {
-          console.log('User already submitted work for this bounty');
           setStep('already-submitted');
           setHasSubmitted(true);
         } else {
@@ -215,11 +210,6 @@ export default function SubmitWorkForm({
           bountyId,
           content: formData.links, // Use links as the on-chain content (shorter)
         });
-
-        console.log(
-          'Generated blockchain submission ID:',
-          blockchainSubmissionId
-        );
       } catch (blockchainError) {
         console.error('Error submitting to blockchain:', blockchainError);
         throw new Error('Failed to generate submission ID. Please try again.');
@@ -422,12 +412,12 @@ export default function SubmitWorkForm({
           <p className="text-gray-400 mt-2">
             Your submission has been recorded successfully.
           </p>
-          <button
-            onClick={() => (window.location.href = `/bounties/${bountyId}`)}
+          <Link
+            href={`/bounties/${bountyId}`}
             className="mt-6 bg-white text-black font-medium py-2 px-6 rounded-lg hover:bg-white/90 transition-colors"
           >
             View Bounty
-          </button>
+          </Link>
         </div>
       )}
     </>

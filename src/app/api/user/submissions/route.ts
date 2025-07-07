@@ -1,37 +1,12 @@
-import { db } from '@/lib/firebase';
-import {
-  collection,
-  doc,
-  getDoc,
-  getDocs,
-  query,
-  where,
-} from '@/lib/firestore';
-import { BlockchainError } from '@/utils/error-handler';
+import { adminDb } from '@/lib/firebaseAdmin';
+import { SubmissionData } from '@/types/submission';
+import { CollectionReference, Query } from 'firebase-admin/firestore';
 import { NextRequest, NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
 
-// Define interface for submission data
-interface SubmissionData {
-  id: string;
-  bountyId: string;
-  applicantAddress: string;
-  userId?: string | null;
-  content?: string;
-  links?: string;
-  createdAt?: string;
-  submittedAt?: { toDate?: () => Date };
-  status?: string;
-}
-
-/**
- * GET /api/user/submissions
- * Get all submissions for the current user
- */
 export async function GET(request: NextRequest) {
   try {
-    // Get user ID from the request
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get('userId');
     const walletAddress = searchParams.get('walletAddress');
@@ -45,106 +20,48 @@ export async function GET(request: NextRequest) {
 
     console.log('Fetching submissions for:', { userId, walletAddress });
 
-    // Get submissions from database
-    const submissionsRef = collection(db, 'submissions');
+    // Get submissions from database and build query
+    let submissionsQuery: CollectionReference | Query =
+      adminDb.collection('submissions');
 
-    // Build query conditions
-    const conditions = [];
-
+    // Add query conditions
     if (userId) {
-      conditions.push(query(submissionsRef, where('userId', '==', userId)));
+      submissionsQuery = submissionsQuery.where('userId', '==', userId);
     }
 
     if (walletAddress) {
-      conditions.push(
-        query(submissionsRef, where('applicantAddress', '==', walletAddress))
+      submissionsQuery = submissionsQuery.where(
+        'applicantAddress',
+        '==',
+        walletAddress
       );
     }
 
-    // Execute queries and combine results
-    const allSubmissions: SubmissionData[] = [];
+    // Execute the query
+    const querySnapshot = await submissionsQuery.get();
+    const submissions = querySnapshot.docs.map((doc) => {
+      const data = doc.data() as SubmissionData;
+      return {
+        ...data,
+        id: doc.id,
+        submittedAt: data.submittedAt?.toDate
+          ? data.submittedAt.toDate()
+          : null,
+      };
+    });
 
-    for (const q of conditions) {
-      const snapshot = await getDocs(q);
+    // Sort submissions by createdAt date
+    const sortedSubmissions = submissions.sort((a, b) => {
+      const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      return dateB - dateA; // Descending order
+    });
 
-      if (!snapshot.empty) {
-        // Add each submission to the results, avoiding duplicates
-        snapshot.docs.forEach((docSnapshot) => {
-          const data = docSnapshot.data() as Omit<SubmissionData, 'id'>;
-          console.log(
-            `DEBUG: Raw submission data for ${docSnapshot.id}:`,
-            JSON.stringify(data)
-          );
-
-          if (!data.applicantAddress) {
-            console.error(
-              `ERROR: Missing applicantAddress in submission ${docSnapshot.id}`
-            );
-          }
-
-          if (!allSubmissions.some((s) => s.id === docSnapshot.id)) {
-            allSubmissions.push({
-              id: docSnapshot.id,
-              ...data,
-            });
-          }
-        });
-      }
-    }
-
-    // If there are no submissions, return empty array
-    if (allSubmissions.length === 0) {
-      return NextResponse.json([]);
-    }
-
-    console.log(`DEBUG: Found ${allSubmissions.length} submissions for user`);
-
-    // Get bounty titles for each submission
-    const submissions = await Promise.all(
-      allSubmissions.map(async (submission) => {
-        // Get bounty details to include title
-        let bountyTitle = 'Unknown Bounty';
-        try {
-          const bountyRef = doc(db, 'bounties', submission.bountyId);
-          const bountySnap = await getDoc(bountyRef);
-          if (bountySnap.exists()) {
-            bountyTitle = bountySnap.data().title || 'Unknown Bounty';
-          }
-        } catch (error) {
-          console.error(`Error fetching bounty ${submission.bountyId}:`, error);
-        }
-
-        // Ensure applicantAddress is present
-        const applicantAddress = submission.applicantAddress || 'Unknown';
-
-        return {
-          id: submission.id,
-          bountyId: submission.bountyId,
-          bountyTitle,
-          applicant: applicantAddress,
-          walletAddress: applicantAddress, // Add this field explicitly for consistency
-          content: submission.content || '',
-          links: submission.links || '',
-          submitted:
-            submission.createdAt ||
-            submission.submittedAt?.toDate?.()?.toISOString() ||
-            new Date().toISOString(),
-          status: submission.status || 'PENDING',
-        };
-      })
-    );
-
-    return NextResponse.json(submissions);
-  } catch (error) {
-    console.error('Error fetching user submissions:', error);
-    if (error instanceof BlockchainError) {
-      return NextResponse.json(
-        { error: error.message, code: error.code },
-        { status: 400 }
-      );
-    }
+    return NextResponse.json(sortedSubmissions);
+  } catch (error: any) {
+    console.error('Error fetching submissions:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch submissions' },
+      { error: `Failed to fetch submissions: ${error.message}` },
       { status: 500 }
     );
   }

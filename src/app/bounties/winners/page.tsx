@@ -136,7 +136,7 @@ export default function BountyWinnersPage() {
           <div className="bg-red-900/20 border border-red-700/30 rounded-lg p-6">
             <p className="text-red-300">{error}</p>
             <button
-              onClick={() => window.location.reload()}
+              onClick={() => router.refresh()}
               className="mt-4 bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-lg"
             >
               Try Again

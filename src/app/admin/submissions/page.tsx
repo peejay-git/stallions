@@ -3,6 +3,8 @@
 import { AdminLayout, AdminProtectedRoute, LoadingSpinner } from '@/components';
 import { useAdminProtectedRoute } from '@/hooks/useAdminProtectedRoute';
 import { getAllSubmissions } from '@/lib/adminService';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 
@@ -21,6 +23,7 @@ interface Submission {
 }
 
 export default function AdminSubmissionsPage() {
+  const router = useRouter();
   const { isAdmin, loading: authLoading } = useAdminProtectedRoute();
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [loading, setLoading] = useState(true);
@@ -96,7 +99,7 @@ export default function AdminSubmissionsPage() {
           <div className="flex justify-between items-center">
             <h1 className="text-2xl font-bold">Submissions</h1>
             <button
-              onClick={() => window.location.reload()}
+              onClick={() => router.refresh()}
               className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors"
             >
               Refresh
@@ -146,14 +149,12 @@ export default function AdminSubmissionsPage() {
                       </td>
                       <td className="py-4">{submission.ranking || '-'}</td>
                       <td className="py-4">
-                        <button
-                          onClick={() =>
-                            (window.location.href = `/bounties/${submission.bountyId}`)
-                          }
+                        <Link
+                          href={`/bounties/${submission.bountyId}`}
                           className="text-blue-400 hover:text-blue-300"
                         >
                           View Bounty
-                        </button>
+                        </Link>
                       </td>
                     </tr>
                   ))}

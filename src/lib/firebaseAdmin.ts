@@ -7,15 +7,6 @@ import {
 import { getAuth, type Auth } from 'firebase-admin/auth';
 import { getFirestore, type Firestore } from 'firebase-admin/firestore';
 
-// Log environment variables (without sensitive data)
-console.log('Firebase Admin Environment Variables:', {
-  projectId: process.env.FIREBASE_PROJECT_ID || '(missing)',
-  clientEmail: process.env.FIREBASE_CLIENT_EMAIL ? '(set)' : '(missing)',
-  privateKey: process.env.FIREBASE_PRIVATE_KEY ? '(set)' : '(missing)',
-  privateKeyLength: process.env.FIREBASE_PRIVATE_KEY?.length || 0,
-  privateKeySample: process.env.FIREBASE_PRIVATE_KEY?.substring(0, 50) + '...',
-});
-
 const apps = getApps();
 
 // Validate environment variables
@@ -67,7 +58,6 @@ try {
           credential: cert(serviceAccount),
         })
       : apps[0];
-  console.log('Firebase Admin initialized successfully');
 } catch (error) {
   console.error('Error initializing Firebase Admin:', error);
   console.error('Service Account details:', {
@@ -82,7 +72,6 @@ try {
 let adminDb: Firestore;
 try {
   adminDb = getFirestore(firebaseAdmin);
-  console.log('Firebase Admin Firestore initialized successfully');
 } catch (error) {
   console.error('Error initializing Firestore:', error);
   throw new Error('Failed to initialize Firestore');
@@ -91,7 +80,6 @@ try {
 let adminAuth: Auth;
 try {
   adminAuth = getAuth(firebaseAdmin);
-  console.log('Firebase Admin Auth initialized successfully');
 } catch (error) {
   console.error('Error initializing Auth:', error);
   throw new Error('Failed to initialize Auth');

@@ -8,6 +8,7 @@ import useUserStore from '@/lib/stores/useUserStore';
 import clsx from 'clsx';
 import { FirebaseError } from 'firebase/app';
 import { motion } from 'framer-motion';
+import { usePathname } from 'next/navigation';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
@@ -52,6 +53,7 @@ type FieldErrors = Partial<Record<keyof FormDataType, string>>;
 
 export default function RegisterModal({ isOpen, onClose }: Props) {
   const router = useRouter();
+  const location = usePathname();
   const [hasEditedUsername, setHasEditedUsername] = useState(false);
   const [isGoogleSubmitting, setIsGoogleSubmitting] = useState(false);
   const { connect: connectWallet, isConnected, publicKey } = useWallet();
@@ -185,9 +187,9 @@ export default function RegisterModal({ isOpen, onClose }: Props) {
 
       if (isNewUser) {
         // If it's a new user, prompt them to connect their wallet
-        router.push('/connect-wallet');
+        router.push(`/connect-wallet?redirect=${encodeURIComponent(location)}`);
       } else {
-        router.push('/dashboard');
+        router.push(`/dashboard?redirect=${encodeURIComponent(location)}`);
       }
     } catch (err: any) {
       console.error(err);
@@ -284,7 +286,7 @@ export default function RegisterModal({ isOpen, onClose }: Props) {
       onClose();
       // Use a small timeout to ensure the modal is closed before redirecting
       setTimeout(() => {
-        router.push('/dashboard');
+        router.push(`/dashboard?redirect=${encodeURIComponent(location)}`);
       }, 100);
     } catch (error: any) {
       if (error instanceof FirebaseError) {

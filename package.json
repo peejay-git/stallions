@@ -1,7 +1,7 @@
 {
   "name": "stallion",
   "version": "0.1.0",
-  "description": "Web3 platform on Stellar blockchain",
+  "description": "A decentralized bounty platform on the Stellar blockchain",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -26,25 +26,24 @@
     "@stellar/freighter-api": "1.7.1",
     "@stellar/stellar-base": "^12.1.1",
     "@stellar/stellar-sdk": "^13.3.0",
-    "@stellar/typescript-wallet-sdk-soroban": "^1.9.0",
     "@tsparticles/engine": "^3.8.1",
-    "@types/js-cookie": "^3.0.6",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
+    "dompurify": "^3.2.6",
     "firebase": "^11.9.1",
     "firebase-admin": "^13.4.0",
     "framer-motion": "^12.18.1",
     "js-cookie": "^3.0.5",
-    "next": "14.0.4",
+    "next": "^15.3.5",
     "pino-pretty": "^13.0.0",
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "react-hot-toast": "^2.5.2",
     "react-icons": "^5.5.0",
+    "react-markdown": "^10.1.0",
+    "react-quill-new": "^3.4.6",
     "react-tsparticles": "^2.12.2",
     "soroban-client": "^1.0.1",
-    "stellar-sdk": "10.4.1",
-    "tsparticles-engine": "^2.12.0",
     "tsparticles-slim": "^2.12.0",
     "zustand": "^5.0.5"
   },
@@ -55,6 +54,8 @@
     "@types/node": "20.10.5",
     "@types/react": "18.2.45",
     "@types/react-dom": "18.2.18",
+    "@types/dompurify": "^3.0.5",
+    "@types/js-cookie": "^3.0.6",
     "ajv": "^8.12.0",
     "autoprefixer": "10.4.16",
     "babel-loader": "^10.0.0",
@@ -74,6 +75,5 @@
     "ts-jest": "29.1.1",
     "typescript": "5.3.3",
     "util": "^0.12.5"
-  },
-  "packageManager": "pnpm@10.9.0+sha512.0486e394640d3c1fb3c9d43d49cf92879ff74f8516959c235308f5a8f62e2e19528a65cdc2a3058f587cde71eba3d5b56327c8c33a97e4c4051ca48a10ca2d5f"
+  }
 }

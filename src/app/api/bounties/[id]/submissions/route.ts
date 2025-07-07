@@ -1,5 +1,5 @@
 import { BountyService } from '@/lib/bountyService';
-import { adminDb } from '@/lib/firebase-admin';
+import { adminDb } from '@/lib/firebaseAdmin';
 import { NextRequest, NextResponse } from 'next/server';
 
 interface Submission {
@@ -15,10 +15,10 @@ export const dynamic = 'force-dynamic';
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
     console.log(`API: Getting submissions for bounty ID ${id}`);
 
     if (!id) {
@@ -104,7 +104,10 @@ export async function GET(
 
     return NextResponse.json(submissions);
   } catch (error) {
-    console.error(`Error fetching submissions for bounty ${params.id}:`, error);
+    console.error(
+      `Error fetching submissions for bounty ${(await params).id}:`,
+      error
+    );
     return NextResponse.json(
       { error: 'Failed to fetch submissions' },
       { status: 500 }
@@ -118,15 +121,15 @@ export async function GET(
  */
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     console.log('POST /api/bounties/[id]/submissions - Start', {
-      id: params.id,
+      id: (await params).id,
       headers: Object.fromEntries(request.headers.entries()),
     });
 
-    const { id: bountyId } = params;
+    const { id: bountyId } = await params;
     if (!bountyId) {
       return NextResponse.json(
         { error: 'Bounty ID is required' },

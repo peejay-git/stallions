@@ -3,6 +3,7 @@
 import { CreateBountyForm, Layout } from '@/components';
 import { useWallet } from '@/hooks/useWallet';
 import useUserStore from '@/lib/stores/useUserStore';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { IoInformationCircleOutline, IoWalletOutline } from 'react-icons/io5';
 
@@ -29,7 +30,13 @@ export default function CreateBountyPage() {
                     until the work is completed and accepted.
                   </p>
                   <button
-                    onClick={() => (window.location.href = '/connect-wallet')}
+                    onClick={() =>
+                      router.push(
+                        `/connect-wallet?redirect=${encodeURIComponent(
+                          '/create'
+                        )}`
+                      )
+                    }
                     className="bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-lg transition-colors"
                   >
                     Connect Wallet
@@ -59,14 +66,14 @@ export default function CreateBountyPage() {
                     Only sponsors can create bounties. Please register as a
                     sponsor to continue.
                   </p>
-                  <button
-                    onClick={() =>
-                      (window.location.href = '/register?role=sponsor')
-                    }
+                  <Link
+                    href={`/register?role=sponsor&redirect=${encodeURIComponent(
+                      '/create'
+                    )}`}
                     className="bg-red-500 hover:bg-red-600 text-white font-medium py-2 px-4 rounded-lg transition-colors"
                   >
                     Register as Sponsor
-                  </button>
+                  </Link>
                 </div>
               </div>
             </div>

@@ -15,10 +15,12 @@ import useUserStore from '@/lib/stores/useUserStore';
 import { BountyStatus } from '@/types/bounty';
 import { getAuth, signOut } from 'firebase/auth';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 export default function DashboardPage() {
   useProtectedRoute();
+  const router = useRouter();
   const { isConnected, publicKey, connect } = useWallet();
   const [activeTab, setActiveTab] = useState<'created' | 'submissions'>(
     'created'
@@ -41,6 +43,9 @@ export default function DashboardPage() {
     try {
       if (!user) return;
 
+      // Fetch user data from Firestore
+      await fetchUser();
+
       // If already connected, don't try to reconnect
       if (isConnected) return;
 
@@ -59,6 +64,9 @@ export default function DashboardPage() {
           setIsLoadingWallet(true);
           try {
             await connect({});
+            // After successful connection, fetch submissions
+            setUserSubmissions([]);
+            setLoadingSubmissions(true);
           } catch (error) {
             console.error('Failed to auto-connect wallet:', error);
             // Clear stored wallet ID on connection failure
@@ -87,26 +95,18 @@ export default function DashboardPage() {
         if (!user?.uid) return;
 
         setLoading(true);
-        console.log('Fetching bounties for user:', user.uid);
-        console.log('User public key:', publicKey);
 
         // Try to fetch bounties using both user.uid and publicKey
         let data: any[] = [];
 
         // For sponsors, we need both user.uid and wallet
         if (isSponsor) {
-          console.log('Fetching bounties for sponsor');
-
           // Always fetch bounties by UID first
           const uidBounties = await getBountiesByOwner(user.uid);
           data = [...uidBounties];
 
           // If wallet is connected, also fetch by public key
           if (publicKey) {
-            console.log(
-              'Fetching additional bounties by publicKey:',
-              publicKey
-            );
             const keyBounties = await getBountiesByOwner(publicKey);
             // Add any bounties not already included
             keyBounties.forEach((bounty) => {
@@ -117,12 +117,9 @@ export default function DashboardPage() {
           }
         } else {
           // For talents, we can fetch by user.uid
-          console.log('Fetching bounties by user.uid:', user.uid);
           const uidBounties = await getBountiesByOwner(user.uid);
           data = [...uidBounties];
         }
-
-        console.log('All bounties fetched:', JSON.stringify(data, null, 2));
 
         // Ensure each bounty has required fields
         const processedBounties = data.map((bounty) => ({
@@ -172,17 +169,19 @@ export default function DashboardPage() {
         }
 
         const data = await response.json();
-        console.log('User submissions:', data);
         setUserSubmissions(data);
       } catch (err: any) {
         console.error('Error fetching user submissions:', err);
+        setUserSubmissions([]);
       } finally {
         setLoadingSubmissions(false);
       }
     };
 
-    fetchUserSubmissions();
-  }, [user?.uid, publicKey]);
+    if (isConnected) {
+      fetchUserSubmissions();
+    }
+  }, [user?.uid, publicKey, isConnected]);
 
   // Format date to be more readable
   const formatDate = (dateString: string) => {
@@ -207,7 +206,7 @@ export default function DashboardPage() {
         // Also clear wallet connection info to prevent "Complete Profile" button from showing
         localStorage.removeItem('walletId');
 
-        window.location.href = '/';
+        router.push('/');
       }
     } catch (error) {
       console.error('Error signing out:', error);
@@ -226,7 +225,7 @@ export default function DashboardPage() {
   }
 
   // Show wallet connection prompt for sponsors
-  if (isSponsor && !isConnected && !user?.wallet) {
+  if (isSponsor && !isConnected && !user?.walletAddress) {
     return (
       <Layout>
         <div className="min-h-screen py-12 px-4 sm:px-6">

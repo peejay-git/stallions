@@ -1,7 +1,7 @@
 import { BountyService } from '@/lib/bountyService';
 import { db } from '@/lib/firebase';
 import { doc, getDoc, updateDoc } from '@/lib/firestore';
-import { BlockchainError } from '@/utils/error-handler';
+import { BlockchainError } from '@/utils/errorHandler';
 import { NextRequest, NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
@@ -13,10 +13,10 @@ export const dynamic = 'force-dynamic';
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
     if (!id) {
       return NextResponse.json(
         { error: 'Bounty ID is required' },
@@ -32,7 +32,7 @@ export async function GET(
 
     return NextResponse.json(bounty);
   } catch (error) {
-    console.error(`Error fetching bounty ${params.id}:`, error);
+    console.error(`Error fetching bounty ${(await params).id}:`, error);
     if (error instanceof BlockchainError) {
       return NextResponse.json(
         { error: error.message, code: error.code },
@@ -53,10 +53,10 @@ export async function GET(
  */
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
     if (!id) {
       return NextResponse.json(
         { error: 'Bounty ID is required' },
@@ -76,6 +76,7 @@ export async function PUT(
       deadline,
       submissionDeadline,
       judgingDeadline,
+      distribution,
       status,
     } = await request.json();
 
@@ -126,6 +127,7 @@ export async function PUT(
       }
     }
 
+    // TODO: Only update provided fields
     // Update off-chain data
     await bountyService.saveBountyToDatabase(parseInt(id), {
       description: description || '',
@@ -140,6 +142,7 @@ export async function PUT(
       judgingDeadline: judgingDeadline || '',
       status: status || 'OPEN',
       updatedAt: new Date().toISOString(),
+      distribution: distribution || [],
     });
 
     return NextResponse.json({
@@ -148,7 +151,7 @@ export async function PUT(
       id,
     });
   } catch (error) {
-    console.error(`Error updating bounty ${params.id}:`, error);
+    console.error(`Error updating bounty ${(await params).id}:`, error);
     if (error instanceof BlockchainError) {
       return NextResponse.json(
         { error: error.message, code: error.code },
@@ -169,10 +172,10 @@ export async function PUT(
  */
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
     if (!id) {
       return NextResponse.json(
         { error: 'Bounty ID is required' },
@@ -190,7 +193,7 @@ export async function DELETE(
       id,
     });
   } catch (error) {
-    console.error(`Error cancelling bounty ${params.id}:`, error);
+    console.error(`Error cancelling bounty ${(await params).id}:`, error);
     if (error instanceof BlockchainError) {
       return NextResponse.json(
         { error: error.message, code: error.code },

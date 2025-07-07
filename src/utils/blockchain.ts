@@ -1,6 +1,5 @@
 import { SorobanService } from '@/lib/soroban';
 import { Distribution } from '@/types/bounty';
-import { getNetwork } from '@stellar/freighter-api';
 import toast from 'react-hot-toast';
 
 /**
@@ -78,15 +77,6 @@ export async function createBountyOnChain({
     // so we don't need to look it up in the mapping
     const tokenAddress = token;
 
-    console.log(`Using token address: ${tokenAddress}`);
-
-    // Get the network to confirm we're on the right one
-    const network = await getNetwork().catch((error) => {
-      console.warn('Failed to get network, using default:', error);
-      return 'TESTNET'; // Default to testnet if we can't get the current network
-    });
-    console.log('Current network:', network);
-
     // Initialize Soroban service with the user's public key
     const sorobanService = new SorobanService(userPublicKey);
 
@@ -97,16 +87,13 @@ export async function createBountyOnChain({
 
     try {
       // Create bounty on the blockchain with the token address instead of symbol
-      // Use retry logic for blockchain operations
-      const bountyId = await retryOperation(async () => {
-        return await sorobanService.createBounty({
-          title,
-          owner: userPublicKey,
-          token: tokenAddress, // Use the resolved token address
-          reward: { amount: reward.amount, asset: token }, // Use the token symbol
-          distribution,
-          submissionDeadline,
-        });
+      const bountyId = await sorobanService.createBounty({
+        title,
+        owner: userPublicKey,
+        token: tokenAddress, // Use the resolved token address
+        reward: { amount: reward.amount, asset: token }, // Use the token symbol
+        distribution,
+        submissionDeadline,
       });
 
       // Success message
@@ -241,10 +228,6 @@ export async function submitWorkOnChain({
       0,
       8
     )}-${bountyId}-${timestamp}`;
-
-    console.log(
-      `Generated submission ID: ${submissionId} (database-only approach)`
-    );
 
     return submissionId;
   } catch (error) {

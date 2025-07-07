@@ -5,10 +5,10 @@ import { auth } from '@/lib/firebase';
 import { confirmPasswordReset, verifyPasswordResetCode } from 'firebase/auth';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { FiAlertTriangle, FiCheckCircle } from 'react-icons/fi';
 
-export default function ResetSuccessPage() {
+function ResetSuccessPageContent() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
@@ -23,8 +23,6 @@ export default function ResetSuccessPage() {
   const mode = searchParams?.get('mode');
 
   useEffect(() => {
-    console.log('Reset parameters:', { oobCode, mode });
-
     if (!oobCode) {
       setError(
         'Missing password reset code. Please use the link from your email.'
@@ -34,7 +32,6 @@ export default function ResetSuccessPage() {
     }
 
     if (mode !== 'resetPassword') {
-      console.log('Incorrect mode:', mode);
       setError('Invalid password reset link. Please request a new one.');
       setIsLoading(false);
       return;
@@ -43,11 +40,9 @@ export default function ResetSuccessPage() {
     // Verify the password reset code
     verifyPasswordResetCode(auth, oobCode)
       .then((email) => {
-        console.log('Reset code verified for email:', email);
         setIsLoading(false);
       })
       .catch((error) => {
-        console.error('Error verifying reset code:', error);
         setError(
           'This password reset link has expired or already been used. Please request a new one.'
         );
@@ -78,15 +73,10 @@ export default function ResetSuccessPage() {
     }
 
     setIsResetting(true);
-    console.log(
-      'Attempting to confirm password reset with code:',
-      oobCode?.substring(0, 5) + '...'
-    );
 
     try {
       // Complete the password reset
       await confirmPasswordReset(auth, oobCode, newPassword);
-      console.log('Password reset confirmed successfully');
       setSuccess(true);
 
       // Redirect to login after 3 seconds
@@ -94,9 +84,6 @@ export default function ResetSuccessPage() {
         router.push('/');
       }, 3000);
     } catch (error: any) {
-      console.error('Error resetting password:', error);
-      console.error('Error code:', error.code);
-      console.error('Error message:', error.message);
       setError(error.message || 'Failed to reset password. Please try again.');
     } finally {
       setIsResetting(false);
@@ -221,5 +208,13 @@ export default function ResetSuccessPage() {
         </form>
       </div>
     </div>
+  );
+}
+
+export default function ResetSuccessPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <ResetSuccessPageContent />
+    </Suspense>
   );
 }

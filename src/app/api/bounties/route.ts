@@ -1,5 +1,5 @@
 import { BountyService } from '@/lib/bountyService';
-import { adminDb } from '@/lib/firebase-admin';
+import { adminDb } from '@/lib/firebaseAdmin';
 import { NextRequest, NextResponse } from 'next/server';
 
 // Force dynamic rendering for APIs to work properly in production
@@ -133,20 +133,9 @@ export async function POST(request: NextRequest) {
       submissionDeadline,
       judgingDeadline,
       status,
+      distribution,
       sponsorName,
     } = requestBody;
-
-    console.log('Extracted request data:', {
-      blockchainBountyId,
-      description: description?.substring(0, 50) + '...',
-      category,
-      skills,
-      owner,
-      title,
-      reward,
-      submissionDeadline,
-      status,
-    });
 
     // Validate required fields
     if (
@@ -164,6 +153,8 @@ export async function POST(request: NextRequest) {
       if (!category) missingFields.push('category');
       if (!skills) missingFields.push('skills');
       if (!owner) missingFields.push('owner');
+      if (!distribution || distribution.length === 0)
+        missingFields.push('distribution');
 
       console.error('Validation failed - Missing fields:', missingFields);
       return NextResponse.json(
@@ -199,8 +190,10 @@ export async function POST(request: NextRequest) {
         extraRequirements: extraRequirements || '',
         owner: owner || '',
         title: title || '',
+        distribution: distribution || [],
         reward:
           typeof reward === 'object' ? JSON.stringify(reward) : reward || '',
+        sponsorName: sponsorName || '',
         deadline: deadline || new Date().toISOString(),
         submissionDeadline:
           submissionDeadline || deadline || new Date().toISOString(),

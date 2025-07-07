@@ -129,44 +129,6 @@ export default function BountiesPage() {
       .finally(() => setLoading(false));
   }, []);
 
-  const filteredAndSorted = [...bounties]
-    .filter((bounty) => {
-      const searchTermLower = searchTerm.toLowerCase();
-      const titleMatch =
-        bounty.title?.toLowerCase().includes(searchTermLower) || false;
-      const descriptionMatch =
-        bounty.description?.toLowerCase().includes(searchTermLower) || false;
-      return titleMatch || descriptionMatch;
-    })
-    .sort((a, b) => {
-      switch (sortBy) {
-        case 'reward-high':
-          return Number(b.reward?.amount || 0) - Number(a.reward?.amount || 0);
-        case 'reward-low':
-          return Number(a.reward?.amount || 0) - Number(b.reward?.amount || 0);
-        case 'deadline':
-          return (
-            new Date(a.deadline || Date.now()).getTime() -
-            new Date(b.deadline || Date.now()).getTime()
-          );
-        case 'newest':
-        default:
-          // Handle potential missing createdAt field or different formats
-          const getCreatedTimestamp = (bounty: ApiBounty) => {
-            if (!bounty.createdAt) return 0;
-            if (
-              typeof bounty.createdAt === 'object' &&
-              bounty.createdAt.seconds
-            )
-              return bounty.createdAt.seconds * 1000;
-            if (typeof bounty.createdAt === 'string')
-              return new Date(bounty.createdAt).getTime();
-            return 0;
-          };
-          return getCreatedTimestamp(b) - getCreatedTimestamp(a);
-      }
-    });
-
   // Filter bounties based on selected filter and completed status
   const filteredBounties = useMemo(() => {
     let filtered = bounties;

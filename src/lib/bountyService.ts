@@ -4,7 +4,7 @@ import type {
   QueryDocumentSnapshot,
 } from 'firebase/firestore/lite';
 import { db } from './firebase';
-import { adminDb } from './firebase-admin';
+import { adminDb } from './firebaseAdmin';
 
 interface FirestoreBountyData {
   owner: string;
@@ -292,6 +292,7 @@ export class BountyService {
       owner: string;
       title: string;
       reward: string | { amount: string; asset: string };
+      distribution: { position: number; percentage: number }[];
       deadline: string;
       submissionDeadline: string;
       judgingDeadline: string;
@@ -301,17 +302,6 @@ export class BountyService {
     }
   ) {
     try {
-      console.log('Saving bounty to database:', {
-        bountyId,
-        title: data.title,
-        reward: data.reward,
-        submissionDeadline: data.submissionDeadline,
-        data: {
-          ...data,
-          description: data.description.substring(0, 50) + '...',
-        },
-      });
-
       // Parse reward if it's a string
       let parsedReward: { amount: string; asset: string };
       if (typeof data.reward === 'string') {
@@ -347,7 +337,7 @@ export class BountyService {
         createdAt: new Date().toISOString(),
         updatedAt: data.updatedAt,
         sponsorName: data.sponsorName || '',
-        distribution: [], // Default empty distribution
+        distribution: data.distribution, // Default empty distribution
       };
 
       // Validate required fields
@@ -364,15 +354,6 @@ export class BountyService {
       // Save to Firestore
       const bountyRef = this.bountiesRef.doc(bountyId.toString());
       await bountyRef.set(bountyData);
-
-      console.log('Bounty saved successfully:', {
-        id: bountyId,
-        title: bountyData.title,
-        reward: bountyData.reward,
-        submissionDeadline: new Date(
-          bountyData.submissionDeadline
-        ).toISOString(),
-      });
 
       return bountyId;
     } catch (error) {

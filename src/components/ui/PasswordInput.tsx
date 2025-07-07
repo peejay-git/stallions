@@ -23,7 +23,7 @@ export default function PasswordInput({
   const [showPassword, setShowPassword] = useState(false);
 
   return (
-    <div className="relative">
+    <div className="relative w-full">
       {icon && (
         <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-300">
           {icon}
@@ -35,7 +35,7 @@ export default function PasswordInput({
         placeholder={placeholder}
         value={value}
         onChange={onChange}
-        className={`${className} ${icon ? 'pl-10' : ''}`}
+        className={`w-full ${className} ${icon ? 'pl-10' : ''}`}
         required={required}
       />
       <button

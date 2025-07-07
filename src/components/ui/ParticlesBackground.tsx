@@ -16,6 +16,22 @@ export default function ParticleBackground() {
       options={{
         fullScreen: { enable: false },
         background: { color: { value: 'transparent' } },
+        interactivity: {
+          events: {
+            onHover: {
+              enable: true,
+              mode: 'grab',
+            },
+            onClick: {
+              enable: true,
+              mode: 'push',
+            },
+          },
+        },
+        backgroundMode: {
+          enable: true,
+          zIndex: -1,
+        },
         particles: {
           number: { value: 60, density: { enable: true, area: 800 } },
           color: { value: '#ffffff' },
@@ -50,7 +66,7 @@ export default function ParticleBackground() {
         },
         detectRetina: true,
       }}
-      className="absolute inset-0 -z-50"
+      className="absolute inset-0"
     />
   );
 }

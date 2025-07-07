@@ -1,30 +1,26 @@
 'use client';
 
 import {
+  AddressLink,
   BountyDetailSkeleton,
+  RichTextViewer,
   SubmissionDetailsModal,
-  SubmitWorkForm,
 } from '@/components';
 import { assetSymbols } from '@/components/core/bounty/BountyCard';
 import { useWallet } from '@/hooks/useWallet';
 import { bountyHasSubmissions, getBountyById } from '@/lib/bounties';
 import { db } from '@/lib/firebase';
 import { doc, getDoc } from '@/lib/firestore';
-import useUserStore from '@/lib/stores/useUserStore';
 import { Bounty, BountyStatus, Submission } from '@/types/bounty';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { FiAward, FiBriefcase, FiClock, FiUser } from 'react-icons/fi';
 
-export default function BountyDetailPage({
-  params,
-}: {
-  params: { id: string };
-}) {
-  const router = useRouter();
+export default function BountyDetailPage() {
+  const params = useParams<{ id: string }>();
   const [bounty, setBounty] = useState<Bounty | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -32,11 +28,10 @@ export default function BountyDetailPage({
   const [userRole, setUserRole] = useState<string | null>(null);
   const [isSponsor, setIsSponsor] = useState(false);
   const [canEdit, setCanEdit] = useState(false);
-  const [checkingEditStatus, setCheckingEditStatus] = useState(true);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [loadingSubmissions, setLoadingSubmissions] = useState(false);
   const [rankingsApproved, setRankingsApproved] = useState(false);
-  const { isConnected, publicKey } = useWallet();
+  const { publicKey } = useWallet();
   const [winners, setWinners] = useState<any[]>([]);
   const [loadingWinners, setLoadingWinners] = useState(false);
   const [selectedSubmission, setSelectedSubmission] =
@@ -49,14 +44,15 @@ export default function BountyDetailPage({
     seconds: 0,
     expired: false,
   });
-  const user = useUserStore((state) => state.user);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const data = await getBountyById(params.id);
+        const id = params.id;
+        if (!id || typeof id !== 'string') return;
+
+        const data = await getBountyById(id);
         setBounty(data);
-        console.log('Bounty:', data);
 
         // If bounty is completed, fetch winners
         if (data && data.status === BountyStatus.COMPLETED) {
@@ -142,31 +138,13 @@ export default function BountyDetailPage({
     // Allow both bounty owners and sponsors to view submissions
     const isOwnerByWallet = bounty.owner === publicKey;
 
-    console.log('Submission access check:', {
-      userId,
-      publicKey,
-      bountyOwner: bounty.owner,
-      isOwnerByWallet,
-      isSponsor,
-      userRole,
-    });
-
     if (!isOwnerByWallet && !isSponsor) {
-      console.log(
-        'User is neither owner nor sponsor, not fetching submissions'
-      );
       return;
     }
 
     const fetchSubmissions = async () => {
       try {
         setLoadingSubmissions(true);
-        console.log('Fetching submissions with headers:', {
-          userId,
-          userRole,
-          isSponsor,
-          publicKey,
-        });
 
         const response = await fetch(`/api/bounties/${params.id}/submissions`, {
           headers: {
@@ -183,10 +161,6 @@ export default function BountyDetailPage({
         }
 
         const data = await response.json();
-        console.log(
-          'DEBUG: Submissions data from API:',
-          JSON.stringify(data, null, 2)
-        );
 
         // Validate each submission has an applicant address
         const validatedData = data.map((submission: any) => {
@@ -236,11 +210,6 @@ export default function BountyDetailPage({
               const role = userData.role || userData?.profileData?.role;
               setUserRole(role);
               setIsSponsor(role === 'sponsor');
-              console.log('User role check:', {
-                uid: user.uid,
-                role,
-                isSponsor: role === 'sponsor',
-              });
             }
           } catch (error) {
             console.error('Error checking user role:', error);
@@ -262,27 +231,26 @@ export default function BountyDetailPage({
   // Check if user can edit this bounty (is owner and no submissions)
   useEffect(() => {
     const checkEditPermission = async () => {
+      const id = params.id;
+      if (!id || typeof id !== 'string') return;
+
       if (!bounty || !publicKey) {
         setCanEdit(false);
-        setCheckingEditStatus(false);
         return;
       }
 
       if (bounty.owner !== publicKey) {
         setCanEdit(false);
-        setCheckingEditStatus(false);
         return;
       }
 
       try {
         // Check if bounty has submissions
-        const hasSubmissions = await bountyHasSubmissions(params.id);
+        const hasSubmissions = await bountyHasSubmissions(id);
         setCanEdit(!hasSubmissions);
       } catch (err) {
         console.error('Error checking bounty submissions:', err);
         setCanEdit(false);
-      } finally {
-        setCheckingEditStatus(false);
       }
     };
 
@@ -291,7 +259,6 @@ export default function BountyDetailPage({
     }
   }, [bounty, publicKey, params.id]);
 
-  console.log('User ID:', userId); // Log the user ID to the console
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
@@ -321,8 +288,6 @@ export default function BountyDetailPage({
       }
 
       try {
-        console.log('Updating expired bounty to COMPLETED status');
-
         // Update the status in the database
         const response = await fetch(`/api/bounties/${params.id}`, {
           method: 'PUT',
@@ -336,7 +301,6 @@ export default function BountyDetailPage({
         });
 
         if (response.ok) {
-          console.log('Successfully updated bounty status to COMPLETED');
           // Update local state
           setBounty({
             ...bounty,
@@ -508,17 +472,9 @@ export default function BountyDetailPage({
     }
   };
 
-  const handleEditBounty = () => {
-    router.push(`/bounties/${params.id}/edit`);
-  };
-
   // Handle approve rankings function
   const handleApproveRankings = async () => {
     if (!bounty || !publicKey) {
-      console.log('Cannot approve rankings - missing bounty or publicKey:', {
-        bounty,
-        publicKey,
-      });
       return;
     }
 
@@ -538,8 +494,6 @@ export default function BountyDetailPage({
       .filter((sub) => sub.ranking !== null)
       .sort((a, b) => (a.ranking || 0) - (b.ranking || 0));
 
-    console.log('Ranked submissions:', rankedSubmissions);
-
     if (rankedSubmissions.length < distributionCount) {
       toast.error(
         `Please rank at least ${distributionCount} submission(s) before approving`
@@ -556,12 +510,6 @@ export default function BountyDetailPage({
       const winnerAddresses = rankedSubmissions
         .slice(0, distributionCount)
         .map((sub) => sub.walletAddress || sub.applicant);
-
-      console.log('Sending request to select winners:', {
-        bountyId: params.id,
-        winnerAddresses,
-        userPublicKey: publicKey,
-      });
 
       // Call the API to select winners and process payments on the blockchain
       const response = await fetch(`/api/bounties/${params.id}/winners`, {
@@ -582,7 +530,6 @@ export default function BountyDetailPage({
       }
 
       const result = await response.json();
-      console.log('API success response:', result);
 
       // Update local state
       setRankingsApproved(true);
@@ -634,17 +581,6 @@ export default function BountyDetailPage({
   const isOwner = publicKey === bounty.owner;
   const canViewSubmissions = isOwner || isSponsor;
 
-  // Debug log for render values
-  console.log('Render values:', {
-    userId,
-    publicKey,
-    bountyOwner: bounty.owner,
-    isOwner,
-    isSponsor,
-    userRole,
-    submissions: submissions.length,
-  });
-
   return (
     <div className="min-h-screen py-12 px-4 sm:px-6">
       <div className="max-w-5xl mx-auto">
@@ -679,7 +615,7 @@ export default function BountyDetailPage({
           </Link>
         </div>
 
-        {/* Bounty header */}
+        {/* Bounty info */}
         <div className="backdrop-blur-xl bg-white/10 border border-white/20 rounded-xl p-8 mb-8 text-white">
           <div className="flex flex-col md:flex-row justify-between md:items-start gap-4 mb-6">
             <div className="flex-1">
@@ -701,6 +637,37 @@ export default function BountyDetailPage({
                 <FiBriefcase className="flex-shrink-0" />
                 <span>Sponsored by {bounty.sponsorName || 'Anonymous'}</span>
               </div>
+              {bounty.status === BountyStatus.OPEN && !isBountyExpired() && (
+                <div className="my-2">
+                  <h3 className="text-gray-300 mb-2 flex items-center gap-1">
+                    <FiClock /> Time Remaining:
+                  </h3>
+                  <div className="flex gap-2">
+                    <div className="bg-white/10 rounded-lg px-3 py-2 text-center w-16">
+                      <div className="text-xl font-mono">{countdown.days}</div>
+                      <div className="text-xs text-gray-400">Days</div>
+                    </div>
+                    <div className="bg-white/10 rounded-lg px-3 py-2 text-center w-16">
+                      <div className="text-xl font-mono">
+                        {countdown.hours.toString().padStart(2, '0')}
+                      </div>
+                      <div className="text-xs text-gray-400">Hours</div>
+                    </div>
+                    <div className="bg-white/10 rounded-lg px-3 py-2 text-center w-16">
+                      <div className="text-xl font-mono">
+                        {countdown.minutes.toString().padStart(2, '0')}
+                      </div>
+                      <div className="text-xs text-gray-400">Min</div>
+                    </div>
+                    <div className="bg-white/10 rounded-lg px-3 py-2 text-center w-16">
+                      <div className="text-xl font-mono">
+                        {countdown.seconds.toString().padStart(2, '0')}
+                      </div>
+                      <div className="text-xs text-gray-400">Sec</div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
             <div className="flex flex-col items-end">
               <div className="bg-white text-black py-3 px-6 rounded-lg text-center mb-3 w-full md:w-auto">
@@ -712,12 +679,12 @@ export default function BountyDetailPage({
               </div>
 
               {canEdit && (
-                <button
-                  onClick={handleEditBounty}
+                <Link
+                  href={`/bounties/${params.id}/edit`}
                   className="bg-white/10 backdrop-blur-xl border border-white/20 text-white font-medium py-2 px-4 rounded-lg hover:bg-white/20 transition-colors w-full md:w-auto"
                 >
                   Edit Bounty
-                </button>
+                </Link>
               )}
             </div>
           </div>
@@ -737,42 +704,18 @@ export default function BountyDetailPage({
               <div>
                 <h3 className="text-sm text-gray-300 mb-1">Posted By</h3>
                 <p className="font-medium text-white truncate">
-                  {bounty.owner.slice(0, 6)}...{bounty.owner.slice(-4)}
+                  <AddressLink address={bounty.owner} />
                 </p>
               </div>
             </div>
 
-            {bounty.status === BountyStatus.OPEN && (
-              <div className="mb-6">
-                <h3 className="text-sm text-gray-300 mb-2 flex items-center gap-1">
-                  <FiClock /> Time Remaining:
-                </h3>
-                <div className="flex gap-2">
-                  <div className="bg-white/10 rounded-lg px-3 py-2 text-center w-16">
-                    <div className="text-xl font-mono">{countdown.days}</div>
-                    <div className="text-xs text-gray-400">Days</div>
-                  </div>
-                  <div className="bg-white/10 rounded-lg px-3 py-2 text-center w-16">
-                    <div className="text-xl font-mono">
-                      {countdown.hours.toString().padStart(2, '0')}
-                    </div>
-                    <div className="text-xs text-gray-400">Hours</div>
-                  </div>
-                  <div className="bg-white/10 rounded-lg px-3 py-2 text-center w-16">
-                    <div className="text-xl font-mono">
-                      {countdown.minutes.toString().padStart(2, '0')}
-                    </div>
-                    <div className="text-xs text-gray-400">Min</div>
-                  </div>
-                  <div className="bg-white/10 rounded-lg px-3 py-2 text-center w-16">
-                    <div className="text-xl font-mono">
-                      {countdown.seconds.toString().padStart(2, '0')}
-                    </div>
-                    <div className="text-xs text-gray-400">Sec</div>
-                  </div>
-                </div>
-              </div>
-            )}
+            <div className="mb-6">
+              <h3 className="text-sm text-gray-300 mb-2">Description</h3>
+              <RichTextViewer
+                content={bounty.description}
+                className="bg-white/5 p-4 rounded-lg prose prose-invert prose-headings:text-white prose-a:text-blue-400 max-w-none"
+              />
+            </div>
 
             <div className="mb-6">
               <h3 className="text-sm text-gray-300 mb-1">Skills</h3>
@@ -787,319 +730,274 @@ export default function BountyDetailPage({
                 ))}
               </div>
             </div>
-          </div>
-        </div>
 
-        {/* Bounty description */}
-        <div className="backdrop-blur-xl bg-white/10 border border-white/20 rounded-xl p-8 mb-8 text-white">
-          <h2 className="text-xl font-semibold mb-4">Description</h2>
-          <div className="prose max-w-none text-gray-300">
-            <p className="whitespace-pre-line">{bounty.description}</p>
-          </div>
-        </div>
-
-        {/* Winners section for completed bounties */}
-        {bounty.status === BountyStatus.COMPLETED && (
-          <div className="backdrop-blur-xl bg-white/10 border border-white/20 rounded-xl p-8 mb-8 text-white">
-            <h2 className="text-xl font-semibold mb-6 flex items-center gap-2">
-              <FiAward className="text-yellow-400" />
-              Winners
-            </h2>
-
-            {loadingWinners ? (
-              <div className="flex justify-center py-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-white"></div>
-              </div>
-            ) : winners.length > 0 ? (
-              <div className="space-y-4">
-                {winners
-                  .sort((a, b) => a.position - b.position)
-                  .map((winner) => (
-                    <div
-                      key={winner.position}
-                      className="flex items-center gap-4 bg-white/5 p-4 rounded-lg"
-                    >
-                      <div className="text-3xl">
-                        {positionToMedal(winner.position)}
-                      </div>
-                      <div className="flex-grow">
-                        <div className="flex justify-between items-center">
-                          <span className="text-white font-medium">
-                            {winner.position === 1
-                              ? '1st Place'
-                              : winner.position === 2
-                              ? '2nd Place'
-                              : winner.position === 3
-                              ? '3rd Place'
-                              : `${winner.position}th Place`}
-                          </span>
-                          <span className="text-gray-300 text-sm">
-                            {winner.percentage}% of reward
-                          </span>
-                        </div>
-                        <div className="text-gray-400 text-sm flex items-center gap-1 mt-1">
-                          <FiUser className="flex-shrink-0" />
-                          <span>
-                            {winner.applicantAddress === 'No winner selected'
-                              ? 'No winner selected'
-                              : `${winner.applicantAddress.substring(
-                                  0,
-                                  8
-                                )}...${winner.applicantAddress.substring(
-                                  winner.applicantAddress.length - 8
-                                )}`}
-                          </span>
-                        </div>
-                        <div className="mt-2 text-green-400 font-medium">
-                          {winner.rewardAmount} {winner.rewardAsset}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-              </div>
-            ) : (
-              <p className="text-gray-300">
-                No winner information available for this bounty.
-              </p>
-            )}
-          </div>
-        )}
-
-        {/* Submissions section (visible to bounty owner and sponsors) */}
-        {canViewSubmissions && (
-          <div className="backdrop-blur-xl bg-white/10 border border-white/20 rounded-xl p-8 mb-8 text-white">
-            <div className="flex justify-between items-center mb-4">
-              <div>
-                <h2 className="text-xl font-semibold flex items-center gap-2">
-                  <FiUser className="text-blue-400" /> Submissions
-                  {submissions.length > 0 && (
-                    <span className="bg-blue-500/30 text-blue-200 border border-blue-500/50 rounded-full px-2 py-0.5 text-xs font-medium">
-                      {submissions.length}
-                    </span>
-                  )}
-                </h2>
-                <p className="text-gray-400 text-sm mt-1">
-                  {submissions.length === 0
-                    ? 'No submissions yet. Check back later!'
-                    : isOwner
-                    ? 'Rank the best submissions to select winners and distribute rewards.'
-                    : 'View submissions for this bounty.'}
-                </p>
-              </div>
-
-              {submissions.length > 0 &&
-                isOwner &&
-                submissions.some((sub) => sub.ranking) &&
-                !rankingsApproved && (
-                  <button
-                    onClick={handleApproveRankings}
-                    className="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg transition-colors flex items-center gap-2"
-                  >
-                    <FiAward /> Finalize Winners & Send Payments
-                  </button>
-                )}
-              {rankingsApproved && (
-                <div className="bg-green-900/40 text-green-300 border border-green-700/30 rounded-lg px-4 py-2 flex items-center gap-2">
-                  <FiAward /> Winners Finalized ✓
+            {/* Reward Distribution Section */}
+            <div className="mb-6">
+              <h3 className="text-sm text-gray-300 mb-1">
+                Reward Distribution
+              </h3>
+              <div className="bg-white/5 border border-white/10 rounded-lg p-4">
+                <div className="flex justify-between items-center mb-3">
+                  <span className="text-white">Total Reward:</span>
+                  <span className="text-white font-medium">
+                    {assetSymbols[bounty.reward.asset] || ''}
+                    {bounty.reward.amount} {bounty.reward.asset}
+                  </span>
                 </div>
-              )}
+                <div className="flex justify-between items-center mb-3 text-sm">
+                  <span className="text-gray-300">Platform Fee (1%):</span>
+                  <span className="text-gray-300">
+                    {assetSymbols[bounty.reward.asset] || ''}
+                    {(parseFloat(bounty.reward.amount) * 0.01).toFixed(2)}{' '}
+                    {bounty.reward.asset}
+                  </span>
+                </div>
+                <div className="border-t border-white/10 my-3"></div>
+                {bounty.distribution && bounty.distribution.length > 0 ? (
+                  <>
+                    <div className="text-sm text-gray-300 mb-2">
+                      Distribution after platform fee:
+                    </div>
+                    <div className="space-y-2">
+                      {bounty.distribution.map((dist) => {
+                        const totalAfterFee =
+                          parseFloat(bounty.reward.amount) * 0.99;
+                        const positionAmount =
+                          totalAfterFee * (dist.percentage / 100);
+                        return (
+                          <div
+                            key={dist.position}
+                            className="flex justify-between items-center text-sm"
+                          >
+                            <span className="flex items-center gap-1">
+                              {dist.position === 1 && '🥇'}
+                              {dist.position === 2 && '🥈'}
+                              {dist.position === 3 && '🥉'}
+                              {dist.position > 3 && `${dist.position}th`} Place
+                              ({dist.percentage}%):
+                            </span>
+                            <span className="font-medium text-white">
+                              {assetSymbols[bounty.reward.asset] || ''}
+                              {positionAmount.toFixed(2)} {bounty.reward.asset}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-sm text-gray-300">
+                    Winner takes all (after 1% platform fee):{' '}
+                    {assetSymbols[bounty.reward.asset] || ''}
+                    {(parseFloat(bounty.reward.amount) * 0.99).toFixed(2)}{' '}
+                    {bounty.reward.asset}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Submissions section (visible to bounty owner) */}
+      {canViewSubmissions && (
+        <div className="max-w-5xl mx-auto backdrop-blur-xl bg-white/10 border border-white/20 rounded-xl p-8 text-white">
+          <div className="flex justify-between items-center mb-4">
+            <div>
+              <h2 className="text-xl font-semibold flex items-center gap-2">
+                <FiUser className="text-blue-400" /> Submissions
+                {submissions.length > 0 && (
+                  <span className="bg-blue-500/30 text-blue-200 border border-blue-500/50 rounded-full px-2 py-0.5 text-xs font-medium">
+                    {submissions.length}
+                  </span>
+                )}
+              </h2>
+              <p className="text-gray-400 text-sm mt-1">
+                {submissions.length === 0
+                  ? 'No submissions yet. Check back later!'
+                  : isOwner
+                  ? 'Rank the best submissions to select winners and distribute rewards.'
+                  : 'View submissions for this bounty.'}
+              </p>
             </div>
 
-            {loadingSubmissions ? (
-              <div className="text-center py-8">
-                <div className="w-8 h-8 border-2 border-t-transparent border-white rounded-full animate-spin mx-auto mb-2"></div>
-                <p className="text-gray-300">Loading submissions...</p>
-              </div>
-            ) : submissions.length === 0 ? (
-              <div className="bg-white/5 rounded-lg p-8 text-center">
-                <div className="text-5xl mb-4">📭</div>
-                <p className="text-gray-300">No submissions yet.</p>
-                <p className="text-gray-400 text-sm mt-2">
-                  Check back later or share your bounty to get more visibility.
-                </p>
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-600">
-                  <thead>
-                    <tr>
-                      <th className="px-4 py-3 bg-black/20 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                        Applicant
-                      </th>
-                      <th className="px-4 py-3 bg-black/20 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                        Submitted
-                      </th>
-                      <th className="px-4 py-3 bg-black/20 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                        Status
-                      </th>
-                      <th className="px-4 py-3 bg-black/20 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                        {isOwner ? 'Ranking' : 'Position'}
-                      </th>
-                      <th className="px-4 py-3 bg-black/20 text-right text-xs font-medium text-gray-300 uppercase tracking-wider">
-                        Actions
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-600">
-                    {submissions.map((submission) => (
-                      <tr key={submission.id}>
-                        <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-white">
-                          {(() => {
-                            // Get the applicant address
-                            const address =
-                              submission.walletAddress || submission.applicant;
-                            if (!address || address === 'Unknown') {
-                              return <span>Unknown applicant</span>;
-                            }
-                            return (
-                              <>
-                                {address.slice(0, 6)}...{address.slice(-4)}
-                                <div className="text-xs text-gray-400">
-                                  Talent
-                                </div>
-                              </>
-                            );
-                          })()}
-                        </td>
-                        <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-300">
-                          {formatDate(submission.created)}
-                        </td>
-                        <td className="px-4 py-4 whitespace-nowrap text-sm">
-                          {getSubmissionStatusBadge(
-                            submission.status.toString()
-                          )}
-                        </td>
-                        <td className="px-4 py-4 whitespace-nowrap text-sm">
-                          {submission.ranking ? (
-                            <span
-                              className={`px-3 py-1 rounded-full text-sm font-medium ${
-                                submission.ranking === 1
-                                  ? 'bg-yellow-900/40 text-yellow-300 border border-yellow-700/30'
-                                  : submission.ranking === 2
-                                  ? 'bg-gray-700/40 text-gray-300 border border-gray-600/30'
-                                  : 'bg-amber-900/40 text-amber-300 border border-amber-700/30'
-                              }`}
-                            >
-                              {submission.ranking === 1
-                                ? '1st Place 🥇'
-                                : submission.ranking === 2
-                                ? '2nd Place 🥈'
-                                : '3rd Place 🥉'}
-                            </span>
-                          ) : !rankingsApproved && isOwner ? (
-                            <div className="flex space-x-2">
-                              <button
-                                onClick={() =>
-                                  handleRankSubmission(submission.id, 1)
-                                }
-                                className="px-2 py-1 bg-yellow-900/40 text-yellow-300 border border-yellow-700/30 rounded text-xs hover:bg-yellow-900/60"
-                                title="Set as 1st place"
-                                disabled={submissions.some(
-                                  (sub) => sub.ranking === 1
-                                )}
-                              >
-                                1st
-                              </button>
-                              <button
-                                onClick={() =>
-                                  handleRankSubmission(submission.id, 2)
-                                }
-                                className="px-2 py-1 bg-gray-700/40 text-gray-300 border border-gray-600/30 rounded text-xs hover:bg-gray-700/60"
-                                title="Set as 2nd place"
-                                disabled={submissions.some(
-                                  (sub) => sub.ranking === 2
-                                )}
-                              >
-                                2nd
-                              </button>
-                              <button
-                                onClick={() =>
-                                  handleRankSubmission(submission.id, 3)
-                                }
-                                className="px-2 py-1 bg-amber-900/40 text-amber-300 border border-amber-700/30 rounded text-xs hover:bg-amber-900/60"
-                                title="Set as 3rd place"
-                                disabled={submissions.some(
-                                  (sub) => sub.ranking === 3
-                                )}
-                              >
-                                3rd
-                              </button>
-                            </div>
-                          ) : (
-                            <span className="text-gray-400">Not ranked</span>
-                          )}
-                        </td>
-                        <td className="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
-                          <button
-                            onClick={() => openSubmissionModal(submission)}
-                            className="text-blue-400 hover:text-blue-300 mr-4"
-                          >
-                            View Details
-                          </button>
-
-                          {isOwner &&
-                            submission.status.toString() === 'PENDING' && (
-                              <button
-                                onClick={() =>
-                                  handleAcceptSubmission(submission.id)
-                                }
-                                className="text-green-300 hover:text-green-200 mr-4"
-                                disabled={
-                                  bounty.status === BountyStatus.COMPLETED
-                                }
-                              >
-                                Accept
-                              </button>
-                            )}
-
-                          {isOwner &&
-                            submission.ranking &&
-                            !rankingsApproved && (
-                              <button
-                                onClick={() =>
-                                  handleRankSubmission(submission.id, null)
-                                }
-                                className="text-red-300 hover:text-red-200 ml-4"
-                                title="Remove ranking"
-                              >
-                                Clear Rank
-                              </button>
-                            )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+            {submissions.length > 0 &&
+              isOwner &&
+              submissions.some((sub) => sub.ranking) &&
+              !rankingsApproved && (
+                <button
+                  onClick={handleApproveRankings}
+                  className="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg transition-colors flex items-center gap-2"
+                >
+                  <FiAward /> Finalize Winners & Send Payments
+                </button>
+              )}
+            {rankingsApproved && (
+              <div className="bg-green-900/40 text-green-300 border border-green-700/30 rounded-lg px-4 py-2 flex items-center gap-2">
+                <FiAward /> Winners Finalized ✓
               </div>
             )}
           </div>
-        )}
 
-        {/* Submit Work section */}
-        {bounty.status === BountyStatus.OPEN && !isOwner && !isSponsor && (
-          <div className="backdrop-blur-xl bg-white/10 border border-white/20 rounded-xl overflow-hidden mb-8">
-            <SubmitWorkForm
-              bountyId={bounty.id}
-              submissionDeadline={bounty.submissionDeadline}
-            />
-          </div>
-        )}
+          {loadingSubmissions ? (
+            <div className="text-center py-8">
+              <div className="w-8 h-8 border-2 border-t-transparent border-white rounded-full animate-spin mx-auto mb-2"></div>
+              <p className="text-gray-300">Loading submissions...</p>
+            </div>
+          ) : submissions.length === 0 ? (
+            <div className="bg-white/5 rounded-lg p-8 text-center">
+              <div className="text-5xl mb-4">📭</div>
+              <p className="text-gray-300">No submissions yet.</p>
+              <p className="text-gray-400 text-sm mt-2">
+                Check back later or share your bounty to get more visibility.
+              </p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-600">
+                <thead>
+                  <tr>
+                    <th className="px-4 py-3 bg-black/20 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                      Applicant
+                    </th>
+                    <th className="px-4 py-3 bg-black/20 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                      Submitted
+                    </th>
+                    <th className="px-4 py-3 bg-black/20 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                      Status
+                    </th>
+                    <th className="px-4 py-3 bg-black/20 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                      {isOwner ? 'Ranking' : 'Position'}
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-black/10 divide-y divide-gray-600">
+                  {submissions.map((submission) => (
+                    <tr key={submission.id}>
+                      <td className="px-4 py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                          <div className="ml-4">
+                            <div className="text-sm font-medium text-white">
+                              <AddressLink
+                                address={submission.applicant}
+                                truncateLength={8}
+                              />
+                            </div>
+                            <div className="text-sm text-gray-300">
+                              {formatDate(submission.created)}
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-300">
+                          {formatDate(submission.created)}
+                        </div>
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap">
+                        {getSubmissionStatusBadge(submission.status)}
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap">
+                        {isOwner ? (
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() =>
+                                handleRankSubmission(submission.id, 1)
+                              }
+                              className="px-2 py-1 bg-green-600/40 text-green-300 border border-green-600/30 rounded text-xs hover:bg-green-600/60"
+                              title="Set as 1st place"
+                              disabled={submissions.some(
+                                (sub) => sub.ranking === 1
+                              )}
+                            >
+                              1st
+                            </button>
+                            <button
+                              onClick={() =>
+                                handleRankSubmission(submission.id, 2)
+                              }
+                              className="px-2 py-1 bg-blue-600/40 text-blue-300 border border-blue-600/30 rounded text-xs hover:bg-blue-600/60"
+                              title="Set as 2nd place"
+                              disabled={submissions.some(
+                                (sub) => sub.ranking === 2
+                              )}
+                            >
+                              2nd
+                            </button>
+                            <button
+                              onClick={() =>
+                                handleRankSubmission(submission.id, 3)
+                              }
+                              className="px-2 py-1 bg-amber-900/40 text-amber-300 border border-amber-700/30 rounded text-xs hover:bg-amber-900/60"
+                              title="Set as 3rd place"
+                              disabled={submissions.some(
+                                (sub) => sub.ranking === 3
+                              )}
+                            >
+                              3rd
+                            </button>
+                          </div>
+                        ) : (
+                          <span className="text-gray-400">Not ranked</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <button
+                          onClick={() => openSubmissionModal(submission)}
+                          className="text-blue-400 hover:text-blue-300 mr-4"
+                        >
+                          View Details
+                        </button>
 
-        {/* Submission Details Modal */}
-        {selectedSubmission && (
-          <SubmissionDetailsModal
-            isOpen={isModalOpen}
-            onClose={() => setIsModalOpen(false)}
-            submission={selectedSubmission}
-            isOwner={isOwner}
-            isSponsor={isSponsor}
-            onAccept={handleAcceptSubmission}
-            onRank={handleRankSubmission}
-            rankingsApproved={rankingsApproved}
-            otherSubmissions={submissions}
-          />
-        )}
-      </div>
+                        {isOwner &&
+                          submission.status.toString() === 'PENDING' && (
+                            <button
+                              onClick={() =>
+                                handleAcceptSubmission(submission.id)
+                              }
+                              className="text-green-300 hover:text-green-200 mr-4"
+                              disabled={
+                                bounty.status === BountyStatus.COMPLETED
+                              }
+                            >
+                              Accept
+                            </button>
+                          )}
+
+                        {isOwner && submission.ranking && !rankingsApproved && (
+                          <button
+                            onClick={() =>
+                              handleRankSubmission(submission.id, null)
+                            }
+                            className="text-red-300 hover:text-red-200 ml-4"
+                            title="Remove ranking"
+                          >
+                            Clear Rank
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+
+      <SubmissionDetailsModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        submission={selectedSubmission}
+        isOwner={isOwner}
+        isSponsor={isSponsor}
+        onAccept={(submissionId) => handleAcceptSubmission(submissionId)}
+        onRank={(submissionId, ranking) =>
+          handleRankSubmission(submissionId, ranking)
+        }
+        rankingsApproved={rankingsApproved}
+        otherSubmissions={submissions}
+      />
     </div>
   );
 }

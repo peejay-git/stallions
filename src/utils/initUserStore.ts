@@ -9,16 +9,18 @@ export function initUserStore() {
   if (typeof window === 'undefined') return;
 
   const store = useUserStore.getState();
-  store.setLoading(true);
 
   return onAuthStateChanged(auth, async (user) => {
-    if (user) {
-      const docRef = doc(db, 'users', user.uid);
+    store.setLoading(true);
+
+    const loggedUser = user || store.user;
+    if (loggedUser) {
+      const docRef = doc(db, 'users', loggedUser.uid);
       const docSnap = await getDoc(docRef);
       if (docSnap.exists()) {
         const profile = docSnap.data();
         store.setUser({
-          uid: user.uid,
+          uid: loggedUser.uid,
           ...profile.profileData,
           role: profile.role,
         });
@@ -28,5 +30,6 @@ export function initUserStore() {
     } else {
       store.clearUser();
     }
+    store.setLoading(false);
   });
 }

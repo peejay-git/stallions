@@ -82,16 +82,6 @@ export default function BountyCard({ bounty }: BountyCardProps) {
       const nowTime = Date.now();
       const timeLeft = deadlineTime - nowTime;
 
-      // Log the initial deadline for debugging
-      console.log('Deadline check for bounty:', bounty.id, {
-        deadline: bounty.deadline,
-        deadlineUTC: new Date(bounty.deadline).toUTCString(),
-        deadlineTime,
-        nowTime,
-        timeLeft,
-        currentUTC: new Date().toUTCString(),
-      });
-
       if (timeLeft <= 0) {
         // Deadline has passed
         setCountdown({
@@ -280,10 +270,6 @@ export default function BountyCard({ bounty }: BountyCardProps) {
           {safeBounty.title}
         </h3>
 
-        <p className="text-gray-300 mb-4 line-clamp-2">
-          {safeBounty.description}
-        </p>
-
         <div className="flex flex-wrap gap-2 mb-4">
           {safeBounty.skills.slice(0, 3).map((skill, index) => (
             <span
@@ -386,7 +372,7 @@ export default function BountyCard({ bounty }: BountyCardProps) {
           </div>
         )}
 
-        <div className="flex justify-between items-center mt-4 pt-4 border-t border-white/10">
+        <div className="flex justify-between items-end mt-4 pt-4 border-t border-white/10">
           <div className="flex flex-col gap-1">
             <span className="text-sm text-gray-300">Deadline</span>
             <span className="font-medium text-white bg-white/5 px-3 py-1 rounded-lg border border-white/10">

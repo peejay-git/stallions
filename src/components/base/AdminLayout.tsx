@@ -3,7 +3,7 @@
 import { auth } from '@/lib/firebase';
 import useUserStore from '@/lib/stores/useUserStore';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
 
@@ -14,6 +14,7 @@ export default function AdminLayout({
 }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const pathname = usePathname();
+  const router = useRouter();
   const user = useUserStore((state) => state.user);
   const clearUser = useUserStore((state) => state.clearUser);
 
@@ -22,7 +23,7 @@ export default function AdminLayout({
       await auth.signOut();
       clearUser();
       toast.success('Signed out successfully');
-      window.location.href = '/admin/login';
+      router.push('/admin/login');
     } catch (error) {
       console.error('Error signing out:', error);
       toast.error('Failed to sign out');

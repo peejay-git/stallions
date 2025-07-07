@@ -1,5 +1,5 @@
 import { BountyService } from '@/lib/bountyService';
-import { BlockchainError } from '@/utils/error-handler';
+import { BlockchainError } from '@/utils/errorHandler';
 import { NextRequest, NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
@@ -10,10 +10,10 @@ export const dynamic = 'force-dynamic';
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
     if (!id) {
       return NextResponse.json(
         { error: 'Bounty ID is required' },
@@ -29,7 +29,10 @@ export async function GET(
 
     return NextResponse.json(winners);
   } catch (error) {
-    console.error(`Error fetching winners for bounty ${params.id}:`, error);
+    console.error(
+      `Error fetching winners for bounty ${(await params).id}:`,
+      error
+    );
     if (error instanceof BlockchainError) {
       return NextResponse.json(
         { error: error.message, code: error.code },
@@ -49,15 +52,12 @@ export async function GET(
  */
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    console.log('POST /api/bounties/[id]/winners - Request received');
-    console.log('Params:', params);
-
-    const { id } = params;
+    const { id } = await params;
     if (!id) {
-      console.log('Error: Bounty ID is missing');
+      console.error('Error: Bounty ID is missing');
       return NextResponse.json(
         { error: 'Bounty ID is required' },
         { status: 400 }
@@ -66,12 +66,11 @@ export async function POST(
 
     // Parse the request body
     const body = await request.json();
-    console.log('Request body:', body);
     const { winnerAddresses, userPublicKey } = body;
 
     // Validate required fields
     if (!winnerAddresses || !Array.isArray(winnerAddresses) || !userPublicKey) {
-      console.log('Error: Invalid request body', {
+      console.error('Error: Invalid request body', {
         winnerAddresses,
         userPublicKey,
       });
@@ -80,12 +79,6 @@ export async function POST(
         { status: 400 }
       );
     }
-
-    console.log('Selecting winners for bounty:', {
-      bountyId: id,
-      userPublicKey,
-      winnerAddresses,
-    });
 
     // Create bounty service
     const bountyService = new BountyService();
@@ -98,7 +91,6 @@ export async function POST(
         userPublicKey
       );
 
-      console.log('Winners selected successfully');
       return NextResponse.json({
         success: true,
         message: 'Winners selected and payments are being processed',
@@ -118,7 +110,10 @@ export async function POST(
       throw error;
     }
   } catch (error) {
-    console.error(`Error selecting winners for bounty ${params.id}:`, error);
+    console.error(
+      `Error selecting winners for bounty ${(await params).id}:`,
+      error
+    );
     if (error instanceof BlockchainError) {
       return NextResponse.json(
         { error: error.message, code: error.code },

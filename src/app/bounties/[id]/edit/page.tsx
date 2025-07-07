@@ -1,15 +1,16 @@
 'use client';
 
-import { Layout } from '@/components';
+import { Layout, RichTextEditor } from '@/components';
 import { useProtectedRoute } from '@/hooks/useProtectedRoute';
 import {
   bountyHasSubmissions,
   getBountyById,
   updateBounty,
 } from '@/lib/bounties';
+import useUserStore from '@/lib/stores/useUserStore';
 import { Bounty } from '@/types/bounty';
-import { getAuth, onAuthStateChanged } from 'firebase/auth';
-import { useRouter } from 'next/navigation';
+import { SUPPORTED_TOKENS } from '@/utils/constants';
+import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 
@@ -39,11 +40,11 @@ const skillsOptions = [
   'Research',
 ];
 
-const assetOptions = ['USDC', 'XLM', 'ETH'];
-
-export default function EditBountyPage({ params }: { params: { id: string } }) {
+export default function EditBountyPage() {
   useProtectedRoute();
+  const params = useParams<{ id: string }>();
   const router = useRouter();
+  const { user, loading: authLoading } = useUserStore();
   const [userId, setUserId] = useState<string | null>(null);
   const [bounty, setBounty] = useState<Bounty | null>(null);
   const [loading, setLoading] = useState(true);
@@ -63,13 +64,23 @@ export default function EditBountyPage({ params }: { params: { id: string } }) {
 
   // Fetch the bounty data and check permissions
   useEffect(() => {
-    const auth = getAuth();
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      if (user) {
+    const fetchBountyData = async () => {
+      if (authLoading) return;
+
+      // TODO: If no wallet, allow user to connect their wallet
+      if (user && user.walletAddress) {
+        console.log(user);
         setUserId(user.uid);
         try {
           // Fetch bounty data
-          const data = await getBountyById(params.id);
+          const id = params.id;
+          if (!id || typeof id !== 'string') {
+            toast.error('Bounty not found');
+            router.push('/dashboard');
+            return;
+          }
+
+          const data = await getBountyById(id);
           if (!data) {
             toast.error('Bounty not found');
             router.push('/dashboard');
@@ -77,19 +88,20 @@ export default function EditBountyPage({ params }: { params: { id: string } }) {
           }
 
           // Check if user is the owner
-          if (data.owner !== user.uid) {
+          if (data.owner !== user.walletAddress) {
+            console.log(data.owner, user.walletAddress);
             toast.error('You do not have permission to edit this bounty');
-            router.push(`/bounties/${params.id}`);
+            router.push(`/bounties/${id}`);
             return;
           }
 
           // Check if bounty has submissions
-          const hasSubmissions = await bountyHasSubmissions(params.id);
+          const hasSubmissions = await bountyHasSubmissions(id);
           if (hasSubmissions) {
             toast.error(
               'This bounty already has submissions and cannot be edited'
             );
-            router.push(`/bounties/${params.id}`);
+            router.push(`/bounties/${id}`);
             return;
           }
 
@@ -119,10 +131,9 @@ export default function EditBountyPage({ params }: { params: { id: string } }) {
         // User is not logged in, redirect to login
         router.push('/bounties');
       }
-    });
-
-    return () => unsubscribe();
-  }, [params.id, router]);
+    };
+    fetchBountyData();
+  }, [user, loading, router, params.id]);
 
   const handleChange = (
     e: React.ChangeEvent<
@@ -146,6 +157,11 @@ export default function EditBountyPage({ params }: { params: { id: string } }) {
         [name]: value,
       }));
     }
+  };
+
+  // Handle rich text editor content changes
+  const handleQuillChange = (value: string) => {
+    setFormData((prev) => ({ ...prev, description: value }));
   };
 
   const handleSkillToggle = (skill: string) => {
@@ -201,7 +217,7 @@ export default function EditBountyPage({ params }: { params: { id: string } }) {
     }
   };
 
-  if (loading) {
+  if (loading || authLoading) {
     return (
       <Layout>
         <div className="min-h-screen py-12 px-4 sm:px-6">
@@ -266,16 +282,15 @@ export default function EditBountyPage({ params }: { params: { id: string } }) {
               >
                 Description*
               </label>
-              <textarea
-                id="description"
-                name="description"
+              <RichTextEditor
                 value={formData.description}
-                onChange={handleChange}
-                className="input w-full"
-                rows={6}
-                placeholder="Detailed description of what you're looking for..."
-                required
-              ></textarea>
+                onChange={handleQuillChange}
+                placeholder="Provide a detailed description for your bounty..."
+              />
+              <p className="text-xs text-gray-400 mt-1">
+                Use the rich text editor above to format your bounty description
+                with headings, lists, and other formatting.
+              </p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
@@ -381,9 +396,9 @@ export default function EditBountyPage({ params }: { params: { id: string } }) {
                   className="input w-full"
                   required
                 >
-                  {assetOptions.map((asset) => (
-                    <option key={asset} value={asset}>
-                      {asset}
+                  {SUPPORTED_TOKENS.map((asset) => (
+                    <option key={asset.name} value={asset.address}>
+                      {asset.symbol} {asset.name}
                     </option>
                   ))}
                 </select>
@@ -392,10 +407,9 @@ export default function EditBountyPage({ params }: { params: { id: string } }) {
 
             <div className="flex gap-4">
               <button
-                type="button"
+                disabled={submitting}
                 onClick={() => router.push(`/bounties/${params.id}`)}
                 className="bg-white/10 backdrop-blur-xl border border-white/20 text-white font-medium py-3 px-6 rounded-lg hover:bg-white/20 transition-colors"
-                disabled={submitting}
               >
                 Cancel
               </button>

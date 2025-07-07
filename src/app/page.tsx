@@ -1,4 +1,5 @@
 'use client';
+
 import { ParticlesBackground } from '@/components';
 import { Layout } from '@/components/base';
 import { getFeaturedBounties } from '@/lib/bounties';
@@ -33,47 +34,7 @@ export default function Home() {
     <Layout>
       <ParticlesBackground />
 
-      <div className="relative overflow-hidden bg-gradient-to-r from-[#070708] to-[#070708]">
-        {/* <motion.div
-        className="absolute left-[5%] top-[3%] z-0 pointer-events-none sm:left-[10%] sm:top-[5%]"
-        animate={{ y: [0, -10, 0] }}
-        transition={{
-          duration: 3,
-          repeat: Infinity,
-          ease: 'easeInOut',
-        }}
-      >
-        <Image
-          src="/images/heroetm.svg"
-          alt="etm Logo"
-          width={40}
-          height={40}
-          className="rounded-full"
-        />
-      </motion.div> */}
-
-        {/* <motion.div
-        className="absolute right-[10%] top-[7%] z-0 pointer-events-none sm:right-[30%] sm:top-[17%]"
-        animate={{ x: [0, 10, 0] }}
-        transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }}
-      >
-        <Image src="/images/heroetm.svg" alt="etm Logo" width={40} height={40} className="rounded-full" />
-      </motion.div> */}
-        {/* <motion.div
-        className="absolute left-[25%] top-[10%] opacity-[0.4]  z-0 pointer-events-none"
-        animate={{ rotate: [0, 360] }}
-        transition={{ duration: 12, repeat: Infinity, ease: 'linear' }}
-      >
-        <Image src="/images/abstract.svg" alt="etm Logo" width={40} height={40} className="rounded-full" />
-      </motion.div> */}
-
-        {/* <motion.div
-        className="absolute right-[8%] top-[1%] z-0 pointer-events-none sm:right-[20%] sm:top-[3%]"
-        animate={{ scale: [1, 1.15, 1] }}
-        transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
-      >
-        <Image src="/images/moon.svg" alt="etm Logo" width={60} height={60} className="rounded-full" />
-      </motion.div> */}
+      <div className="relative overflow-hidden">
         <motion.div
           className="absolute left-[0%] top-[15%] z-0 pointer-events-none sm:left-[24%] sm:top-[10%]"
           animate={{ x: [0, 5, 0], y: [0, -8, 0] }}
@@ -87,20 +48,6 @@ export default function Home() {
             className="rounded-full w-[60px] h-[60px]"
           />
         </motion.div>
-        {/* <motion.div
-        className="absolute left-[50%] top-[14%] z-0 pointer-events-none sm:left-[24%] sm:top-[20%]"
-        animate={{ rotate: [0, 360], scale: [1, 1.1, 1] }}
-        transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
-      >
-        <Image src="/images/crypto.svg" alt="etm Logo" width={30} height={30} className="rounded-full" />
-      </motion.div> */}
-        {/* <motion.div
-        className="absolute right-[5%] top-[12%] z-0 pointer-events-none sm:right-[24%] sm:top-[10%]"
-        animate={{ x: [0, -6, 6, 0], y: [0, 5, 0] }}
-        transition={{ duration: 7, repeat: Infinity, ease: 'easeInOut' }}
-      >
-        <Image src="/images/crypto.svg" alt="etm Logo" width={50} height={50} className="rounded-full" />
-      </motion.div> */}
 
         <motion.div
           className="absolute top-[16%] z-0 pointer-events-none flex justify-center md:top-[20%]   sm:top-[18%]  w-full"
@@ -125,8 +72,6 @@ export default function Home() {
         </motion.div>
         {/* Hero Section */}
         <section className="pt-20 pb-32 px-4 md:px-6 max-w-7xl mx-auto">
-          {/* <div className="backdrop-blur-xl bg-white/60 border border-white/20 shadow-xl rounded-3xl p-10 text-center"> */}
-
           <motion.div
             className="p-10 text-center mb-2 relative z-10"
             initial={{ opacity: 0, y: 50 }}
@@ -155,43 +100,20 @@ export default function Home() {
             <div className="flex flex-col sm:flex-row gap-4 justify-center w-full max-w-md mx-auto">
               <Link
                 href="/create"
-                className="bg-white text-black font-medium py-3 px-6 rounded-[40px] flex items-center justify-between text-[15px] font-bold hover:bg-white/90 transition-colors w-full"
+                className="bg-white text-black font-medium py-3 px-6 rounded-[40px] flex items-center justify-between text-[15px] hover:bg-white/90 transition-colors w-full"
               >
                 Create Bounty
                 <FaAngleRight className="" />
               </Link>
               <Link
                 href="/bounties"
-                className="backdrop-blur-xl bg-white/10 text-white font-medium py-3 px-6 rounded-[40px] flex items-center justify-between text-[15px] font-bold border border-white/20 hover:bg-white/20 transition-colors w-full"
+                className="backdrop-blur-xl bg-white/10 text-white font-medium py-3 px-6 rounded-[40px] flex items-center justify-between text-[15px] border border-white/20 hover:bg-white/20 transition-colors w-full"
               >
                 Browse Bounties
                 <FaAngleRight className="" />
               </Link>
             </div>
           </motion.div>
-
-          {/* Stats */}
-          {/* <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-20">
-          {stats.map((stat, index) => (
-            <motion.div
-              key={index}
-              initial={{ opacity: 0, scale: 0.8, y: 40 }}
-              whileInView={{ opacity: 1, scale: 1, y: 0 }}
-              whileHover={{ scale: 1.08, rotate: 1 }}
-              transition={{
-                type: 'spring',
-                stiffness: 120,
-                damping: 12,
-                delay: index * 0.2,
-              }}
-              viewport={{ once: true, amount: 0.3 }}
-              className="cursor-pointer backdrop-blur-xl bg-white/60 border border-white/20 shadow-xl rounded-2xl p-6 text-center transform transition-transform duration-300"
-            >
-              <p className="text-4xl font-extrabold text-blue-700 mb-2 tracking-tight">{stat.value}</p>
-              <p className="text-gray-700 text-lg font-medium">{stat.label}</p>
-            </motion.div>
-          ))}
-        </div> */}
         </section>
         <div className="relative overflow-hidden py-8">
           <div className="flex whitespace-nowrap animate-scroll w-full">

@@ -1,14 +1,9 @@
 import { db } from '@/lib/firebase';
 import { doc, getDoc, updateDoc } from '@/lib/firestore';
-import { SorobanService } from '@/lib/soroban';
-import { BlockchainError } from '@/utils/error-handler';
+import { BlockchainError } from '@/utils/errorHandler';
 import { NextRequest, NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
-
-// Initialize the Soroban service
-// TODO: Pass in the publicKey of the currently signed in user
-const sorobanService = new SorobanService();
 
 /**
  * GET /api/bounties/[id]/submissions/[submissionId]
@@ -16,10 +11,10 @@ const sorobanService = new SorobanService();
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string; submissionId: string } }
+  { params }: { params: Promise<{ id: string; submissionId: string }> }
 ) {
   try {
-    const { id, submissionId } = params;
+    const { id, submissionId } = await params;
     if (!id || !submissionId) {
       return NextResponse.json(
         { error: 'Bounty ID and Submission ID are required' },
@@ -58,7 +53,10 @@ export async function GET(
 
     return NextResponse.json({ submission });
   } catch (error) {
-    console.error(`Error fetching submission for bounty ${params.id}:`, error);
+    console.error(
+      `Error fetching submission for bounty ${(await params).id}:`,
+      error
+    );
     if (error instanceof BlockchainError) {
       return NextResponse.json(
         { error: error.message, code: error.code },
@@ -78,10 +76,10 @@ export async function GET(
  */
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string; submissionId: string } }
+  { params }: { params: Promise<{ id: string; submissionId: string }> }
 ) {
   try {
-    const { id, submissionId } = params;
+    const { id, submissionId } = await params;
     if (!id || !submissionId) {
       return NextResponse.json(
         { error: 'Bounty ID and Submission ID are required' },
@@ -228,7 +226,9 @@ export async function PATCH(
     );
   } catch (error) {
     console.error(
-      `Error processing submission ${params.submissionId} for bounty ${params.id}:`,
+      `Error processing submission ${(await params).submissionId} for bounty ${
+        (await params).id
+      }:`,
       error
     );
     return NextResponse.json(

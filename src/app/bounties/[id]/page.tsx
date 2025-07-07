@@ -8,10 +8,14 @@ import {
 } from '@/components';
 import { assetSymbols } from '@/components/core/bounty/BountyCard';
 import { useWallet } from '@/hooks/useWallet';
-import { bountyHasSubmissions, getBountyById } from '@/lib/bounties';
+import {
+  bountyHasSubmissions,
+  FirebaseBounty,
+  getBountyById,
+} from '@/lib/bounties';
 import { db } from '@/lib/firebase';
 import { doc, getDoc } from '@/lib/firestore';
-import { Bounty, BountyStatus, Submission } from '@/types/bounty';
+import { BountyStatus, Submission } from '@/types/bounty';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
@@ -21,7 +25,7 @@ import { FiAward, FiBriefcase, FiClock, FiUser } from 'react-icons/fi';
 
 export default function BountyDetailPage() {
   const params = useParams<{ id: string }>();
-  const [bounty, setBounty] = useState<Bounty | null>(null);
+  const [bounty, setBounty] = useState<FirebaseBounty | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
@@ -116,7 +120,7 @@ export default function BountyDetailPage() {
     return () => clearInterval(timer);
   }, [bounty]);
 
-  const fetchWinners = async (bountyId: number) => {
+  const fetchWinners = async (bountyId: string) => {
     try {
       setLoadingWinners(true);
       const response = await fetch(`/api/bounties/${bountyId}/winners`);
@@ -631,7 +635,7 @@ export default function BountyDetailPage() {
                 )}
               </div>
               <div className="text-gray-300 text-sm mb-2">
-                Posted on {formatDate(bounty.created)}
+                Posted on {formatDate(bounty.createdAt)}
               </div>
               <div className="flex items-center gap-2 text-gray-300">
                 <FiBriefcase className="flex-shrink-0" />

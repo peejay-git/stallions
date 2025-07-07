@@ -7,7 +7,8 @@ import {
   getAllBounties,
   updateBountyStatus,
 } from '@/lib/adminService';
-import { Bounty, BountyStatus } from '@/types/bounty';
+import { FirebaseBounty } from '@/lib/bounties';
+import { BountyStatus } from '@/types/bounty';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
@@ -24,7 +25,7 @@ import {
 
 export default function AdminBountiesPage() {
   const { isAdmin, loading: authLoading } = useAdminProtectedRoute();
-  const [bounties, setBounties] = useState<Bounty[]>([]);
+  const [bounties, setBounties] = useState<FirebaseBounty[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
@@ -63,12 +64,10 @@ export default function AdminBountiesPage() {
   const handleDelete = async (bountyId: number | string) => {
     const bountyIdStr =
       typeof bountyId === 'number' ? bountyId.toString() : bountyId;
-    const bountyIdNum =
-      typeof bountyId === 'string' ? Number(bountyId) : bountyId;
 
     try {
       await deleteBounty(bountyIdStr);
-      setBounties(bounties.filter((bounty) => bounty.id !== bountyIdNum));
+      setBounties(bounties.filter((bounty) => bounty.id !== bountyIdStr));
       toast.success('Bounty deleted successfully');
       setConfirmDelete(null);
     } catch (error) {
@@ -84,8 +83,6 @@ export default function AdminBountiesPage() {
   ) => {
     const bountyIdStr =
       typeof bountyId === 'number' ? bountyId.toString() : bountyId;
-    const bountyIdNum =
-      typeof bountyId === 'string' ? Number(bountyId) : bountyId;
 
     try {
       await updateBountyStatus(bountyIdStr, newStatus);
@@ -93,7 +90,7 @@ export default function AdminBountiesPage() {
       // Update the local state
       setBounties(
         bounties.map((bounty) =>
-          bounty.id === bountyIdNum
+          bounty.id === bountyIdStr
             ? { ...bounty, status: newStatus as BountyStatus }
             : bounty
         )
@@ -296,7 +293,7 @@ export default function AdminBountiesPage() {
                       {bounty.reward.amount} {bounty.reward.asset}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
-                      {formatDate(bounty.created)}
+                      {formatDate(bounty.createdAt)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
                       {bounty.owner.slice(0, 6)}...{bounty.owner.slice(-4)}

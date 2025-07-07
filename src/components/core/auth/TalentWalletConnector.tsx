@@ -19,7 +19,7 @@ export default function TalentWalletConnector({ onSuccess }: Props) {
   const handleConnectWallet = async () => {
     try {
       setIsConnecting(true);
-      const publicKey = await connect({});
+      const publicKey = await connect();
 
       if (publicKey && user?.uid) {
         // Save the wallet to the user's account

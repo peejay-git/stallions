@@ -9,7 +9,8 @@ import {
   updateDoc,
   where,
 } from '@/lib/firestore';
-import { Bounty, BountyCategory, BountyStatus } from '@/types/bounty';
+import { BountyCategory, BountyStatus } from '@/types/bounty';
+import { FirebaseBounty } from './bounties';
 
 // Get all bounties for admin view
 export async function getAllBounties() {
@@ -22,7 +23,7 @@ export async function getAllBounties() {
     return snapshot.docs.map((doc) => {
       const data = doc.data();
       return {
-        id: parseInt(doc.id), // Convert string ID to number
+        id: doc.id,
         owner: data.owner || '',
         title: data.title || '',
         description: data.description || '',
@@ -33,10 +34,10 @@ export async function getAllBounties() {
         status: data.status || BountyStatus.OPEN,
         category: data.category || BountyCategory.OTHER,
         skills: data.skills || [],
-        created: data.created || new Date().toISOString(),
+        createdAt: data.created || new Date().toISOString(),
         updatedAt: data.updatedAt || new Date().toISOString(),
         deadline: data.deadline || new Date().toISOString(),
-      } as Bounty;
+      } as FirebaseBounty;
     });
   } catch (error) {
     console.error('Error getting all bounties:', error);

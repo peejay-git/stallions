@@ -1,28 +1,11 @@
-import { Bounty, BountyCategory, BountyStatus } from '@/types/bounty';
+import { BountyCategory, BountyStatus } from '@/types/bounty';
 import type {
   DocumentData,
   QueryDocumentSnapshot,
 } from 'firebase/firestore/lite';
+import { FirebaseBounty } from './bounties';
 import { db } from './firebase';
 import { adminDb } from './firebaseAdmin';
-
-interface FirestoreBountyData {
-  owner: string;
-  title: string;
-  description: string;
-  reward: { amount: string; asset: string };
-  distribution: Array<{ position: number; percentage: number }>;
-  submissionDeadline: number;
-  judgingDeadline: number;
-  status: BountyStatus;
-  category: BountyCategory;
-  skills: string[];
-  createdAt: string;
-  updatedAt: string;
-  deadline: string;
-  extraRequirements?: string;
-  sponsorName?: string;
-}
 
 interface FirestoreSubmissionData {
   bountyId: string;
@@ -68,35 +51,32 @@ export class BountyService {
   /**
    * Get bounty details from database
    */
-  async getBountyById(id: string | number): Promise<Bounty> {
+  async getBountyById(id: string): Promise<FirebaseBounty> {
     try {
-      // Convert to number for consistency
-      const numericId = typeof id === 'string' ? parseInt(id) : id;
-
       // Get data from Firestore
-      const docRef = this.bountiesRef.doc(id.toString());
+      const docRef = this.bountiesRef.doc(id);
       const docSnap = await docRef.get();
 
       if (!docSnap.exists) {
         throw new Error('Bounty not found');
       }
 
-      const data = docSnap.data() as FirestoreBountyData;
+      const data = docSnap.data() as FirebaseBounty;
 
       // Return the bounty data
       return {
-        id: numericId,
+        id,
         owner: data.owner || '',
         title: data.title || '',
         description: data.description || '',
         reward: data.reward || { amount: '0', asset: 'USDC' },
         distribution: data.distribution || [],
-        submissionDeadline: data.submissionDeadline || 0,
-        judgingDeadline: data.judgingDeadline || 0,
+        submissionDeadline: data.submissionDeadline || new Date().toISOString(),
+        judgingDeadline: data.judgingDeadline || new Date().toISOString(),
         status: data.status || BountyStatus.OPEN,
         category: data.category || BountyCategory.OTHER,
         skills: data.skills || [],
-        created: data.createdAt || new Date().toISOString(),
+        createdAt: data.createdAt || new Date().toISOString(),
         updatedAt: data.updatedAt || new Date().toISOString(),
         deadline: data.deadline || new Date().toISOString(),
       };
@@ -109,7 +89,7 @@ export class BountyService {
   /**
    * Get all bounties from database
    */
-  async getAllBounties(filters?: any): Promise<Bounty[]> {
+  async getAllBounties(filters?: any): Promise<FirebaseBounty[]> {
     try {
       const snapshot = await this.bountiesRef.get();
 
@@ -118,23 +98,24 @@ export class BountyService {
       }
 
       return snapshot.docs.map((doc: QueryDocumentSnapshot<DocumentData>) => {
-        const data = doc.data() as FirestoreBountyData;
+        const data = doc.data() as FirebaseBounty;
         return {
-          id: Number(doc.id),
+          id: doc.id,
           owner: data.owner || '',
           title: data.title || '',
           description: data.description || '',
           reward: data.reward || { amount: '', asset: '' },
           distribution: data.distribution || [],
-          submissionDeadline: data.submissionDeadline || 0,
-          judgingDeadline: data.judgingDeadline || 0,
+          submissionDeadline:
+            data.submissionDeadline || new Date().toISOString(),
+          judgingDeadline: data.judgingDeadline || new Date().toISOString(),
           status: data.status || BountyStatus.OPEN,
           category: data.category || BountyCategory.OTHER,
           skills: data.skills || [],
-          created: data.createdAt || new Date().toISOString(),
+          createdAt: data.createdAt || new Date().toISOString(),
           updatedAt: data.updatedAt || new Date().toISOString(),
           deadline: data.deadline || new Date().toISOString(),
-        } as Bounty;
+        } as FirebaseBounty;
       });
     } catch (error) {
       console.error('Error fetching all bounties:', error);
@@ -146,7 +127,7 @@ export class BountyService {
    * Save submission to database
    */
   async saveSubmissionToDatabase(
-    bountyId: number,
+    bountyId: string,
     applicantAddress: string,
     content: string,
     submissionId: string,
@@ -157,7 +138,7 @@ export class BountyService {
       // Save to Firestore
       const submissionRef = this.submissionsRef.doc(submissionId);
       await submissionRef.set({
-        bountyId: bountyId.toString(),
+        bountyId,
         applicantAddress,
         content,
         links: links || '',
@@ -177,15 +158,11 @@ export class BountyService {
   /**
    * Get all submissions for a bounty
    */
-  async getBountySubmissions(bountyId: number | string) {
+  async getBountySubmissions(bountyId: string) {
     try {
-      // Convert to number for consistency
-      const numericId =
-        typeof bountyId === 'string' ? parseInt(bountyId) : bountyId;
-
       // Get submission data from the database
       const snapshot = await this.submissionsRef
-        .where('bountyId', '==', bountyId.toString())
+        .where('bountyId', '==', bountyId)
         .get();
 
       if (snapshot.empty) {
@@ -196,7 +173,7 @@ export class BountyService {
         const data = doc.data() as FirestoreSubmissionData;
         return {
           id: doc.id,
-          bountyId: numericId,
+          bountyId,
           applicant: data.applicantAddress,
           userId: data.userId || null,
           submission: data.links || '',
@@ -220,7 +197,7 @@ export class BountyService {
   /**
    * Get winners for a bounty
    */
-  async getBountyWinners(bountyId: number | string): Promise<
+  async getBountyWinners(bountyId: string): Promise<
     {
       applicantAddress: string;
       position: number;
@@ -315,24 +292,18 @@ export class BountyService {
         parsedReward = data.reward;
       }
 
-      // Convert deadline strings to timestamps
-      const submissionDeadlineTimestamp = new Date(
-        data.submissionDeadline
-      ).getTime();
-      const judgingDeadlineTimestamp = new Date(data.judgingDeadline).getTime();
-
       // Prepare the bounty data
-      const bountyData: FirestoreBountyData = {
+      const bountyData: FirebaseBounty = {
+        id: bountyId.toString(),
         description: data.description,
         category: data.category as BountyCategory,
         skills: Array.isArray(data.skills) ? data.skills : [],
-        extraRequirements: data.extraRequirements || '',
         owner: data.owner,
         title: data.title,
         reward: parsedReward,
         deadline: data.deadline,
-        submissionDeadline: submissionDeadlineTimestamp,
-        judgingDeadline: judgingDeadlineTimestamp,
+        submissionDeadline: data.submissionDeadline,
+        judgingDeadline: data.judgingDeadline,
         status: data.status as BountyStatus,
         createdAt: new Date().toISOString(),
         updatedAt: data.updatedAt,
@@ -352,7 +323,7 @@ export class BountyService {
       }
 
       // Save to Firestore
-      const bountyRef = this.bountiesRef.doc(bountyId.toString());
+      const bountyRef = this.bountiesRef.doc(bountyId);
       await bountyRef.set(bountyData);
 
       return bountyId;
@@ -369,7 +340,7 @@ export class BountyService {
    * Select winners for a bounty and process payments
    */
   async selectBountyWinners(
-    bountyId: number,
+    bountyId: string,
     winnerAddresses: string[],
     userPublicKey: string
   ): Promise<void> {
@@ -383,7 +354,7 @@ export class BountyService {
       }
 
       // Update bounty status to COMPLETED
-      const bountyRef = this.bountiesRef.doc(bountyId.toString());
+      const bountyRef = this.bountiesRef.doc(bountyId);
       await bountyRef.update({
         status: 'COMPLETED',
         updatedAt: new Date().toISOString(),

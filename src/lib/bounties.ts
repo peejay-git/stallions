@@ -14,7 +14,25 @@ import {
   updateDoc,
   where,
 } from '@/lib/firestore';
-import { Bounty, BountyCategory, BountyStatus } from '@/types/bounty';
+import { BountyCategory, BountyStatus, Distribution } from '@/types/bounty';
+
+export interface FirebaseBounty {
+  id: string;
+  title: string;
+  description: string;
+  distribution: Distribution[];
+  submissionDeadline: string;
+  judgingDeadline: string;
+  category: string;
+  skills: string[];
+  reward: { amount: string; asset: string };
+  sponsorName?: string;
+  status: string;
+  deadline: string;
+  owner: string;
+  createdAt: string;
+  updatedAt: string;
+}
 
 interface SubmitBountyInput {
   bountyId: string;
@@ -57,20 +75,17 @@ export async function getFeaturedBounties(limit = 3) {
       id: doc.id,
       title: data.title || 'Untitled Bounty',
       description: data.description || '',
+      distribution: data.distribution || [],
+      submissionDeadline: data.submissionDeadline || new Date().toISOString(),
+      judgingDeadline: data.judgingDeadline || new Date().toISOString(),
       category: data.category || 'OTHER',
       skills: data.skills || [],
       reward: data.reward || { amount: '0', asset: 'USDC' },
       status: data.status || 'OPEN',
       deadline: data.deadline || new Date().toISOString(),
       owner: data.owner || '',
-      createdAt: data.createdAt || {
-        seconds: Date.now() / 1000,
-        nanoseconds: 0,
-      },
-      updatedAt: data.updatedAt || {
-        seconds: Date.now() / 1000,
-        nanoseconds: 0,
-      },
+      createdAt: data.createdAt || new Date().toISOString(),
+      updatedAt: data.updatedAt || new Date().toISOString(),
       ...data,
     };
   });
@@ -104,14 +119,16 @@ export async function getAllBounties() {
   });
 }
 
-export async function getBountyById(id: string): Promise<Bounty | null> {
+export async function getBountyById(
+  id: string
+): Promise<FirebaseBounty | null> {
   const docRef = doc(db, 'bounties', id);
   const docSnap = await getDoc(docRef);
   if (!docSnap.exists()) return null;
 
   const data = docSnap.data();
   return {
-    id: parseInt(docSnap.id), // Convert string ID to number
+    id: docSnap.id,
     owner: data.owner || '',
     title: data.title || '',
     description: data.description || '',
@@ -122,13 +139,15 @@ export async function getBountyById(id: string): Promise<Bounty | null> {
     status: data.status || BountyStatus.OPEN,
     category: data.category || BountyCategory.OTHER,
     skills: data.skills || [],
-    created: data.created || new Date().toISOString(),
+    createdAt: data.createdAt || new Date().toISOString(),
     updatedAt: data.updatedAt || new Date().toISOString(),
     deadline: data.deadline || new Date().toISOString(),
   };
 }
 
-export async function getBountiesByOwner(ownerId: string): Promise<Bounty[]> {
+export async function getBountiesByOwner(
+  ownerId: string
+): Promise<FirebaseBounty[]> {
   const q = query(collection(db, 'bounties'), where('owner', '==', ownerId));
 
   const snapshot = await getDocs(q);
@@ -137,18 +156,18 @@ export async function getBountiesByOwner(ownerId: string): Promise<Bounty[]> {
     const data = doc.data();
 
     return {
-      id: parseInt(doc.id), // Convert string ID to number
+      id: doc.id,
       owner: data.owner || '',
       title: data.title || 'Untitled Bounty',
       description: data.description || '',
       reward: data.reward || { amount: '0', asset: 'XLM' },
       distribution: data.distribution || [],
-      submissionDeadline: data.submissionDeadline || 0,
-      judgingDeadline: data.judgingDeadline || 0,
+      submissionDeadline: data.submissionDeadline || new Date().toISOString(),
+      judgingDeadline: data.judgingDeadline || new Date().toISOString(),
       status: data.status || BountyStatus.OPEN,
       category: data.category || BountyCategory.OTHER,
       skills: data.skills || [],
-      created: data.createdAt || new Date().toISOString(),
+      createdAt: data.createdAt || new Date().toISOString(),
       updatedAt: data.updatedAt || new Date().toISOString(),
       deadline: data.deadline || new Date().toISOString(),
     };

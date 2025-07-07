@@ -74,6 +74,7 @@ const useUserStore = create<UserState>()(
 
           if (docSnap.exists()) {
             const userData = docSnap.data();
+            console.log('USER DATA', userData);
             const userProfile = {
               uid: currentUser.uid,
               email: currentUser.email || undefined,
@@ -110,6 +111,7 @@ const useUserStore = create<UserState>()(
             if (loggedUser) {
               const docRef = doc(db, 'users', loggedUser.uid);
               const docSnap = await getDoc(docRef);
+              console.log('USER DATA', docSnap.data());
 
               if (docSnap.exists()) {
                 const userData = docSnap.data();

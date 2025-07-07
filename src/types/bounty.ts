@@ -40,7 +40,7 @@ export interface Bounty {
   status: BountyStatus;
   category: BountyCategory;
   skills: string[];
-  created: string;
+  createdAt: string;
   updatedAt: string;
   deadline: string;
   sponsorName?: string;

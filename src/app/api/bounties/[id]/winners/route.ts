@@ -86,7 +86,7 @@ export async function POST(
     try {
       // Select winners for the bounty - this will call the blockchain to process payments
       await bountyService.selectBountyWinners(
-        parseInt(id),
+        id,
         winnerAddresses,
         userPublicKey
       );

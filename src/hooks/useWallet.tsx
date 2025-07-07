@@ -12,11 +12,7 @@ interface WalletContextType {
   isConnecting: boolean;
   publicKey: string | null;
   networkPassphrase: string | null;
-  connect: ({
-    onWalletSelected,
-    modalTitle,
-    notAvailableText,
-  }: {
+  connect: (props?: {
     onWalletSelected?: (address: string) => void;
     modalTitle?: string;
     notAvailableText?: string;
@@ -112,15 +108,13 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
   }, [isInitialized, user]);
 
   // Connect wallet
-  const connect = async ({
-    onWalletSelected,
-    modalTitle = 'Connect Wallet',
-    notAvailableText = 'No wallets available',
-  }: {
+  const connect = async (props?: {
     onWalletSelected?: (address: string) => void;
     modalTitle?: string;
     notAvailableText?: string;
   }): Promise<string | null> => {
+    const { onWalletSelected, modalTitle, notAvailableText } = props || {};
+
     if (!isInitialized) {
       toast.error('Wallet system not initialized');
       return null;
@@ -137,22 +131,6 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
     setIsConnecting(true);
 
     try {
-      if (walletId) {
-        kit.setWallet(walletId);
-
-        const address = await kit.getAddress();
-        if (!address?.address) {
-          throw new Error('No address returned from wallet');
-        }
-
-        const pubKey = address.address;
-        setPublicKey(pubKey);
-        setIsConnected(true);
-        const network = await kit.getNetwork();
-        setNetworkPassphrase(network.networkPassphrase);
-        return pubKey;
-      }
-
       await kit.openModal({
         onWalletSelected: async (option: ISupportedWallet) => {
           kit.setWallet(option.id);

@@ -97,7 +97,7 @@ export default function WalletConnectionHelper({
       setIsSubmitting(true);
 
       if (!isConnected) {
-        await connect({});
+        await connect();
       }
 
       if (!publicKey) {

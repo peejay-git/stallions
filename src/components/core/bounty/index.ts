@@ -3,6 +3,7 @@ export { default as BountyCardSkeleton } from './BountyCardSkeleton';
 export { default as BountyDetailSkeleton } from './BountyDetailSkeleton';
 export { default as BountyFilter } from './BountyFilter';
 export { default as CreateBountyForm } from './CreateBountyForm';
+export { default as FeaturedBountyCard } from './FeaturedBountyCard';
 export { default as SelectWinnersForm } from './SelectWinnersForm';
 export { default as SubmissionDetailsModal } from './SubmissionDetailsModal';
 export { default as SubmitWorkForm } from './SubmitWorkForm';

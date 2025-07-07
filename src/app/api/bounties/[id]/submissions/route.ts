@@ -225,7 +225,7 @@ export async function POST(
       // Get bounty details to check deadline
       console.log('Checking bounty deadline...');
       const bounty = await bountyService.getBountyById(bountyId);
-      if (bounty.submissionDeadline < Date.now()) {
+      if (new Date(bounty.submissionDeadline) < new Date()) {
         console.log('Submission deadline has passed:', {
           deadline: bounty.submissionDeadline,
           now: Date.now(),
@@ -239,7 +239,7 @@ export async function POST(
       // Save submission to database
       console.log('Saving submission to database...');
       await bountyService.saveSubmissionToDatabase(
-        parseInt(bountyId),
+        bountyId,
         applicantAddress,
         content,
         submissionId,

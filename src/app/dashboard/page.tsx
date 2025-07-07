@@ -63,7 +63,7 @@ export default function DashboardPage() {
           // Try to automatically connect the wallet once
           setIsLoadingWallet(true);
           try {
-            await connect({});
+            await connect();
             // After successful connection, fetch submissions
             setUserSubmissions([]);
             setLoadingSubmissions(true);

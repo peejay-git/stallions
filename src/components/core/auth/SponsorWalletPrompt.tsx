@@ -22,7 +22,7 @@ export default function SponsorWalletPrompt({ onSuccess }: Props) {
       setIsConnecting(true);
 
       // Connect wallet
-      const publicKey = await connect({});
+      const publicKey = await connect();
 
       if (!publicKey) {
         toast.error('Failed to get wallet public key');

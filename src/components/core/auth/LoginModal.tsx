@@ -309,7 +309,7 @@ FIREBASE DOMAIN FIX INSTRUCTIONS
           try {
             const kit = await getWalletKit();
             if (kit) {
-              const connected = await connect({});
+              const connected = await connect();
               if (connected && publicKey) {
                 // Update user's wallet info in Firestore
                 await updateDoc(docRef, {

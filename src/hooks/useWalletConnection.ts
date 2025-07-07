@@ -2,7 +2,6 @@ import { useWallet } from '@/hooks/useWallet';
 import { connectWallet, walletToAccount } from '@/lib/authService';
 import { auth, db } from '@/lib/firebase';
 import { doc, getDoc } from '@/lib/firestore';
-import useUserStore from '@/lib/stores/useUserStore';
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 
@@ -41,7 +40,6 @@ export function useWalletConnection({
   const [storedWalletAddress, setStoredWalletAddress] = useState<string | null>(
     null
   );
-  const user = useUserStore((state) => state.user);
 
   // Check if user already has a wallet address stored
   useEffect(() => {
@@ -67,7 +65,7 @@ export function useWalletConnection({
       setIsSubmitting(true);
 
       if (!isConnected) {
-        await connect({});
+        await connect();
       }
 
       if (!publicKey) {

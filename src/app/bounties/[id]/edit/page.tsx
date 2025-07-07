@@ -4,11 +4,11 @@ import { Layout, RichTextEditor } from '@/components';
 import { useProtectedRoute } from '@/hooks/useProtectedRoute';
 import {
   bountyHasSubmissions,
+  FirebaseBounty,
   getBountyById,
   updateBounty,
 } from '@/lib/bounties';
 import useUserStore from '@/lib/stores/useUserStore';
-import { Bounty } from '@/types/bounty';
 import { SUPPORTED_TOKENS } from '@/utils/constants';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -46,7 +46,7 @@ export default function EditBountyPage() {
   const router = useRouter();
   const { user, loading: authLoading } = useUserStore();
   const [userId, setUserId] = useState<string | null>(null);
-  const [bounty, setBounty] = useState<Bounty | null>(null);
+  const [bounty, setBounty] = useState<FirebaseBounty | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -69,7 +69,6 @@ export default function EditBountyPage() {
 
       // TODO: If no wallet, allow user to connect their wallet
       if (user && user.walletAddress) {
-        console.log(user);
         setUserId(user.uid);
         try {
           // Fetch bounty data
@@ -89,7 +88,7 @@ export default function EditBountyPage() {
 
           // Check if user is the owner
           if (data.owner !== user.walletAddress) {
-            console.log(data.owner, user.walletAddress);
+            console.log(data, user);
             toast.error('You do not have permission to edit this bounty');
             router.push(`/bounties/${id}`);
             return;

@@ -46,7 +46,7 @@ const adaptBounty = (apiBounty: ApiBounty): Bounty => {
     status: (apiBounty.status as BountyStatus) || BountyStatus.OPEN,
     category: (apiBounty.category as BountyCategory) || BountyCategory.OTHER,
     skills: apiBounty.skills || [],
-    created:
+    createdAt:
       typeof apiBounty.createdAt === 'string'
         ? apiBounty.createdAt
         : new Date().toISOString(),

@@ -1,13 +1,13 @@
-import { Buffer } from "buffer";
+import type { i128, Option, u32, u64 } from '@stellar/stellar-sdk/contract';
 import { AssembledTransaction, Client as ContractClient, ClientOptions as ContractClientOptions, MethodOptions, Result } from '@stellar/stellar-sdk/contract';
-import type { u32, u64, i128, Option } from '@stellar/stellar-sdk/contract';
+import { Buffer } from 'buffer';
 export * from '@stellar/stellar-sdk';
 export * as contract from '@stellar/stellar-sdk/contract';
 export * as rpc from '@stellar/stellar-sdk/rpc';
 export declare const networks: {
     readonly testnet: {
         readonly networkPassphrase: "Test SDF Network ; September 2015";
-        readonly contractId: "CBSPZEBFRRVY3X6M4JVXF6F7DAMSDXTM5DPBYXBRPFXNYSVJQVPGCGPC";
+        readonly contractId: "CCR32V65TMOA5VFREEUFUOJMN36P2QROR7RUPI4VVEURVCJMKQT7YRM7";
     };
 };
 export declare const Errors: {
@@ -56,15 +56,21 @@ export declare const Errors: {
     15: {
         message: string;
     };
+    16: {
+        message: string;
+    };
+    17: {
+        message: string;
+    };
 };
 export type Status = {
-    tag: "Active";
+    tag: 'Active';
     values: void;
 } | {
-    tag: "InReview";
+    tag: 'InReview';
     values: void;
 } | {
-    tag: "Completed";
+    tag: 'Completed';
     values: void;
 };
 export interface Bounty {
@@ -440,7 +446,7 @@ export interface Client {
     /**
      * Construct and simulate a create_bounty transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
      */
-    create_bounty: ({ owner, token, reward, distribution, submission_deadline, judging_deadline, title }: {
+    create_bounty: ({ owner, token, reward, distribution, submission_deadline, judging_deadline, title, }: {
         owner: string;
         token: string;
         reward: i128;
@@ -465,7 +471,7 @@ export interface Client {
     /**
      * Construct and simulate a update_bounty transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
      */
-    update_bounty: ({ owner, bounty_id, new_title, new_distribution, new_submission_deadline }: {
+    update_bounty: ({ owner, bounty_id, new_title, new_distribution, new_submission_deadline, }: {
         owner: string;
         bounty_id: u32;
         new_title: Option<string>;
@@ -508,7 +514,7 @@ export interface Client {
     /**
      * Construct and simulate a apply_to_bounty transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
      */
-    apply_to_bounty: ({ applicant, bounty_id, submission_link }: {
+    apply_to_bounty: ({ applicant, bounty_id, submission_link, }: {
         applicant: string;
         bounty_id: u32;
         submission_link: string;
@@ -529,7 +535,7 @@ export interface Client {
     /**
      * Construct and simulate a update_submission transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
      */
-    update_submission: ({ applicant, bounty_id, new_submission_link }: {
+    update_submission: ({ applicant, bounty_id, new_submission_link, }: {
         applicant: string;
         bounty_id: u32;
         new_submission_link: string;
@@ -550,7 +556,7 @@ export interface Client {
     /**
      * Construct and simulate a select_winners transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
      */
-    select_winners: ({ owner, bounty_id, winners }: {
+    select_winners: ({ owner, bounty_id, winners, }: {
         owner: string;
         bounty_id: u32;
         winners: Array<string>;
@@ -597,13 +603,13 @@ export declare class Client extends ContractClient {
         fee_account: string;
     }, 
     /** Options for initializing a Client as well as for calling a method, with extras specific to deploying. */
-    options: MethodOptions & Omit<ContractClientOptions, "contractId"> & {
+    options: MethodOptions & Omit<ContractClientOptions, 'contractId'> & {
         /** The hash of the Wasm blob, which must already be installed on-chain. */
         wasmHash: Buffer | string;
         /** Salt used to generate the contract's ID. Passed through to {@link Operation.createCustomContract}. Default: random. */
         salt?: Buffer | Uint8Array;
         /** The format used to decode `wasmHash`, if it's provided as a string. */
-        format?: "hex" | "base64";
+        format?: 'hex' | 'base64';
     }): Promise<AssembledTransaction<T>>;
     constructor(options: ContractClientOptions);
     readonly fromJSON: {

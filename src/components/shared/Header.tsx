@@ -26,7 +26,9 @@ const Header = () => {
   const pathname = usePathname();
   const { isConnected, disconnect, publicKey, connect } = useWallet();
   const [showRegister, setShowRegister] = useState(false);
-  const [selectedRole, setSelectedRole] = useState<'talent' | 'sponsor' | null>(null);
+  const [selectedRole, setSelectedRole] = useState<'talent' | 'sponsor' | null>(
+    null
+  );
   const [showLogin, setShowLogin] = useState(false);
   const [chooseRoleOpen, setChooseRoleOpen] = useState(false);
   const router = useRouter();
@@ -179,7 +181,7 @@ const Header = () => {
             {isConnected && !user && (
               <button
                 onClick={() => setChooseRoleOpen(true)}
-                className="bg-white text-black font-medium py-1.5 px-4 rounded-lg hover:bg-white/90 complete-profile"
+                className="bg-white text-black font-medium py-1.5 px-4 rounded-lg hover:bg-white/90"
               >
                 Complete Profile
               </button>

@@ -1,8 +1,6 @@
 'use client';
 
-import { auth } from '@/lib/firebase';
 import useAuthStore from '@/lib/stores/auth.store';
-import { signInWithEmailAndPassword } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import toast from 'react-hot-toast';

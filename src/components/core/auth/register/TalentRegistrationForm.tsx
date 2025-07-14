@@ -110,8 +110,7 @@ const TalentRegistrationForm: React.FC<TalentRegistrationFormProps> = ({
       </div>
 
       <div>
-        <label className="text-sm font-medium mb-2 block">Blockchain Wallet</label>
-        <WalletConnectButton 
+        <WalletConnectButton
           onAddressChange={(address) => onFieldChange('walletAddress', address)}
           currentAddress={formData.walletAddress}
         />
@@ -129,7 +128,7 @@ const TalentRegistrationForm: React.FC<TalentRegistrationFormProps> = ({
       </div>
 
       <div>
-        <p className="text-sm font-medium mb-2">Skills</p>
+        <p className="text-sm font-medium text-white mb-2">Skills</p>
         <div className="flex flex-wrap gap-2">
           {defaultSkills.map((skill) => (
             <button
@@ -152,7 +151,7 @@ const TalentRegistrationForm: React.FC<TalentRegistrationFormProps> = ({
       </div>
 
       <div className="space-y-3">
-        <p className="text-sm font-medium">Social Media</p>
+        <p className="text-sm text-white font-medium">Social Media</p>
         {formData.socials.map((social, index) => (
           <div key={index} className="flex items-center gap-2">
             {social.platform === 'twitter' && (
@@ -191,7 +190,7 @@ const TalentRegistrationForm: React.FC<TalentRegistrationFormProps> = ({
           <button
             type="button"
             onClick={onAddSocial}
-            className="text-sm text-primary hover:underline"
+            className="text-sm text-white hover:underline"
           >
             + Add {formData.socials.length === 0 ? 'Social Media' : 'Another'}
           </button>

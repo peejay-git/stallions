@@ -69,7 +69,9 @@ const SponsorRegistrationForm: React.FC<SponsorRegistrationFormProps> = ({
   return (
     <div className="space-y-4">
       <section>
-        <h3 className="font-medium text-lg mb-4">Personal Information</h3>
+        <h3 className="font-medium text-lg text-white mb-4">
+          Personal Information
+        </h3>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
@@ -120,11 +122,10 @@ const SponsorRegistrationForm: React.FC<SponsorRegistrationFormProps> = ({
         </div>
 
         <div className="mt-4">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Blockchain Wallet
-          </label>
-          <WalletConnectButton 
-            onAddressChange={(address) => onFieldChange('walletAddress', address)}
+          <WalletConnectButton
+            onAddressChange={(address) =>
+              onFieldChange('walletAddress', address)
+            }
             currentAddress={formData.walletAddress}
           />
         </div>
@@ -146,7 +147,7 @@ const SponsorRegistrationForm: React.FC<SponsorRegistrationFormProps> = ({
         </div>
 
         <div className="mt-4">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-white mb-2">
             Profile Picture
           </label>
           <div className="border-2 border-dashed rounded-lg p-6 text-center cursor-pointer bg-gray-50">
@@ -227,7 +228,9 @@ const SponsorRegistrationForm: React.FC<SponsorRegistrationFormProps> = ({
       </section>
 
       <section className="mt-8">
-        <h3 className="font-medium text-lg mb-4">Company Information</h3>
+        <h3 className="font-medium text-lg text-white mb-4">
+          Company Information
+        </h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <input
@@ -296,7 +299,7 @@ const SponsorRegistrationForm: React.FC<SponsorRegistrationFormProps> = ({
         </div>
 
         <div className="mt-4">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-white mb-2">
             Company Logo
           </label>
           <div className="border-2 border-dashed rounded-lg p-6 text-center cursor-pointer bg-gray-50">

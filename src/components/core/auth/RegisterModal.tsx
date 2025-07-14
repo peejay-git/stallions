@@ -432,7 +432,7 @@ export default function RegisterModal({
               }}
               className="flex w-full items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white p-3 text-center font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
             >
-              Connect MetaMask
+              Connect Wallet
             </button>
 
             <button
@@ -448,78 +448,79 @@ export default function RegisterModal({
   }
 
   return (
-    <div
-      className={clsx(
-        'fixed inset-0 z-[9999] flex items-start justify-center pt-20 transition-all duration-300',
-        isOpen
-          ? 'visible opacity-100'
-          : 'invisible opacity-0 pointer-events-none'
-      )}
+    <dialog
+      open={isOpen}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+      className="h-fit w-fit bg-transparent flex items-start justify-center pt-20 backdrop:bg-black/60 overflow-auto"
     >
-      <div className="absolute inset-0 bg-black/40" onClick={onClose}></div>
       <motion.div
-        initial={{ y: 20, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.3 }}
-        className="relative max-h-[90vh] w-full max-w-md overflow-y-auto rounded-lg bg-white p-8 shadow-lg dark:bg-gray-900"
+        initial={{ scale: 0.9, opacity: 0, y: 20 }}
+        animate={{ scale: 1, opacity: 1, y: 0 }}
+        exit={{ scale: 0.9, opacity: 0, y: 20 }}
+        transition={{ type: 'spring', duration: 0.5 }}
+        className="backdrop-blur-xl bg-white/10 w-[min(90%, 400px)] max-w-lg mx-auto max-h-[90vh] border border-white/20 rounded-xl overflow-hidden shadow-2xl"
       >
-        <button
-          onClick={onClose}
-          className="absolute right-4 top-4 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-        >
-          <IoClose size={24} />
-        </button>
-
-        <h2 className="mb-6 text-2xl font-bold dark:text-white">
-          {role === 'sponsor' ? 'Create Sponsor Account' : 'Create Account'}
-        </h2>
-
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {role === 'talent' ? (
-            <TalentRegistrationForm
-              formData={talentFormData}
-              fieldErrors={talentFieldErrors}
-              isSubmitting={isSubmitting}
-              onFieldChange={handleTalentFieldChange}
-              onSkillToggle={handleSkillToggle}
-              onSocialChange={handleSocialChange}
-              onAddSocial={handleAddSocial}
-              onRemoveSocial={handleRemoveSocial}
-            />
-          ) : (
-            <SponsorRegistrationForm
-              formData={sponsorFormData}
-              fieldErrors={sponsorFieldErrors}
-              isSubmitting={isSubmitting}
-              onFieldChange={handleSponsorFieldChange}
-              onFileChange={handleSponsorFileChange}
-            />
-          )}
-
+        <div className="relative p-8 overflow-y-auto max-h-[80vh]">
           <button
-            type="submit"
-            className="btn-primary w-full py-2"
-            disabled={isSubmitting}
+            onClick={onClose}
+            className="absolute right-4 top-4 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
           >
-            {isSubmitting ? 'Creating Account...' : 'Create Account'}
+            <IoClose size={24} />
           </button>
-        </form>
 
-        <div className="my-6 flex items-center justify-center">
-          <span className="h-px flex-1 bg-gray-200 dark:bg-gray-700"></span>
-          <span className="mx-3 text-sm text-gray-500 dark:text-gray-400">
-            OR
-          </span>
-          <span className="h-px flex-1 bg-gray-200 dark:bg-gray-700"></span>
-        </div>
+          <h2 className="mb-6 text-2xl font-bold dark:text-white">
+            {role === 'sponsor' ? 'Create Sponsor Account' : 'Create Account'}
+          </h2>
 
-        <div className="space-y-3">
-          <button className="flex w-full items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white p-3 text-center font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700">
-            <FcGoogle size={20} />
-            Continue with Google
-          </button>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {role === 'talent' ? (
+              <TalentRegistrationForm
+                formData={talentFormData}
+                fieldErrors={talentFieldErrors}
+                isSubmitting={isSubmitting}
+                onFieldChange={handleTalentFieldChange}
+                onSkillToggle={handleSkillToggle}
+                onSocialChange={handleSocialChange}
+                onAddSocial={handleAddSocial}
+                onRemoveSocial={handleRemoveSocial}
+              />
+            ) : (
+              <SponsorRegistrationForm
+                formData={sponsorFormData}
+                fieldErrors={sponsorFieldErrors}
+                isSubmitting={isSubmitting}
+                onFieldChange={handleSponsorFieldChange}
+                onFileChange={handleSponsorFileChange}
+              />
+            )}
+
+            <button
+              type="submit"
+              className="btn-primary w-full py-2"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? 'Creating Account...' : 'Create Account'}
+            </button>
+          </form>
+
+          <div className="my-6 flex items-center justify-center">
+            <span className="h-px flex-1 bg-gray-200 dark:bg-gray-700"></span>
+            <span className="mx-3 text-sm text-gray-500 dark:text-gray-400">
+              OR
+            </span>
+            <span className="h-px flex-1 bg-gray-200 dark:bg-gray-700"></span>
+          </div>
+
+          <div className="space-y-3">
+            <button className="flex w-full items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white p-3 text-center font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700">
+              <FcGoogle size={20} />
+              Continue with Google
+            </button>
+          </div>
         </div>
       </motion.div>
-    </div>
+    </dialog>
   );
 }

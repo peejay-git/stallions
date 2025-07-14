@@ -322,8 +322,19 @@ export class BountyService {
         throw new Error('Submission deadline is required');
       }
 
+      // Ensure bountyId is a non-empty string for Firestore doc reference
+      if (bountyId === undefined || bountyId === null) {
+        throw new Error('bountyId must be a valid number');
+      }
+      
+      // Convert to string and ensure it's not empty
+      const bountyIdStr = String(bountyId);
+      if (!bountyIdStr) {
+        throw new Error('bountyId must convert to a non-empty string');
+      }
+      
       // Save to Firestore
-      const bountyRef = this.bountiesRef.doc(bountyId);
+      const bountyRef = this.bountiesRef.doc(bountyIdStr);
       await bountyRef.set(bountyData);
 
       return bountyId;

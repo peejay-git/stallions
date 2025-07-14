@@ -1,6 +1,8 @@
 'use client';
 
 import { ISupportedWallet } from '@creit.tech/stellar-wallets-kit';
+import { auth } from '@/lib/firebase';
+import useAuthStore from '@/lib/stores/auth.store';
 import { createContext, useContext, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { getWalletKit, initializeWallet } from '../lib/wallet';
@@ -90,6 +92,15 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
           setPublicKey(address);
           onWalletSelected?.(address);
           setIsConnected(true);
+          
+          // Check if user is signed in with Firebase
+          if (!auth.currentUser) {
+            // If not signed in, try to fetch user profile by wallet address
+            const userProfile = await useAuthStore.getState().fetchUserByWalletAddress(address);
+            if (userProfile) {
+              toast.success('Signed in with connected wallet');
+            }
+          }
         },
         modalTitle,
         notAvailableText,
@@ -102,6 +113,7 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
       while (!address) {
         await new Promise((resolve) => setTimeout(resolve, 100));
       }
+
       return address;
     } catch (e) {
       console.error('Error connecting wallet:', e);

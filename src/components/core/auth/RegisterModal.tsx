@@ -2,7 +2,7 @@
 
 import { PasswordInput } from '@/components/ui';
 import { useWallet } from '@/hooks/useWallet';
-import { registerTalent, signInWithGoogle } from '@/lib/authService';
+import { registerTalent } from '@/lib/authService';
 import { auth } from '@/lib/firebase';
 import useAuthStore from '@/lib/stores/auth.store';
 import { UserRole } from '@/types/auth.types';
@@ -177,28 +177,6 @@ export default function RegisterModal({ isOpen, onClose }: Props) {
     }
   };
 
-  const handleGoogleSignIn = async () => {
-    try {
-      setIsGoogleSubmitting(true);
-      const { user, isNewUser } = await signInWithGoogle();
-
-      toast.success('Account created successfully!');
-      onClose();
-
-      if (isNewUser) {
-        // If it's a new user, prompt them to connect their wallet
-        router.push(`/connect-wallet?redirect=${encodeURIComponent(location)}`);
-      } else {
-        router.push(`/dashboard?redirect=${encodeURIComponent(location)}`);
-      }
-    } catch (err: any) {
-      console.error(err);
-      toast.error('Google sign-in failed. Please try again.');
-    } finally {
-      setIsGoogleSubmitting(false);
-    }
-  };
-
   const connectUserWallet = async () => {
     if (!isConnected) {
       try {
@@ -284,7 +262,6 @@ export default function RegisterModal({ isOpen, onClose }: Props) {
         updatedAt: new Date().toISOString(),
       };
       useAuthStore.getState().setUser(userProfile);
-      localStorage.setItem('user', JSON.stringify(userProfile));
       toast.success('Profile created successfully!');
 
       // Close the modal first, then redirect
@@ -679,7 +656,6 @@ export default function RegisterModal({ isOpen, onClose }: Props) {
 
               <motion.button
                 type="button"
-                onClick={handleGoogleSignIn}
                 disabled={isGoogleSubmitting}
                 className="mt-6 w-full flex items-center justify-center gap-2 border border-white/20 bg-white/10 hover:bg-white/15 text-white py-3 px-4 rounded-lg transition-colors"
                 whileHover={{ scale: 1.03 }}

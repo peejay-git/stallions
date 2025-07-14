@@ -12,7 +12,15 @@ import {
   onAuthStateChanged,
   setPersistence,
 } from 'firebase/auth';
-import { doc, getDoc, updateDoc } from 'firebase/firestore/lite';
+import {
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  query,
+  updateDoc,
+  where,
+} from 'firebase/firestore/lite';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 
@@ -285,6 +293,65 @@ const useAuthStore = create<AuthStoreState>()(
       requiresProfileCompletion: () => {
         const { user } = get();
         return user ? !user.isProfileComplete : false;
+      },
+
+      // Fetch user by wallet address when not signed in
+      fetchUserByWalletAddress: async (walletAddress: string) => {
+        try {
+          set({ loading: true });
+
+          // Query Firestore for users with this wallet address
+          const usersRef = collection(db, 'users');
+          const q = query(
+            usersRef,
+            where('wallet.publicKey', '==', walletAddress)
+          );
+          const querySnapshot = await getDocs(q);
+
+          if (querySnapshot.empty) {
+            // No user with this wallet address exists
+            set({ loading: false });
+            return null;
+          }
+
+          // User with this wallet exists
+          const userDoc = querySnapshot.docs[0];
+          const userData = userDoc.data();
+
+          // Sign in with custom token or directly update store state
+          // Note: This doesn't do Firebase Auth sign-in, just updates the store
+          // You would need to implement Firebase custom token auth to fully sign in
+
+          const userProfile = {
+            uid: userDoc.id,
+            email: userData.email,
+            displayName: userData.displayName || '',
+            photoURL: userData.photoURL || '',
+            role: userData.role || '',
+            walletConnected: true,
+            emailVerified: userData.emailVerified || false,
+            isProfileComplete: isProfileComplete(userData as UserProfile),
+            createdAt: userData.createdAt || '',
+            updatedAt: userData.updatedAt || '',
+            lastLoginAt: new Date().toISOString(),
+            walletInfo: userData.wallet || {},
+            ...userData,
+          };
+
+          set({
+            user: userProfile,
+            loading: false,
+            isAuthenticated: true,
+            isWalletAuthenticated: true,
+            isEmailAuthenticated: false,
+          });
+
+          return userProfile;
+        } catch (error) {
+          console.error('Error fetching user by wallet address:', error);
+          set({ loading: false });
+          return null;
+        }
       },
     }),
     {

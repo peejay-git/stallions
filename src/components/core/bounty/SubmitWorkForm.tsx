@@ -53,26 +53,13 @@ export default function SubmitWorkForm({
 
   // Fetch user's wallet address from Firestore
   useEffect(() => {
-    const fetchUserWalletAddress = async () => {
-      if (!user?.uid) return;
+    if (!user) return;
 
-      try {
-        const userRef = doc(db, 'users', user.uid);
-        const userSnap = await getDoc(userRef);
-
-        if (userSnap.exists()) {
-          const userData = userSnap.data();
-          if (userData.wallet && userData.wallet.address) {
-            setUserWalletAddress(userData.wallet.address);
-          }
-        }
-      } catch (error) {
-        console.error('Error fetching user wallet address:', error);
-      }
-    };
-
-    fetchUserWalletAddress();
-  }, [user?.uid]);
+    // Get wallet address from auth store user data
+    if (user.walletConnected && user.walletInfo?.address) {
+      setUserWalletAddress(user.walletInfo.address);
+    }
+  }, [user]);
 
   // Check if bounty has expired and if user has already submitted work
   useEffect(() => {

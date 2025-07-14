@@ -1,8 +1,8 @@
 'use client';
 
-import { auth, db } from '@/lib/firebase';
+import { auth } from '@/lib/firebase';
+import useAuthStore from '@/lib/stores/auth.store';
 import { signInWithEmailAndPassword } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore/lite';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
@@ -18,21 +18,14 @@ export default function AdminLoginPage() {
     setIsLoading(true);
 
     try {
-      // Sign in with Firebase
-      const userCredential = await signInWithEmailAndPassword(
-        auth,
-        email,
-        password
-      );
-      const user = userCredential.user;
+      // Fetch user data from auth store
+      await useAuthStore.getState().fetchUserFromFirestore();
+      const userData = useAuthStore.getState().user;
 
       // Check if user has admin role
-      const userDoc = await getDoc(doc(db, 'users', user.uid));
-      const userData = userDoc.data();
-
       if (!userData || userData.role !== 'admin') {
         // Not an admin, sign out and show error
-        await auth.signOut();
+        await useAuthStore.getState().logout();
         toast.error('You do not have admin access');
         return;
       }

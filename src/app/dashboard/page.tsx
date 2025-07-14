@@ -9,12 +9,9 @@ import { assetSymbols } from '@/components/core/bounty/BountyCard';
 import { useProtectedRoute } from '@/hooks/useProtectedRoute';
 import { useWallet } from '@/hooks/useWallet';
 import { getBountiesByOwner } from '@/lib/bounties';
-import { db } from '@/lib/firebase';
-import { doc, getDoc } from '@/lib/firestore';
 import useAuthStore from '@/lib/stores/auth.store';
 import { AuthState } from '@/types/auth.types';
 import { BountyStatus } from '@/types/bounty';
-import { getAuth, signOut } from 'firebase/auth';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -28,8 +25,6 @@ export default function DashboardPage() {
   );
   const [bounty, setBounty] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [isLoadingWallet, setIsLoadingWallet] = useState(false);
   const user = useAuthStore((state: AuthState) => state.user);
   const fetchUser = useAuthStore(
     (state: AuthState) => state.fetchUserFromFirestore
@@ -46,41 +41,26 @@ export default function DashboardPage() {
     try {
       if (!user) return;
 
-      // Fetch user data from Firestore
+      // Fetch user data from auth store
       await fetchUser();
 
       // If already connected, don't try to reconnect
       if (isConnected) return;
 
-      // Check if we have a stored wallet ID
-      const storedWalletId = localStorage.getItem('walletId');
-      if (!storedWalletId) return;
-
-      // Only try to connect if we have a stored wallet ID and user data
-      const userDoc = doc(db, 'users', user.uid);
-      const userSnap = await getDoc(userDoc);
-
-      if (userSnap.exists()) {
-        const userData = userSnap.data();
-        if (userData.wallet?.address) {
-          // Try to automatically connect the wallet once
-          setIsLoadingWallet(true);
-          try {
-            await connect();
-            // After successful connection, fetch submissions
-            setUserSubmissions([]);
-            setLoadingSubmissions(true);
-          } catch (error) {
-            console.error('Failed to auto-connect wallet:', error);
-            // Clear stored wallet ID on connection failure
-            localStorage.removeItem('walletId');
-          }
-          setIsLoadingWallet(false);
+      // Check if user has wallet connected in their profile
+      if (user.walletInfo?.address || (user as any).wallet?.address) {
+        // Try to automatically connect the wallet once
+        try {
+          await connect();
+          // After successful connection, fetch submissions
+          setUserSubmissions([]);
+          setLoadingSubmissions(true);
+        } catch (error) {
+          console.error('Failed to auto-connect wallet:', error);
         }
       }
     } catch (err) {
       console.error('Error loading wallet data:', err);
-      setIsLoadingWallet(false);
     }
   };
 
@@ -136,7 +116,6 @@ export default function DashboardPage() {
         setBounty(processedBounties);
       } catch (err: any) {
         console.error('Error fetching bounties:', err);
-        setError(err.message || 'Error fetching bounty');
       } finally {
         setLoading(false);
       }

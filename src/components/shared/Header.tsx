@@ -2,7 +2,6 @@
 
 import LoginModal from '@/components/core/auth/LoginModal';
 import RegisterModal from '@/components/core/auth/RegisterModal';
-import WalletConnectionModal from '@/components/core/auth/WalletConnectionModal';
 import { useAuth } from '@/hooks/useAuth';
 import { useWallet } from '@/hooks/useWallet';
 import useAuthStore from '@/lib/stores/auth.store';
@@ -23,11 +22,9 @@ const createBountyLink = { name: 'Create', href: '/create' };
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const pathname = usePathname();
-  const { isConnected, disconnect, publicKey } = useWallet();
+  const { isConnected, disconnect, publicKey, connect } = useWallet();
   const [showRegister, setShowRegister] = useState(false);
-  const [isChooseRoleOpen, setChooseRoleOpen] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
-  const [showWalletModal, setShowWalletModal] = useState(false);
   const router = useRouter();
   const { user, AuthModals, isAuthenticated } = useAuth();
   const logout = useAuthStore((state) => state.logout);
@@ -42,28 +39,9 @@ const Header = () => {
     setIsMenuOpen((prev) => !prev);
   }, []);
 
-  // Modal handlers
-  const handleLoginClose = useCallback(() => setShowLogin(false), []);
-  const handleRegisterClose = useCallback(() => setShowRegister(false), []);
-  const handleChooseRoleClose = useCallback(() => setChooseRoleOpen(false), []);
-
-  const handleSwitchToRegister = useCallback(() => {
-    setShowLogin(false);
-    setChooseRoleOpen(true);
+  const handleWalletConnect = useCallback(() => {
+    connect();
   }, []);
-
-  const handleChooseRole = useCallback(
-    (role: string) => {
-      if (!role) return;
-      setChooseRoleOpen(false);
-      if (role === 'talent') {
-        setShowRegister(true);
-      } else {
-        router.push('/register/sponsor');
-      }
-    },
-    [router]
-  );
 
   const handleLogout = useCallback(() => {
     // Confirm logout
@@ -77,23 +55,8 @@ const Header = () => {
     router.push('/');
   }, [disconnect, logout, isConnected, router]);
 
-  // Wallet modal handling
-  const handleWalletModalOpen = useCallback(() => setShowWalletModal(true), []);
-  const handleWalletModalClose = useCallback(
-    () => setShowWalletModal(false),
-    []
-  );
-
   return (
     <header className="sticky top-0 z-40 bg-[#070708] shadow-md">
-      {showWalletModal && (
-        <WalletConnectionModal
-          isOpen={showWalletModal}
-          onClose={handleWalletModalClose}
-          mode="connect"
-        />
-      )}
-
       {showRegister && (
         <RegisterModal
           isOpen={showRegister}
@@ -191,6 +154,14 @@ const Header = () => {
                       {`${publicKey.slice(0, 4)}...${publicKey.slice(-4)}`}
                     </span>
                   ) : null}
+                  {!publicKey && (
+                    <button
+                      onClick={handleWalletConnect}
+                      className="bg-white text-black font-medium py-1.5 px-4 rounded-lg hover:bg-white/90"
+                    >
+                      Connect Wallet
+                    </button>
+                  )}
                   <button
                     onClick={handleLogout}
                     className="bg-white text-black font-medium py-1.5 px-4 rounded-lg hover:bg-white/90"

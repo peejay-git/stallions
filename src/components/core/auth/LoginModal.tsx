@@ -2,13 +2,8 @@
 
 import { PasswordInput } from '@/components/ui';
 import { useWallet } from '@/hooks/useWallet';
-import {
-  forgotPassword,
-  signInWithGoogle,
-  walletToAccount,
-} from '@/lib/authService';
-import { auth, db } from '@/lib/firebase';
-import { doc, getDoc, updateDoc } from '@/lib/firestore';
+import { forgotPassword, walletToAccount } from '@/lib/authService';
+import { auth } from '@/lib/firebase';
 import useAuthStore from '@/lib/stores/auth.store';
 import { getWalletKit } from '@/lib/wallet';
 import { signInWithEmailAndPassword } from 'firebase/auth';
@@ -27,11 +22,7 @@ type Props = {
   onSwitchToRegister?: () => void;
 };
 
-type LoginView =
-  | 'main'
-  | 'wallet-selector'
-  | 'wallet-email'
-  | 'forgot-password';
+type LoginView = 'main' | 'wallet-selector' | 'forgot-password';
 
 export default function LoginModal({
   isOpen,
@@ -52,7 +43,6 @@ export default function LoginModal({
   const [animationComplete, setAnimationComplete] = useState(false);
   const [resetEmail, setResetEmail] = useState('');
   const [isResettingPassword, setIsResettingPassword] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -95,107 +85,31 @@ export default function LoginModal({
     if (formError) setFormError(null); // Clear global error on typing
   };
 
-  const handleGoogleSignIn = async () => {
-    try {
-      setIsGoogleSubmitting(true);
-
-      const { user, isNewUser } = await signInWithGoogle();
-
-      toast.success('Login successful!');
-      onClose();
-
-      if (isNewUser) {
-        // If it's a new user, prompt them to connect their wallet
-        router.push(`/connect-wallet?redirect=${encodeURIComponent(location)}`);
-      } else {
-        router.push(`/dashboard?redirect=${encodeURIComponent(location)}`);
-      }
-    } catch (err: any) {
-      console.error('Google sign-in error:', err);
-
-      // Display more specific error messages based on the error
-      if (
-        err.message?.includes('unauthorized-domain') ||
-        err.message?.includes('domain error')
-      ) {
-        console.error('Unauthorized domain error:', {
-          domain: window.location.hostname,
-          fullUrl: window.location.href,
-          message: err.message,
-          code: err.code,
-        });
-
-        // Show detailed error message
-        toast.error(
-          err.message ||
-            `Google sign-in failed: Domain not authorized. Please contact support.`
-        );
-
-        // Log detailed fix instructions
-        console.info(`
-=====================================================
-FIREBASE DOMAIN FIX INSTRUCTIONS
-=====================================================
-1. Go to Firebase Console: https://console.firebase.google.com
-2. Select your project
-3. Go to Authentication > Settings tab
-4. Scroll to "Authorized domains" section
-5. Add BOTH of these domains:
-   - earnstallions.xyz
-   - www.earnstallions.xyz
-
-6. Make sure your authDomain in Firebase config is set to the CURRENT domain:
-   In firebase.ts: authDomain: window.location.hostname
-   
-7. Check Google OAuth redirect URIs:
-   - Go to Google Cloud Console: https://console.cloud.google.com
-   - Navigate to APIs & Services > Credentials
-   - Find your OAuth 2.0 Client ID
-   - Ensure it has these redirect URIs:
-     * https://www.earnstallions.xyz/__/auth/handler
-     * https://earnstallions.xyz/__/auth/handler
-
-8. Make sure your .env and Vercel environment variables include:
-   NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=earnstallions.xyz
-=====================================================
-                `);
-      } else if (err.message?.includes('popup-closed')) {
-        toast.error('Sign-in popup was closed. Please try again.');
-      } else if (err.message?.includes('popup-blocked')) {
-        toast.error(
-          'Sign-in popup was blocked by your browser. Please allow popups for this site.'
-        );
-      } else if (err.message?.includes('network')) {
-        toast.error(
-          'Network error. Please check your internet connection and try again.'
-        );
-      } else {
-        toast.error(`Google sign-in failed: ${err.message || 'Unknown error'}`);
-      }
-    } finally {
-      setIsGoogleSubmitting(false);
-    }
-  };
-
   const handleWalletConnect = async () => {
     if (isConnected) {
-      setCurrentView('wallet-email');
+      handleWalletLogin();
     } else {
       await connect({
-        onWalletSelected: async (address: string) => {
-          handleWalletSelected(address);
+        onWalletSelected: async () => {
+          // Wait for user to be set, then check if user exists
+          while (useAuthStore.getState().loading) {
+            await new Promise((resolve) => setTimeout(resolve, 100));
+          }
+
+          if (!useAuthStore.getState().user) {
+            handleWalletLogin();
+          }
         },
       });
     }
   };
 
-  const handleWalletSelected = (publicKey: string) => {
-    if (publicKey) {
-      setCurrentView('wallet-email');
-    }
-  };
-
   const handleWalletLogin = async () => {
+    // Wait for public key to be set
+    while (!publicKey) {
+      await new Promise((resolve) => setTimeout(resolve, 100));
+    }
+
     if (!publicKey) {
       toast.error('Wallet not connected. Please connect your wallet first.');
       return;
@@ -243,9 +157,6 @@ FIREBASE DOMAIN FIX INSTRUCTIONS
 
     setIsSubmitting(true);
 
-    // Store current wallet state
-    const storedWalletId = localStorage.getItem('walletId');
-
     try {
       // Try direct Firebase auth first
       let userCredential;
@@ -259,41 +170,14 @@ FIREBASE DOMAIN FIX INSTRUCTIONS
         throw authError;
       }
 
-      const uid = userCredential.user.uid;
-      const docRef = doc(db, 'users', uid);
+      // Fetch user data from Firestore through auth store
+      await useAuthStore.getState().fetchUserFromFirestore();
 
-      const userSnap = await getDoc(docRef);
-      if (!userSnap.exists()) {
-        throw new Error('User profile not found.');
-      }
+      // Get the current user from auth store
+      const { user } = useAuthStore.getState();
 
-      // Update last login timestamp
-      try {
-        await updateDoc(docRef, {
-          lastLogin: new Date().toISOString(),
-        });
-      } catch (updateError) {
-        console.error('Failed to update last login timestamp:', updateError);
-      }
-
-      const userData = userSnap.data();
-      if (!userData?.role || !userData?.profileData) {
-        throw new Error('Incomplete user profile.');
-      }
-
-      const userProfile = {
-        uid,
-        role: userData.role,
-        walletConnected: !!userData.wallet,
-        ...userData.profileData,
-      };
-
-      // Store in Zustand
-      useAuthStore.getState().setUser(userProfile);
-
-      // Restore wallet ID if it was previously connected
-      if (storedWalletId) {
-        localStorage.setItem('walletId', storedWalletId);
+      if (!user) {
+        throw new Error('User profile not found or incomplete.');
       }
 
       toast.success('Login successful!');
@@ -301,37 +185,29 @@ FIREBASE DOMAIN FIX INSTRUCTIONS
 
       // Check if wallet needs to be connected
       setTimeout(async () => {
+        // Get the latest user data from the auth store
+        const currentUser = useAuthStore.getState().user;
+
         // For sponsors, automatically prompt wallet connection if they don't have one
-        if (
-          userData.role === 'sponsor' &&
-          (!userData.wallet || !userData.wallet.address)
-        ) {
+        if (currentUser?.role === 'sponsor' && !currentUser.walletConnected) {
           try {
             const kit = await getWalletKit();
             if (kit) {
               const publicKey = await connect();
               if (publicKey) {
-                // Update user's wallet info in Firestore
-                await updateDoc(docRef, {
-                  wallet: {
-                    address: publicKey,
-                    network: 'TESTNET',
-                    updatedAt: new Date().toISOString(),
-                  },
+                // Update user's wallet info through the auth store
+                await useAuthStore.getState().connectWalletToUser({
+                  address: publicKey,
+                  publicKey,
+                  network: 'TESTNET',
+                  connectedAt: new Date().toISOString(),
                 });
-
-                // Update local user state
-                const updatedUserProfile = {
-                  ...userProfile,
-                  walletConnected: true,
-                };
-                useAuthStore.getState().setUser(updatedUserProfile);
 
                 toast.success('Wallet connected successfully!');
               }
             }
-          } catch (error) {
-            console.error('Error connecting wallet:', error);
+          } catch (walletError) {
+            console.error('Error connecting wallet:', walletError);
             toast.error(
               'Failed to connect wallet. Please try again in your dashboard.'
             );
@@ -753,24 +629,43 @@ FIREBASE DOMAIN FIX INSTRUCTIONS
                   animate={{ y: 0, opacity: 1 }}
                   transition={{ delay: 0.2 }}
                 >
-                  <h2 className="text-3xl font-bold mb-2 text-white text-center">
-                    {currentView === 'main'
-                      ? 'Welcome Back'
-                      : currentView === 'wallet-selector'
-                      ? 'Select Wallet'
-                      : currentView === 'forgot-password'
-                      ? 'Reset Password'
-                      : 'Link Your Account'}
-                  </h2>
-                  <p className="text-gray-300 text-center mb-8">
-                    {currentView === 'main'
-                      ? 'Sign in to your account'
-                      : currentView === 'wallet-selector'
-                      ? 'Choose your preferred wallet'
-                      : currentView === 'forgot-password'
-                      ? "We'll send you a reset link"
-                      : 'Enter your email to continue'}
-                  </p>
+                  {currentView === 'main' ? (
+                    <>
+                      <h2 className="text-3xl font-bold mb-2 text-white text-center">
+                        Welcome Back
+                      </h2>
+                      <p className="text-gray-300 text-center mb-8">
+                        Sign in to your account
+                      </p>
+                    </>
+                  ) : currentView === 'wallet-selector' ? (
+                    <>
+                      <h2 className="text-3xl font-bold mb-2 text-white text-center">
+                        Select Wallet
+                      </h2>
+                      <p className="text-gray-300 text-center mb-8">
+                        Choose your preferred wallet
+                      </p>
+                    </>
+                  ) : currentView === 'forgot-password' ? (
+                    <>
+                      <h2 className="text-3xl font-bold mb-2 text-white text-center">
+                        Reset Password
+                      </h2>
+                      <p className="text-gray-300 text-center mb-8">
+                        We'll send you a reset link
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <h2 className="text-3xl font-bold mb-2 text-white text-center">
+                        Link Your Account
+                      </h2>
+                      <p className="text-gray-300 text-center mb-8">
+                        Enter your email to continue
+                      </p>
+                    </>
+                  )}
                 </motion.div>
 
                 {formError && currentView === 'main' && (
@@ -786,16 +681,6 @@ FIREBASE DOMAIN FIX INSTRUCTIONS
                 <AnimatePresence mode="wait">
                   {currentView === 'main' && renderMainContent()}
 
-                  {currentView === 'wallet-email' && (
-                    <motion.div
-                      key="wallet-email"
-                      initial={{ opacity: 0, x: 20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -20 }}
-                    >
-                      {renderWalletEmailContent()}
-                    </motion.div>
-                  )}
                   {currentView === 'forgot-password' && (
                     <motion.div
                       key="forgot-password"

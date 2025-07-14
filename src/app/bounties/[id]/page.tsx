@@ -13,8 +13,7 @@ import {
   FirebaseBounty,
   getBountyById,
 } from '@/lib/bounties';
-import { db } from '@/lib/firebase';
-import { doc, getDoc } from '@/lib/firestore';
+import useAuthStore from '@/lib/stores/auth.store';
 import { BountyStatus, Submission } from '@/types/bounty';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import Link from 'next/link';
@@ -203,15 +202,16 @@ export default function BountyDetailPage() {
         // If user is logged in, set the user ID (uid)
         setUserId(user.uid);
 
-        // Check if the user is a sponsor by getting their role from Firestore
+        // Check if the user is a sponsor by getting their role from auth store
         const checkUserRole = async () => {
           try {
-            const userRef = doc(db, 'users', user.uid);
-            const userSnap = await getDoc(userRef);
+            // Refresh user data from Firestore to ensure we have the latest
+            await useAuthStore.getState().fetchUserFromFirestore();
 
-            if (userSnap.exists()) {
-              const userData = userSnap.data();
-              const role = userData.role || userData?.profileData?.role;
+            // Get the user role from auth store
+            const currentUser = useAuthStore.getState().user;
+            if (currentUser) {
+              const role = currentUser.role;
               setUserRole(role);
               setIsSponsor(role === 'sponsor');
             }
@@ -749,7 +749,7 @@ export default function BountyDetailPage() {
                   </span>
                 </div>
                 <div className="flex justify-between items-center mb-3 text-sm">
-                  <span className="text-gray-300">Platform Fee (1%):</span>
+                  <span className="text-gray-300">Platform Fee (5%):</span>
                   <span className="text-gray-300">
                     {assetSymbols[bounty.reward.asset] || ''}
                     {(parseFloat(bounty.reward.amount) * 0.01).toFixed(2)}{' '}
@@ -765,7 +765,7 @@ export default function BountyDetailPage() {
                     <div className="space-y-2">
                       {bounty.distribution.map((dist) => {
                         const totalAfterFee =
-                          parseFloat(bounty.reward.amount) * 0.99;
+                          parseFloat(bounty.reward.amount) * 0.95;
                         const positionAmount =
                           totalAfterFee * (dist.percentage / 100);
                         return (
@@ -774,9 +774,9 @@ export default function BountyDetailPage() {
                             className="flex justify-between items-center text-sm"
                           >
                             <span className="flex items-center gap-1">
-                              {dist.position === 1 && '🥇'}
-                              {dist.position === 2 && '🥈'}
-                              {dist.position === 3 && '🥉'}
+                              {dist.position === 1 && '🥇 1st'}
+                              {dist.position === 2 && '🥈 2nd'}
+                              {dist.position === 3 && '🥉 3rd'}
                               {dist.position > 3 && `${dist.position}th`} Place
                               ({dist.percentage}%):
                             </span>

@@ -1,7 +1,8 @@
 import { useWallet } from '@/hooks/useWallet';
 import { connectWallet, walletToAccount } from '@/lib/authService';
-import { auth, db } from '@/lib/firebase';
-import { doc, getDoc } from '@/lib/firestore';
+import { auth } from '@/lib/firebase';
+import useAuthStore from '@/lib/stores/auth.store';
+import { AuthState } from '@/types/auth.types';
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 
@@ -41,24 +42,17 @@ export function useWalletConnection({
     null
   );
 
+  // Get user data from auth store
+  const user = useAuthStore((state: AuthState) => state.user);
+
   // Check if user already has a wallet address stored
   useEffect(() => {
-    const checkUserWallet = async () => {
-      if (!auth.currentUser) return;
+    if (!auth.currentUser || !user) return;
 
-      const userRef = doc(db, 'users', auth.currentUser.uid);
-      const userSnap = await getDoc(userRef);
-
-      if (userSnap.exists()) {
-        const userData = userSnap.data();
-        setUserRole(userData.role);
-        setUserHasWallet(!!userData.wallet?.address);
-        setStoredWalletAddress(userData.wallet?.address || null);
-      }
-    };
-
-    checkUserWallet();
-  }, [auth.currentUser]);
+    setUserRole(user.role);
+    setUserHasWallet(!!user.walletConnected);
+    setStoredWalletAddress(user.walletInfo?.address || null);
+  }, [user, auth.currentUser]);
 
   const handleConnectWallet = async () => {
     try {

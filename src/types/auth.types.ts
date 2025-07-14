@@ -82,18 +82,21 @@ export type UserProfile = TalentProfile | SponsorProfile | AdminProfile;
 export interface AuthState {
   // User data
   user: UserProfile | null;
-  
+
   // Authentication state
   isAuthenticated: boolean;
   isEmailAuthenticated: boolean;
   isWalletAuthenticated: boolean;
   loading: boolean;
-  
+
   // Actions
   setUser: (user: UserProfile) => void;
   clearUser: () => void;
   setLoading: (value: boolean) => void;
   fetchUserFromFirestore: () => Promise<void>;
+  fetchUserByWalletAddress: (
+    walletAddress: string
+  ) => Promise<UserProfile | null>;
   initializeAuthListener: () => () => void;
   updateUserProfile: (profileData: Partial<UserProfile>) => Promise<void>;
   connectWalletToUser: (walletInfo: WalletInfo) => Promise<void>;

@@ -62,6 +62,24 @@ export async function registerSponsor(data: any) {
     lastLogin: new Date().toISOString(),
   });
 
+  // Set user in auth store
+  const userProfile: UserProfile = {
+    uid,
+    role: 'sponsor',
+    email,
+    ...rest,
+    walletConnected: !!walletAddress,
+    walletInfo: walletAddress ? {
+      address: walletAddress,
+      publicKey: walletAddress,
+      network: 'TESTNET',
+      connectedAt: new Date().toISOString(),
+    } : undefined,
+    isProfileComplete: true,
+  };
+  
+  useAuthStore.getState().setUser(userProfile);
+
   return userCredential;
 }
 // #endregion
@@ -128,11 +146,8 @@ export async function loginUser(email: string, password: string) {
     password
   );
 
-  // Update last login timestamp
-  const userRef = doc(db, 'users', userCredential.user.uid);
-  await updateDoc(userRef, {
-    lastLogin: new Date().toISOString(),
-  });
+  // Update last login timestamp and fetch user data through auth store
+  await useAuthStore.getState().fetchUserFromFirestore();
 
   return userCredential;
 }
@@ -291,49 +306,27 @@ export async function signInWithGoogle() {
 export async function connectWallet(walletData: WalletData) {
   const user = auth.currentUser;
   if (!user) throw new Error('User not logged in');
-
-  const userRef = doc(db, 'users', user.uid);
-  const userDoc = await getDoc(userRef);
-
-  if (!userDoc.exists()) {
+  
+  // Get user data from auth store
+  const authStoreUser = useAuthStore.getState().user;
+  
+  if (!authStoreUser) {
     throw new Error('User document not found');
   }
 
-  const userData = userDoc.data();
-
   // Prevent talents from overriding their stored wallet address
   if (
-    userData.role === 'talent' &&
-    userData.wallet &&
-    userData.wallet.address
+    authStoreUser.role === 'talent' &&
+    authStoreUser.walletConnected
   ) {
     throw new Error(
       'Talents cannot change their wallet address after signup. Please use your original wallet address.'
     );
   }
 
-  await updateDoc(userRef, {
-    wallet: walletData,
-  });
-
-  // Update user store
-  const updatedUserDoc = await getDoc(userRef);
-  if (updatedUserDoc.exists()) {
-    const updatedUserData = updatedUserDoc.data();
-    const userProfile: UserProfile = {
-      uid: user.uid,
-      ...updatedUserData.profileData,
-      role: updatedUserData.role as UserRole,
-      walletConnected: true,
-      isProfileComplete:
-        !!updatedUserData.profileData?.firstName &&
-        !!updatedUserData.profileData?.username,
-    };
-
-    useAuthStore.getState().setUser(userProfile);
-    // No need to manually set localStorage anymore as it's handled by the auth store
-  }
-
+  // Connect wallet through auth store
+  await useAuthStore.getState().connectWalletToUser(walletData);
+  
   return walletData;
 }
 
@@ -345,11 +338,11 @@ export async function walletToAccount(
   walletAddress: string,
   userEmail: string
 ) {
-  // This function handles connecting a wallet to an existing account
-  // or creating a new account if the user doesn't exist
+  // This function handles connecting a wallet to an existing account by email
 
   try {
     // First, let's try to find a user with this email address
+    // We still need to use Firestore here as we're looking up by email, not by current user
     const usersRef = collection(db, 'users');
     const q = query(usersRef, where('email', '==', userEmail));
     const querySnapshot = await getDocs(q);
@@ -358,6 +351,7 @@ export async function walletToAccount(
       // User with this email exists
       const existingUserDoc = querySnapshot.docs[0];
       const existingUserData = existingUserDoc.data();
+      const userId = existingUserDoc.id;
 
       // Check if the user already has a different wallet connected
       if (
@@ -373,22 +367,34 @@ export async function walletToAccount(
       }
 
       // Either the user has no wallet or has this same wallet
-      // Update the user with wallet info
-      await updateDoc(doc(db, 'users', existingUserDoc.id), {
-        wallet: {
-          address: walletAddress,
-          publicKey: walletAddress,
-          network: 'TESTNET', // Could be made dynamic
-        },
+      // Create wallet info object
+      const walletInfo = {
+        address: walletAddress,
+        publicKey: walletAddress,
+        network: 'TESTNET', // Could be made dynamic
+        connectedAt: new Date().toISOString(),
+      };
+      
+      // Use the auth store to update Firestore
+      // Since we're not the currently authenticated user, we need to update Firestore directly
+      await updateDoc(doc(db, 'users', userId), {
+        wallet: walletInfo,
+        updatedAt: new Date().toISOString(),
       });
+      
+      // If this is the current user, update the auth store as well
+      if (auth.currentUser?.uid === userId) {
+        useAuthStore.getState().connectWalletToUser(walletInfo);
+      }
 
       return {
         success: true,
         message: 'Wallet connected successfully',
         user: {
           ...existingUserData,
-          uid: existingUserDoc.id,
+          uid: userId,
           walletConnected: true,
+          walletInfo,
         },
       };
     }

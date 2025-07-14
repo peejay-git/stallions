@@ -1,54 +1,14 @@
 'use client';
 
 import { CreateBountyForm, Layout } from '@/components';
-import { useWallet } from '@/hooks/useWallet';
+import { useProtectedRoute } from '@/hooks/useProtectedRoute';
 import useAuthStore from '@/lib/stores/auth.store';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { IoInformationCircleOutline, IoWalletOutline } from 'react-icons/io5';
+import { IoInformationCircleOutline } from 'react-icons/io5';
 
 export default function CreateBountyPage() {
-  const router = useRouter();
-  const { isConnected } = useWallet();
+  useProtectedRoute();
   const user = useAuthStore((state) => state.user);
-
-  if (!isConnected) {
-    return (
-      <Layout>
-        <div className="min-h-screen py-12 px-4 sm:px-6 lg:px-8">
-          <div className="max-w-4xl mx-auto">
-            <div className="bg-blue-900/20 border border-blue-700/30 rounded-lg p-6">
-              <div className="flex items-start gap-4">
-                <IoWalletOutline className="text-blue-300 text-2xl flex-shrink-0 mt-1" />
-                <div>
-                  <h3 className="text-lg font-semibold text-white mb-2">
-                    Connect Your Wallet
-                  </h3>
-                  <p className="text-blue-200 mb-4">
-                    You'll need to connect your Stellar wallet to create a
-                    bounty. The bounty reward will be locked in a smart contract
-                    until the work is completed and accepted.
-                  </p>
-                  <button
-                    onClick={() =>
-                      router.push(
-                        `/connect-wallet?redirect=${encodeURIComponent(
-                          '/create'
-                        )}`
-                      )
-                    }
-                    className="bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-lg transition-colors"
-                  >
-                    Connect Wallet
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </Layout>
-    );
-  }
 
   if (!user || user.role !== 'sponsor') {
     return (

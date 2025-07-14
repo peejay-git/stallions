@@ -1,8 +1,6 @@
 'use client';
 
 import { useWallet } from '@/hooks/useWallet';
-import { db } from '@/lib/firebase';
-import { doc, updateDoc } from '@/lib/firestore';
 import useAuthStore from '@/lib/stores/auth.store';
 import { motion } from 'framer-motion';
 import { useState } from 'react';
@@ -29,30 +27,16 @@ export default function SponsorWalletPrompt({ onSuccess }: Props) {
         return;
       }
 
-      // Update user's wallet info in Firestore
+      // Update user's wallet info using auth store
       if (user?.uid) {
-        const userRef = doc(db, 'users', user.uid);
-        const walletData = {
+        const walletInfo = {
           address: publicKey,
           publicKey: publicKey,
           network: 'TESTNET',
-          updatedAt: new Date().toISOString(),
         };
 
-        await updateDoc(userRef, {
-          wallet: walletData,
-        });
-
-        // Update local user state
-        const updatedUserProfile = {
-          ...user,
-          walletConnected: true,
-          wallet: walletData,
-        };
-        useAuthStore.getState().setUser(updatedUserProfile);
-
-        // Store wallet ID for auto-reconnection
-        localStorage.setItem('walletId', publicKey);
+        // Use auth store to update Firestore and local state
+        await useAuthStore.getState().connectWalletToUser(walletInfo);
       }
 
       toast.success('Wallet connected successfully!');

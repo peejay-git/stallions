@@ -162,7 +162,6 @@ export default function SponsorRegisterPage() {
       };
 
       useAuthStore.getState().setUser(userProfile);
-      localStorage.setItem('user', JSON.stringify(userProfile));
 
       toast.success('Sponsor profile created successfully!');
       router.push('/dashboard');

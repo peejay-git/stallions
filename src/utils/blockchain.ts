@@ -152,6 +152,13 @@ export async function createBountyOnChain({
       toast.error('Wallet response timed out. Please try again.', {
         id: 'wallet-transaction',
       });
+    } else if (error.message?.toLowerCase().includes('trustline')) {
+      toast.error(
+        'Transaction failed. Please set trustline for the token and make sure you have enough balance.',
+        {
+          id: 'wallet-transaction',
+        }
+      );
     } else if (error.message?.includes('insufficient balance')) {
       toast.error('Insufficient balance in your wallet.', {
         id: 'wallet-transaction',
@@ -174,10 +181,16 @@ export async function createBountyOnChain({
       error.message?.includes('Simulation error') ||
       error.message?.includes('simulate')
     ) {
-      toast.error(
-        `Transaction simulation failed. Please try again with different parameters.`,
-        { id: 'wallet-transaction' }
-      );
+      if (error.message?.includes('The user rejected this request')) {
+        toast.error('Transaction was rejected in wallet.', {
+          id: 'wallet-transaction',
+        });
+      } else {
+        toast.error(
+          `Transaction simulation failed. Please try again with different parameters.`,
+          { id: 'wallet-transaction' }
+        );
+      }
     } else if (
       error.message?.includes('Contract error') ||
       error.message?.includes('contract')

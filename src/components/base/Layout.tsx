@@ -12,10 +12,12 @@ const Layout = ({ children }: LayoutProps) => {
 
   // Ensure content transition is smooth
   useEffect(() => {
-    setIsLoaded(true);
-    // Cleanup function
-    return () => setIsLoaded(false);
-  }, []);
+    // Only set once to avoid excessive re-renders
+    if (!isLoaded) {
+      setIsLoaded(true);
+    }
+    // No cleanup function that changes state - this could cause issues during unmounting
+  }, [isLoaded]);
 
   return (
     <div

@@ -2,7 +2,7 @@
 
 import { useWallet } from '@/hooks/useWallet';
 import { connectWallet } from '@/lib/authService';
-import useUserStore from '@/lib/stores/useUserStore';
+import useAuthStore from '@/lib/stores/auth.store';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
 
@@ -13,20 +13,25 @@ interface Props {
 export default function TalentWalletConnector({ onSuccess }: Props) {
   const { connect, networkPassphrase } = useWallet();
   const [isConnecting, setIsConnecting] = useState(false);
-  const user = useUserStore((state) => state.user);
-  const fetchUser = useUserStore((state) => state.fetchUserFromFirestore);
+  const user = useAuthStore((state: { user: any }) => state.user);
+  const fetchUser = useAuthStore(
+    (state: { fetchUserFromFirestore: any }) => state.fetchUserFromFirestore
+  );
 
   const handleConnectWallet = async () => {
     try {
       setIsConnecting(true);
-      const publicKey = await connect();
 
-      if (publicKey && user?.uid) {
+      // Connect wallet
+      await connect();
+
+      // After connect() is called, check if we have a public key
+      if (user?.uid && networkPassphrase) {
         // Save the wallet to the user's account
         await connectWallet({
-          address: publicKey,
-          publicKey: publicKey,
-          network: networkPassphrase!,
+          address: user.walletInfo?.address || '',
+          publicKey: user.walletInfo?.publicKey || '',
+          network: networkPassphrase,
         });
 
         // Update user data in store
@@ -37,10 +42,10 @@ export default function TalentWalletConnector({ onSuccess }: Props) {
         if (onSuccess) {
           onSuccess();
         }
-      } else if (!publicKey) {
-        toast.error('Could not connect wallet');
       } else if (!user?.uid) {
         toast.error('Please log in first');
+      } else {
+        toast.error('Could not connect wallet');
       }
     } catch (err) {
       console.error('Error connecting wallet:', err);

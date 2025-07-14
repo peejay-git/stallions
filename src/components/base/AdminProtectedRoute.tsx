@@ -2,7 +2,8 @@
 
 import { LoadingSpinner } from '@/components';
 import { auth } from '@/lib/firebase';
-import useUserStore from '@/lib/stores/useUserStore';
+import useAuthStore from '@/lib/stores/auth.store';
+import { AuthState } from '@/types/auth.types';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
@@ -13,10 +14,10 @@ export default function AdminProtectedRoute({
   children: React.ReactNode;
 }) {
   const router = useRouter();
-  const user = useUserStore((state) => state.user);
-  const loading = useUserStore((state) => state.loading);
-  const fetchUserFromFirestore = useUserStore(
-    (state) => state.fetchUserFromFirestore
+  const user = useAuthStore((state: AuthState) => state.user);
+  const loading = useAuthStore((state: AuthState) => state.loading);
+  const fetchUserFromFirestore = useAuthStore(
+    (state: AuthState) => state.fetchUserFromFirestore
   );
   const [isChecking, setIsChecking] = useState(true);
 

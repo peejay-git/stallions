@@ -2,7 +2,7 @@
 
 import { CreateBountyForm, Layout } from '@/components';
 import { useWallet } from '@/hooks/useWallet';
-import useUserStore from '@/lib/stores/useUserStore';
+import useAuthStore from '@/lib/stores/auth.store';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { IoInformationCircleOutline, IoWalletOutline } from 'react-icons/io5';
@@ -10,7 +10,7 @@ import { IoInformationCircleOutline, IoWalletOutline } from 'react-icons/io5';
 export default function CreateBountyPage() {
   const router = useRouter();
   const { isConnected } = useWallet();
-  const user = useUserStore((state) => state.user);
+  const user = useAuthStore((state) => state.user);
 
   if (!isConnected) {
     return (

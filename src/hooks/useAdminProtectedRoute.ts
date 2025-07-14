@@ -1,12 +1,12 @@
-import useUserStore from '@/lib/stores/useUserStore';
+import useAuthStore from '@/lib/stores/auth.store';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 
 export function useAdminProtectedRoute() {
   const router = useRouter();
-  const user = useUserStore((state) => state.user);
-  const loading = useUserStore((state) => state.loading);
+  const user = useAuthStore((state: { user: any }) => state.user);
+  const loading = useAuthStore((state: { loading: boolean }) => state.loading);
   const [isAdmin, setIsAdmin] = useState(false);
   const [verifying, setVerifying] = useState(true);
 
@@ -42,7 +42,7 @@ export function useAdminProtectedRoute() {
           setIsAdmin(false);
           setVerifying(false);
           // Clear user store on verification failure
-          useUserStore.getState().clearUser();
+          useAuthStore.getState().logout();
           toast.error('Admin session expired. Please login again.');
           router.push('/admin/login');
         }

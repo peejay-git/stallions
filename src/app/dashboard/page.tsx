@@ -11,7 +11,8 @@ import { useWallet } from '@/hooks/useWallet';
 import { getBountiesByOwner } from '@/lib/bounties';
 import { db } from '@/lib/firebase';
 import { doc, getDoc } from '@/lib/firestore';
-import useUserStore from '@/lib/stores/useUserStore';
+import useAuthStore from '@/lib/stores/auth.store';
+import { AuthState } from '@/types/auth.types';
 import { BountyStatus } from '@/types/bounty';
 import { getAuth, signOut } from 'firebase/auth';
 import Link from 'next/link';
@@ -29,8 +30,10 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isLoadingWallet, setIsLoadingWallet] = useState(false);
-  const user = useUserStore((state) => state.user);
-  const fetchUser = useUserStore((state) => state.fetchUserFromFirestore);
+  const user = useAuthStore((state: AuthState) => state.user);
+  const fetchUser = useAuthStore(
+    (state: AuthState) => state.fetchUserFromFirestore
+  );
   const [userSubmissions, setUserSubmissions] = useState<any[]>([]);
   const [loadingSubmissions, setLoadingSubmissions] = useState(false);
 
@@ -199,13 +202,7 @@ export default function DashboardPage() {
 
       // Only proceed with logout if user confirms
       if (confirmLogout) {
-        const auth = getAuth();
-        await signOut(auth);
-        useUserStore.getState().clearUser();
-
-        // Also clear wallet connection info to prevent "Complete Profile" button from showing
-        localStorage.removeItem('walletId');
-
+        useAuthStore.getState().logout();
         router.push('/');
       }
     } catch (error) {
@@ -225,7 +222,7 @@ export default function DashboardPage() {
   }
 
   // Show wallet connection prompt for sponsors
-  if (isSponsor && !isConnected && !user?.walletAddress) {
+  if (isSponsor && !isConnected && !user?.walletConnected) {
     return (
       <Layout>
         <div className="min-h-screen py-12 px-4 sm:px-6">

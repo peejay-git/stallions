@@ -1,8 +1,10 @@
 'use client';
 
+import {
+  useWalletConnection,
+  WalletConnectionMode,
+} from '@/hooks/useWalletConnection';
 import { motion } from 'framer-motion';
-import { WalletConnectionMode } from '@/hooks/useWalletConnection';
-import { useWalletConnection } from '@/hooks/useWalletConnection';
 import { useEffect } from 'react';
 
 interface WalletConnectionModalProps {
@@ -29,15 +31,19 @@ export default function WalletConnectionModal({
   useEffect(() => {
     if (!isOpen) return;
 
-    if (state.isConnected && !state.isSubmitting) {
+    if (state.isConnected && !state.isConnecting) {
       onSuccess?.();
       onClose();
     }
-  }, [isOpen, state.isConnected, state.isSubmitting, onSuccess, onClose]);
+  }, [isOpen, state.isConnected, state.isConnecting, onSuccess, onClose]);
 
   if (!isOpen) return null;
 
-  if (state.userRole === 'talent' && state.userHasWallet && state.storedWalletAddress) {
+  if (
+    state.userRole === 'talent' &&
+    state.userHasWallet &&
+    state.storedWalletAddress
+  ) {
     return (
       <div className="backdrop-blur-xl bg-white/10 border border-white/20 rounded-xl overflow-hidden p-6">
         <h3 className="text-xl font-bold mb-2 text-white">
@@ -83,7 +89,9 @@ export default function WalletConnectionModal({
       {state.isConnected ? (
         <div className="bg-green-900/20 border border-green-700/30 rounded-lg p-4 mb-6">
           <p className="text-white font-medium">Wallet Connected</p>
-          <p className="text-sm text-gray-300 break-all mt-1">{state.publicKey}</p>
+          <p className="text-sm text-gray-300 break-all mt-1">
+            {state.publicKey}
+          </p>
         </div>
       ) : (
         <div className="bg-white/5 border border-white/10 rounded-lg p-4 mb-6">
@@ -113,13 +121,14 @@ export default function WalletConnectionModal({
         <motion.button
           onClick={connectWallet}
           disabled={
-            state.isSubmitting || (state.isConnected && state.isSubmitting && mode === 'connect')
+            state.isConnecting ||
+            (state.isConnected && state.isConnecting && mode === 'connect')
           }
           className="bg-white text-black font-medium py-2.5 px-4 rounded-lg hover:bg-white/90 transition-colors w-full flex items-center justify-center"
           whileHover={{ scale: 1.03 }}
           whileTap={{ scale: 0.98 }}
         >
-          {state.isSubmitting ? 'Connecting...' : 'Connect Wallet'}
+          {state.isConnecting ? 'Connecting...' : 'Connect Wallet'}
         </motion.button>
 
         <button

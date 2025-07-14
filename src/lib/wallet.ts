@@ -155,10 +155,33 @@ const initializeWallet = async () => {
   // Create new initialization promise
   initializationPromise = (async () => {
     if (!walletKit) {
+      // Add an initial delay to allow browser extensions to fully initialize
+      // This is critical for proper wallet detection
+      await new Promise((resolve) => setTimeout(resolve, 10000));
+
       let retries = 3;
       while (retries > 0) {
         walletKit = await createWalletKit();
         if (walletKit) {
+          // Log available wallets for debugging
+          try {
+            // Use kit's getSupportedWallets method if available, otherwise fallback to type casting
+            const supportedWallets =
+              typeof walletKit.getSupportedWallets === 'function'
+                ? walletKit.getSupportedWallets()
+                : (walletKit as any).supportedWallets || [];
+
+            console.log(
+              'Available wallets:',
+              Array.isArray(supportedWallets)
+                ? supportedWallets
+                    .map((w: any) => w.id || w.name || 'unknown')
+                    .filter(Boolean)
+                : 'No wallets detected'
+            );
+          } catch (error) {
+            console.error('Error getting wallet list:', error);
+          }
           break;
         }
         console.warn(

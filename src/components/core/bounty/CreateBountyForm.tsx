@@ -2,7 +2,7 @@
 
 import { RichTextEditor } from '@/components';
 import { useWallet } from '@/hooks/useWallet';
-import useUserStore from '@/lib/stores/useUserStore';
+import useAuthStore from '@/lib/stores/auth.store';
 import { Distribution } from '@/types/bounty';
 import { createBountyOnChain } from '@/utils/blockchain';
 import { SUPPORTED_TOKENS } from '@/utils/constants';
@@ -11,7 +11,7 @@ import { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
 export default function CreateBountyForm() {
-  const user = useUserStore((state) => state.user);
+  const user = useAuthStore((state: { user: any }) => state.user);
   const { isConnected, publicKey } = useWallet();
   const [isLoading, setIsLoading] = useState(false);
   const [step, setStep] = useState<

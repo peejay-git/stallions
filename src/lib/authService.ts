@@ -1,4 +1,12 @@
 import { FormDataType } from '@/components/core/auth/RegisterModal';
+import type { UserProfile, UserRole } from '@/types/auth.types';
+import {
+  createUserWithEmailAndPassword,
+  onAuthStateChanged,
+  sendPasswordResetEmail,
+  signInWithEmailAndPassword,
+  signInWithPopup,
+} from 'firebase/auth';
 import {
   collection,
   doc,
@@ -8,17 +16,9 @@ import {
   setDoc,
   updateDoc,
   where,
-} from '@/lib/firestore';
-import {
-  createUserWithEmailAndPassword,
-  onAuthStateChanged,
-  sendPasswordResetEmail,
-  signInWithEmailAndPassword,
-  signInWithPopup,
-  signOut,
-} from 'firebase/auth';
+} from 'firebase/firestore';
 import { auth, db, googleProvider } from './firebase';
-import useUserStore from './stores/useUserStore';
+import useAuthStore from './stores/auth.store';
 
 type TalentRegistrationData = Omit<
   FormDataType,
@@ -50,13 +50,6 @@ export async function registerSponsor(data: any) {
   );
   const uid = userCredential.user.uid;
 
-  // const profileImageRef = ref(storage, `users/${uid}/profile.jpg`);
-  // const companyLogoRef = ref(storage, `users/${uid}/company-logo.jpg`);
-  // await uploadBytes(profileImageRef, profileImageFile);
-  // await uploadBytes(companyLogoRef, companyLogoFile);
-  // const profileUrl = await getDownloadURL(profileImageRef);
-  // const logoUrl = await getDownloadURL(companyLogoRef);
-
   await setDoc(doc(db, 'users', uid), {
     uid,
     role: 'sponsor',
@@ -82,13 +75,6 @@ export async function registerTalent(data: TalentRegistrationData) {
     password
   );
   const uid = userCredential.user.uid;
-  // let profileUrl = '';
-
-  // if (profileImageFile) {
-  //     const profileImageRef = ref(storage, `users/${uid}/profile.jpg`);
-  //     await uploadBytes(profileImageRef, profileImageFile);
-  //     profileUrl = await getDownloadURL(profileImageRef);
-  // }
 
   // Save user data to Firestore
   await setDoc(doc(db, 'users', uid), {
@@ -109,18 +95,26 @@ export async function registerTalent(data: TalentRegistrationData) {
     lastLogin: new Date().toISOString(),
   });
 
-  // Set Zustand store & localStorage
-  const setUser = useUserStore.getState().setUser;
-  const userProfile = {
+  // Set Zustand auth store
+  const setUser = useAuthStore.getState().setUser;
+  const userProfile: UserProfile = {
     uid,
     username: rest.username,
     firstName: rest.firstName,
-    role: 'talent',
+    role: 'talent' as UserRole,
     walletConnected: !!walletAddress,
+    walletInfo: walletAddress
+      ? {
+          address: walletAddress,
+          publicKey: walletAddress,
+          network: 'TESTNET',
+          connectedAt: new Date().toISOString(),
+        }
+      : undefined,
+    isProfileComplete: !!rest.username && !!rest.firstName,
   };
 
   setUser(userProfile);
-  localStorage.setItem('user', JSON.stringify(userProfile));
 
   return userCredential;
 }
@@ -219,7 +213,7 @@ export async function signInWithGoogle() {
       const userData = {
         uid: user.uid,
         email: user.email,
-        role: 'talent', // Default role
+        role: 'talent' as UserRole, // Default role
         profileData: {
           firstName: user.displayName?.split(' ')[0] || '',
           lastName: user.displayName?.split(' ').slice(1).join(' ') || '',
@@ -234,17 +228,18 @@ export async function signInWithGoogle() {
 
       await setDoc(userRef, userData);
 
-      const userProfile = {
+      const userProfile: UserProfile = {
         uid: user.uid,
         username: userData.profileData.username,
         firstName: userData.profileData.firstName,
         role: userData.role,
         walletConnected: false,
         profileImage: user.photoURL || '',
+        isProfileComplete: false, // New Google sign-up needs profile completion
       };
 
-      useUserStore.getState().setUser(userProfile);
-      localStorage.setItem('user', JSON.stringify(userProfile));
+      useAuthStore.getState().setUser(userProfile);
+      // No need to manually set localStorage anymore as it's handled by the auth store
 
       return { user: result.user, isNewUser: true };
     } else {
@@ -262,8 +257,8 @@ export async function signInWithGoogle() {
         profileImage: user.photoURL,
       };
 
-      useUserStore.getState().setUser(userProfile);
-      localStorage.setItem('user', JSON.stringify(userProfile));
+      useAuthStore.getState().setUser(userProfile);
+      // No need to manually set localStorage anymore as it's handled by the auth store
 
       return { user: result.user, isNewUser: false };
     }
@@ -325,15 +320,18 @@ export async function connectWallet(walletData: WalletData) {
   const updatedUserDoc = await getDoc(userRef);
   if (updatedUserDoc.exists()) {
     const updatedUserData = updatedUserDoc.data();
-    const userProfile = {
+    const userProfile: UserProfile = {
       uid: user.uid,
       ...updatedUserData.profileData,
-      role: updatedUserData.role,
+      role: updatedUserData.role as UserRole,
       walletConnected: true,
+      isProfileComplete:
+        !!updatedUserData.profileData?.firstName &&
+        !!updatedUserData.profileData?.username,
     };
 
-    useUserStore.getState().setUser(userProfile);
-    localStorage.setItem('user', JSON.stringify(userProfile));
+    useAuthStore.getState().setUser(userProfile);
+    // No need to manually set localStorage anymore as it's handled by the auth store
   }
 
   return walletData;
@@ -407,25 +405,6 @@ export async function walletToAccount(
 }
 // #endregion
 
-// #region Logout
-export async function logoutUser() {
-  // Store wallet state before logout
-  const storedWalletId = localStorage.getItem('walletId');
-  const wasConnected = !!storedWalletId;
-
-  await signOut(auth);
-  useUserStore.getState().clearUser();
-
-  // Clear user data from localStorage
-  localStorage.removeItem('user');
-
-  // Only clear wallet connection info if it wasn't connected before login
-  if (!wasConnected) {
-    localStorage.removeItem('walletId');
-  }
-}
-// #endregion
-
 // #region Auth State Observer
 export function initAuthStateObserver(callback: (user: any) => void) {
   return onAuthStateChanged(auth, async (authUser) => {
@@ -436,12 +415,23 @@ export function initAuthStateObserver(callback: (user: any) => void) {
 
       if (userDoc.exists()) {
         const userData = userDoc.data();
-        const userProfile = {
+        const walletInfo = userData.wallet
+          ? {
+              address: userData.wallet.address,
+              publicKey: userData.wallet.publicKey,
+              network: userData.wallet.network,
+              connectedAt: userData.wallet.connectedAt,
+            }
+          : undefined;
+
+        const userProfile: UserProfile = {
           uid: authUser.uid,
           ...userData.profileData,
           email: authUser.email,
-          role: userData.role,
+          role: userData.role as UserRole,
           walletConnected: !!userData.wallet,
+          walletInfo,
+          isProfileComplete: true, // This will be recalculated by the auth store
         };
         callback(userProfile);
       } else {

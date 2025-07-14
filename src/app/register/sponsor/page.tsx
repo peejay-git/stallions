@@ -3,7 +3,8 @@
 import { PasswordInput } from '@/components';
 import { registerSponsor } from '@/lib/authService';
 import { auth } from '@/lib/firebase';
-import useUserStore from '@/lib/stores/useUserStore';
+import useAuthStore from '@/lib/stores/auth.store';
+import { UserProfile } from '@/types/auth.types';
 import { FirebaseError } from 'firebase/app';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -146,14 +147,21 @@ export default function SponsorRegisterPage() {
         shortBio: formData.shortBio,
       });
 
-      const userProfile = {
+      const userProfile: UserProfile = {
         uid: auth.currentUser?.uid || '',
         username: formData.username,
         firstName: formData.firstName,
         role: 'sponsor',
+        isProfileComplete: true,
+        walletConnected: true,
+        walletInfo: {
+          publicKey: formData.walletAddress,
+          address: formData.walletAddress,
+          network: 'testnet',
+        },
       };
 
-      useUserStore.getState().setUser(userProfile);
+      useAuthStore.getState().setUser(userProfile);
       localStorage.setItem('user', JSON.stringify(userProfile));
 
       toast.success('Sponsor profile created successfully!');

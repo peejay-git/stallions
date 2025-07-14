@@ -3,7 +3,6 @@
 import { ISupportedWallet } from '@creit.tech/stellar-wallets-kit';
 import { createContext, useContext, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
-import useUserStore from '../lib/stores/useUserStore';
 import { getWalletKit, initializeWallet } from '../lib/wallet';
 
 // Wallet context type definition
@@ -30,9 +29,6 @@ const defaultContext: WalletContextType = {
   disconnect: () => {},
 };
 
-// Local storage keys
-const WALLET_ID_KEY = 'walletId';
-
 // Create the context
 const WalletContext = createContext<WalletContextType>(defaultContext);
 
@@ -44,9 +40,7 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
   const [networkPassphrase, setNetworkPassphrase] = useState<string | null>(
     null
   );
-  const [walletId, setWalletId] = useState<string | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
-  const user = useUserStore((state) => state.user);
 
   // Initialize wallet on mount
   useEffect(() => {
@@ -56,56 +50,10 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
         setIsInitialized(true);
       } catch (error) {
         console.error('Failed to initialize wallet:', error);
-        setIsInitialized(true); // Still mark as initialized even on error
       }
     };
     init();
   }, []);
-
-  // Check if wallet is connected on initial load (only for sponsors)
-  useEffect(() => {
-    const checkConnection = async () => {
-      try {
-        if (typeof window === 'undefined') return;
-        if (!isInitialized) return;
-        // Only auto-connect for logged-in sponsors
-        if (!user || user.role !== 'sponsor') return;
-        const kit = await getWalletKit();
-        if (!kit) {
-          console.warn('Wallet kit not available');
-          return;
-        }
-        try {
-          setIsConnecting(true);
-          const storedWalletId = localStorage.getItem(WALLET_ID_KEY);
-          if (storedWalletId) {
-            setWalletId(storedWalletId);
-            kit.setWallet(storedWalletId);
-            const address = await kit.getAddress();
-            if (!address?.address) {
-              throw new Error('No address returned from wallet');
-            }
-            setPublicKey(address.address);
-            setIsConnected(true);
-            const network = await kit.getNetwork();
-            setNetworkPassphrase(network.networkPassphrase);
-          }
-        } catch (error) {
-          console.error('Error reconnecting to wallet:', error);
-          localStorage.removeItem(WALLET_ID_KEY);
-          setWalletId(null);
-          setIsConnected(false);
-          setPublicKey(null);
-          setNetworkPassphrase(null);
-        }
-      } catch (e) {
-        console.error('Error checking wallet connection:', e);
-      } finally {
-        setIsConnecting(false);
-      }
-    };
-    checkConnection();
-  }, [isInitialized, user]);
 
   // Connect wallet
   const connect = async (props?: {
@@ -117,7 +65,6 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
 
     if (!isInitialized) {
       toast.error('Wallet system not initialized');
-      return null;
     }
 
     if (isConnected && publicKey) return publicKey;
@@ -130,40 +77,32 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
 
     setIsConnecting(true);
 
+    let address: string | null = null;
     try {
       await kit.openModal({
         onWalletSelected: async (option: ISupportedWallet) => {
           kit.setWallet(option.id);
-          setWalletId(option.id);
-          localStorage.setItem(WALLET_ID_KEY, option.id);
-
-          const { address } = await kit.getAddress();
+          address = (await kit.getAddress()).address;
           if (!address) {
             throw new Error('No address returned from wallet');
           }
 
           setPublicKey(address);
           onWalletSelected?.(address);
+          setIsConnected(true);
         },
         modalTitle,
         notAvailableText,
+        onClosed: () => {
+          setIsConnecting(false);
+        },
       });
 
-      // Get the public key
-      const address = await kit.getAddress();
-      if (!address?.address) {
-        throw new Error('No address returned from wallet');
+      // Wait until public key is set
+      while (!address) {
+        await new Promise((resolve) => setTimeout(resolve, 100));
       }
-
-      const pubKey = address.address;
-      if (pubKey) {
-        setPublicKey(pubKey);
-        setIsConnected(true);
-        return pubKey;
-      }
-
-      toast.error('No public key returned from wallet');
-      return null;
+      return address;
     } catch (e) {
       console.error('Error connecting wallet:', e);
       if ((e as any).code !== -3) {
@@ -190,9 +129,7 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
 
     setIsConnected(false);
     setPublicKey(null);
-    setWalletId(null);
     setNetworkPassphrase(null);
-    localStorage.removeItem(WALLET_ID_KEY);
     toast.success('Wallet disconnected');
   };
 

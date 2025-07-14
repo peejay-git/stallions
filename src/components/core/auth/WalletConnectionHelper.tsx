@@ -4,7 +4,7 @@ import { useWallet } from '@/hooks/useWallet';
 import { connectWallet, walletToAccount } from '@/lib/authService';
 import { auth, db } from '@/lib/firebase';
 import { doc, getDoc } from '@/lib/firestore';
-import useUserStore from '@/lib/stores/useUserStore';
+import useAuthStore from '@/lib/stores/auth.store';
 import { motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
@@ -32,7 +32,7 @@ export default function WalletConnectionHelper({
   const [storedWalletAddress, setStoredWalletAddress] = useState<string | null>(
     null
   );
-  const user = useUserStore((state) => state.user);
+  const user = useAuthStore((state) => state.user);
 
   // Check if user already has a wallet address stored
   useEffect(() => {
@@ -96,16 +96,14 @@ export default function WalletConnectionHelper({
     try {
       setIsSubmitting(true);
 
-      if (!isConnected) {
-        await connect();
-      }
-
+      const publicKey = await connect();
       if (!publicKey) {
         toast.error('Failed to get wallet public key');
         return;
       }
 
-      if (mode === 'connect') {
+      if (mode === 'connect' && !user?.isProfileComplete) {
+        console.log('Mode is connect');
         // Connect wallet to current user account
         await connectWallet({
           address: publicKey,

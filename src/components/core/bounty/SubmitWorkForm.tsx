@@ -1,6 +1,6 @@
 import { useWallet } from '@/hooks/useWallet';
 import { db } from '@/lib/firebase';
-import useUserStore from '@/lib/stores/useUserStore';
+import useAuthStore from '@/lib/stores/auth.store';
 import { submitWorkOnChain } from '@/utils/blockchain';
 import {
   collection,
@@ -42,7 +42,7 @@ export default function SubmitWorkForm({
   const [hasSubmitted, setHasSubmitted] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const { publicKey } = useWallet();
-  const user = useUserStore((state) => state.user);
+  const user = useAuthStore((state: { user: any }) => state.user);
 
   // Form state
   const [formData, setFormData] = useState({

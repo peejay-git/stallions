@@ -3,7 +3,7 @@
 import { useWallet } from '@/hooks/useWallet';
 import { db } from '@/lib/firebase';
 import { doc, updateDoc } from '@/lib/firestore';
-import useUserStore from '@/lib/stores/useUserStore';
+import useAuthStore from '@/lib/stores/auth.store';
 import { motion } from 'framer-motion';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
@@ -15,7 +15,7 @@ type Props = {
 export default function SponsorWalletPrompt({ onSuccess }: Props) {
   const { connect, publicKey } = useWallet();
   const [isConnecting, setIsConnecting] = useState(false);
-  const user = useUserStore((state) => state.user);
+  const user = useAuthStore((state: { user: any }) => state.user);
 
   const handleConnectWallet = async () => {
     try {
@@ -49,8 +49,7 @@ export default function SponsorWalletPrompt({ onSuccess }: Props) {
           walletConnected: true,
           wallet: walletData,
         };
-        useUserStore.getState().setUser(updatedUserProfile);
-        localStorage.setItem('user', JSON.stringify(updatedUserProfile));
+        useAuthStore.getState().setUser(updatedUserProfile);
 
         // Store wallet ID for auto-reconnection
         localStorage.setItem('walletId', publicKey);

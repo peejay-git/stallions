@@ -4,12 +4,12 @@ import { PasswordInput } from '@/components/ui';
 import { useWallet } from '@/hooks/useWallet';
 import { registerTalent, signInWithGoogle } from '@/lib/authService';
 import { auth } from '@/lib/firebase';
-import useUserStore from '@/lib/stores/useUserStore';
+import useAuthStore from '@/lib/stores/auth.store';
+import { UserRole } from '@/types/auth.types';
 import clsx from 'clsx';
 import { FirebaseError } from 'firebase/app';
 import { motion } from 'framer-motion';
-import { usePathname } from 'next/navigation';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { FaGithub, FaLinkedin, FaXTwitter } from 'react-icons/fa6';
@@ -202,7 +202,7 @@ export default function RegisterModal({ isOpen, onClose }: Props) {
   const connectUserWallet = async () => {
     if (!isConnected) {
       try {
-        await connectWallet({});
+        const publicKey = await connectWallet({});
         // Update the wallet address in the form data
         if (publicKey) {
           setFormData((prev) => ({
@@ -272,13 +272,18 @@ export default function RegisterModal({ isOpen, onClose }: Props) {
         socials: formData.socials.filter((s) => s.username.trim() !== ''),
       });
       const userProfile = {
-        uid: auth.currentUser?.uid || '', // fallback
+        uid: auth.currentUser?.uid || '',
         username: formData.username,
         firstName: formData.firstName,
-        role: 'talent',
+        lastName: formData.lastName,
+        email: auth.currentUser?.email || '',
+        role: 'talent' as UserRole,
         walletConnected: !!formData.walletAddress || isConnected,
+        isProfileComplete: true,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
       };
-      useUserStore.getState().setUser(userProfile);
+      useAuthStore.getState().setUser(userProfile);
       localStorage.setItem('user', JSON.stringify(userProfile));
       toast.success('Profile created successfully!');
 

@@ -9,7 +9,7 @@ import {
 } from '@/lib/authService';
 import { auth, db } from '@/lib/firebase';
 import { doc, getDoc, updateDoc } from '@/lib/firestore';
-import useUserStore from '@/lib/stores/useUserStore';
+import useAuthStore from '@/lib/stores/auth.store';
 import { getWalletKit } from '@/lib/wallet';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -289,7 +289,7 @@ FIREBASE DOMAIN FIX INSTRUCTIONS
       };
 
       // Store in Zustand
-      useUserStore.getState().setUser(userProfile);
+      useAuthStore.getState().setUser(userProfile);
 
       // Restore wallet ID if it was previously connected
       if (storedWalletId) {
@@ -309,8 +309,8 @@ FIREBASE DOMAIN FIX INSTRUCTIONS
           try {
             const kit = await getWalletKit();
             if (kit) {
-              const connected = await connect();
-              if (connected && publicKey) {
+              const publicKey = await connect();
+              if (publicKey) {
                 // Update user's wallet info in Firestore
                 await updateDoc(docRef, {
                   wallet: {
@@ -325,7 +325,7 @@ FIREBASE DOMAIN FIX INSTRUCTIONS
                   ...userProfile,
                   walletConnected: true,
                 };
-                useUserStore.getState().setUser(updatedUserProfile);
+                useAuthStore.getState().setUser(updatedUserProfile);
 
                 toast.success('Wallet connected successfully!');
               }

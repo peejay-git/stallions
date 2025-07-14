@@ -1,7 +1,7 @@
 'use client';
 
-import { auth } from '@/lib/firebase';
-import useUserStore from '@/lib/stores/useUserStore';
+import useAuthStore from '@/lib/stores/auth.store';
+import { AuthState } from '@/types/auth.types';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState } from 'react';
@@ -15,13 +15,12 @@ export default function AdminLayout({
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const pathname = usePathname();
   const router = useRouter();
-  const user = useUserStore((state) => state.user);
-  const clearUser = useUserStore((state) => state.clearUser);
+  const user = useAuthStore((state: AuthState) => state.user);
+  const logout = useAuthStore((state: AuthState) => state.logout);
 
   const handleSignOut = async () => {
     try {
-      await auth.signOut();
-      clearUser();
+      await logout();
       toast.success('Signed out successfully');
       router.push('/admin/login');
     } catch (error) {

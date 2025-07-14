@@ -13,7 +13,7 @@ export interface UseWalletConnectionOptions {
 }
 
 export interface WalletConnectionState {
-  isSubmitting: boolean;
+  isConnecting: boolean;
   isConnected: boolean;
   publicKey: string | null;
   userHasWallet: boolean;
@@ -32,8 +32,8 @@ export function useWalletConnection({
   mode = 'connect',
   email = '',
 }: UseWalletConnectionOptions = {}): UseWalletConnectionResult {
-  const { connect, isConnected, publicKey, networkPassphrase } = useWallet();
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { connect, isConnected, publicKey, networkPassphrase, isConnecting } =
+    useWallet();
   const [userEmail, setUserEmail] = useState(email);
   const [userHasWallet, setUserHasWallet] = useState(false);
   const [userRole, setUserRole] = useState<string | null>(null);
@@ -62,11 +62,8 @@ export function useWalletConnection({
 
   const handleConnectWallet = async () => {
     try {
-      setIsSubmitting(true);
-
-      if (!isConnected) {
-        await connect();
-      }
+      const publicKey = await connect();
+      console.log('publicKey', publicKey);
 
       if (!publicKey) {
         throw new Error('Failed to get wallet public key');
@@ -95,14 +92,12 @@ export function useWalletConnection({
       } else {
         toast.error('Failed to connect wallet. Please try again.');
       }
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
   return {
     state: {
-      isSubmitting,
+      isConnecting,
       isConnected,
       publicKey,
       userHasWallet,

@@ -1,4 +1,4 @@
-import { FormDataType } from '@/components/core/auth/RegisterModal';
+import { TalentFormDataType } from '@/components/core/auth/register';
 import type { UserProfile, UserRole } from '@/types/auth.types';
 import {
   createUserWithEmailAndPassword,
@@ -21,7 +21,7 @@ import { auth, db, googleProvider } from './firebase';
 import useAuthStore from './stores/auth.store';
 
 type TalentRegistrationData = Omit<
-  FormDataType,
+  TalentFormDataType,
   'confirmPassword' | 'profileImage'
 > & {
   profileImageFile?: File | null;
@@ -57,7 +57,13 @@ export async function registerSponsor(data: any) {
     profileData: {
       ...rest,
     },
-    wallet: walletAddress,
+    wallet: walletAddress
+      ? {
+          address: walletAddress,
+          publicKey: walletAddress,
+          network: 'TESTNET',
+        }
+      : null,
     createdAt: new Date().toISOString(),
     lastLogin: new Date().toISOString(),
   });
@@ -69,15 +75,17 @@ export async function registerSponsor(data: any) {
     email,
     ...rest,
     walletConnected: !!walletAddress,
-    walletInfo: walletAddress ? {
-      address: walletAddress,
-      publicKey: walletAddress,
-      network: 'TESTNET',
-      connectedAt: new Date().toISOString(),
-    } : undefined,
+    walletInfo: walletAddress
+      ? {
+          address: walletAddress,
+          publicKey: walletAddress,
+          network: 'TESTNET',
+          connectedAt: new Date().toISOString(),
+        }
+      : undefined,
     isProfileComplete: true,
   };
-  
+
   useAuthStore.getState().setUser(userProfile);
 
   return userCredential;
@@ -306,19 +314,16 @@ export async function signInWithGoogle() {
 export async function connectWallet(walletData: WalletData) {
   const user = auth.currentUser;
   if (!user) throw new Error('User not logged in');
-  
+
   // Get user data from auth store
   const authStoreUser = useAuthStore.getState().user;
-  
+
   if (!authStoreUser) {
     throw new Error('User document not found');
   }
 
   // Prevent talents from overriding their stored wallet address
-  if (
-    authStoreUser.role === 'talent' &&
-    authStoreUser.walletConnected
-  ) {
+  if (authStoreUser.role === 'talent' && authStoreUser.walletConnected) {
     throw new Error(
       'Talents cannot change their wallet address after signup. Please use your original wallet address.'
     );
@@ -326,7 +331,7 @@ export async function connectWallet(walletData: WalletData) {
 
   // Connect wallet through auth store
   await useAuthStore.getState().connectWalletToUser(walletData);
-  
+
   return walletData;
 }
 
@@ -374,14 +379,14 @@ export async function walletToAccount(
         network: 'TESTNET', // Could be made dynamic
         connectedAt: new Date().toISOString(),
       };
-      
+
       // Use the auth store to update Firestore
       // Since we're not the currently authenticated user, we need to update Firestore directly
       await updateDoc(doc(db, 'users', userId), {
         wallet: walletInfo,
         updatedAt: new Date().toISOString(),
       });
-      
+
       // If this is the current user, update the auth store as well
       if (auth.currentUser?.uid === userId) {
         useAuthStore.getState().connectWalletToUser(walletInfo);

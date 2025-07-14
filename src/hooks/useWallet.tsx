@@ -1,8 +1,8 @@
 'use client';
 
-import { ISupportedWallet } from '@creit.tech/stellar-wallets-kit';
 import { auth } from '@/lib/firebase';
 import useAuthStore from '@/lib/stores/auth.store';
+import { ISupportedWallet } from '@creit.tech/stellar-wallets-kit';
 import { createContext, useContext, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { getWalletKit, initializeWallet } from '../lib/wallet';
@@ -83,20 +83,29 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       await kit.openModal({
         onWalletSelected: async (option: ISupportedWallet) => {
-          kit.setWallet(option.id);
-          address = (await kit.getAddress()).address;
+          try {
+            kit.setWallet(option.id);
+            address = (await kit.getAddress()).address;
+          } catch (error) {
+            console.error('Error setting wallet:', error);
+            toast.error('Error setting wallet: ' + (error as Error).message);
+            return;
+          }
           if (!address) {
-            throw new Error('No address returned from wallet');
+            toast.error('No address returned from wallet');
+            return;
           }
 
           setPublicKey(address);
           onWalletSelected?.(address);
           setIsConnected(true);
-          
+
           // Check if user is signed in with Firebase
           if (!auth.currentUser) {
             // If not signed in, try to fetch user profile by wallet address
-            const userProfile = await useAuthStore.getState().fetchUserByWalletAddress(address);
+            const userProfile = await useAuthStore
+              .getState()
+              .fetchUserByWalletAddress(address);
             if (userProfile) {
               toast.success('Signed in with connected wallet');
             }
@@ -117,9 +126,7 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
       return address;
     } catch (e) {
       console.error('Error connecting wallet:', e);
-      if ((e as any).code !== -3) {
-        toast.error('Error connecting wallet: ' + (e as Error).message);
-      }
+      toast.error('Error connecting wallet: ' + (e as Error).message);
       return null;
     } finally {
       setIsConnecting(false);

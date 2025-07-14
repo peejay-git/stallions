@@ -5,11 +5,6 @@ import {
   StellarWalletsKit,
   WalletNetwork,
 } from '@creit.tech/stellar-wallets-kit';
-import { TrezorModule } from '@creit.tech/stellar-wallets-kit/modules/trezor.module';
-import {
-  WalletConnectAllowedMethods,
-  WalletConnectModule,
-} from '@creit.tech/stellar-wallets-kit/modules/walletconnect.module';
 import toast from 'react-hot-toast';
 
 // Add Freighter type to window object
@@ -77,20 +72,20 @@ const createWalletKit = async () => {
       network,
       modules: [
         ...allowAllModules(),
-        new TrezorModule({
-          appUrl,
-          email: trezorContactEmail,
-        }),
-        new WalletConnectModule({
-          url: appUrl,
-          projectId: appUrl,
-          method: WalletConnectAllowedMethods.SIGN,
-          description:
-            'Stallion is a decentralized bounty platform built on the Stellar network',
-          name: 'Stallion',
-          icons: ['/favicon.svg'],
-          network,
-        }),
+        // new TrezorModule({
+        //   appUrl,
+        //   email: trezorContactEmail,
+        // }),
+        // new WalletConnectModule({
+        //   url: appUrl,
+        //   projectId: appUrl,
+        //   method: WalletConnectAllowedMethods.SIGN,
+        //   description:
+        //     'Stallion is a decentralized bounty platform built on the Stellar network',
+        //   name: 'Stallion',
+        //   icons: ['/favicon.svg'],
+        //   network,
+        // }),
       ],
     });
 
@@ -121,23 +116,23 @@ const createWalletKit = async () => {
     };
 
     // Add error handling for address retrieval
-    const originalGetAddress = newKit.getAddress.bind(newKit);
-    newKit.getAddress = async () => {
-      try {
-        const result = await originalGetAddress();
-        if (!result || !result.address) {
-          throw new Error('No address returned from wallet');
-        }
-        return result;
-      } catch (error) {
-        console.error('Error getting address:', error);
-        throw new Error(
-          error instanceof Error
-            ? error.message
-            : 'Failed to get address from wallet'
-        );
-      }
-    };
+    // const originalGetAddress = newKit.getAddress.bind(newKit);
+    // newKit.getAddress = async () => {
+    //   try {
+    //     const result = await originalGetAddress();
+    //     if (!result || !result.address) {
+    //       throw new Error('No address returned from wallet');
+    //     }
+    //     return result;
+    //   } catch (error) {
+    //     console.error('Error getting address:', error);
+    //     throw new Error(
+    //       error instanceof Error
+    //         ? error.message
+    //         : 'Failed to get address from wallet'
+    //     );
+    //   }
+    // };
 
     return newKit;
   } catch (error) {

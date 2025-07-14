@@ -1,64 +1,50 @@
 'use client';
 
-import { PasswordInput } from '@/components/ui';
 import { useWallet } from '@/hooks/useWallet';
-import { registerTalent } from '@/lib/authService';
+import { registerSponsor, registerTalent } from '@/lib/authService';
 import { auth } from '@/lib/firebase';
 import useAuthStore from '@/lib/stores/auth.store';
 import { UserRole } from '@/types/auth.types';
 import clsx from 'clsx';
 import { FirebaseError } from 'firebase/app';
+import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { motion } from 'framer-motion';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
-import { FaGithub, FaLinkedin, FaXTwitter } from 'react-icons/fa6';
 import { FcGoogle } from 'react-icons/fc';
 import { IoClose } from 'react-icons/io5';
-
-const defaultSkills = [
-  'Frontend',
-  'Backend',
-  'UI/UX Design',
-  'Writing',
-  'Digital Marketing',
-];
+import {
+  SponsorFieldErrors,
+  SponsorFormDataType,
+  SponsorRegistrationForm,
+  TalentFieldErrors,
+  TalentFormDataType,
+  TalentRegistrationForm,
+} from './register';
 
 type Props = {
   isOpen: boolean;
   onClose: () => void;
+  selectedRole?: 'talent' | 'sponsor' | null;
 };
-
-export type FormDataType = {
-  firstName: string;
-  lastName: string;
-  username: string;
-  walletAddress: string;
-  location: string;
-  skills: string[];
-  socials: SocialLink[];
-  profileImage: File | null;
-  email: string;
-  password: string;
-  confirmPassword: string;
-};
-
-type SocialPlatform = 'twitter' | 'github' | 'linkedin';
 
 type SocialLink = {
-  platform: SocialPlatform;
+  platform: string;
   username: string;
 };
-type FieldErrors = Partial<Record<keyof FormDataType, string>>;
 
-export default function RegisterModal({ isOpen, onClose }: Props) {
+export default function RegisterModal({
+  isOpen,
+  onClose,
+  selectedRole,
+}: Props) {
   const router = useRouter();
   const location = usePathname();
-  const [hasEditedUsername, setHasEditedUsername] = useState(false);
-  const [isGoogleSubmitting, setIsGoogleSubmitting] = useState(false);
-  const { connect: connectWallet, isConnected, publicKey } = useWallet();
+  const { isConnected, connect } = useWallet();
 
-  const [formData, setFormData] = useState<FormDataType>({
+  // For talent form
+  const [talentFormData, setTalentFormData] = useState<TalentFormDataType>({
     firstName: '',
     lastName: '',
     username: '',
@@ -71,10 +57,38 @@ export default function RegisterModal({ isOpen, onClose }: Props) {
     password: '',
     confirmPassword: '',
   });
+  const [talentFieldErrors, setTalentFieldErrors] = useState<TalentFieldErrors>(
+    {}
+  );
 
-  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
+  // For sponsor form
+  const [sponsorFormData, setSponsorFormData] = useState<SponsorFormDataType>({
+    firstName: '',
+    lastName: '',
+    username: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+    telegram: '',
+    profileImage: null,
+    companyName: '',
+    companyUsername: '',
+    companyUrl: '',
+    companyTwitter: '',
+    entityName: '',
+    companyLogo: null,
+    industry: '',
+    shortBio: '',
+    walletAddress: '',
+  });
+  const [sponsorFieldErrors, setSponsorFieldErrors] =
+    useState<SponsorFieldErrors>({});
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [step, setStep] = useState<'form' | 'wallet'>('form');
+
+  // Determine which role to use
+  const role = selectedRole || 'talent';
 
   // Prevent background scrolling when modal is open
   useEffect(() => {
@@ -90,10 +104,17 @@ export default function RegisterModal({ isOpen, onClose }: Props) {
     };
   }, [isOpen]);
 
-  const validateField = (name: keyof FormDataType, value: any) => {
+  // Talent form handlers
+  const handleTalentFieldChange = (name: string, value: any) => {
+    setTalentFormData((prev: TalentFormDataType) => ({
+      ...prev,
+      [name]: value,
+    }));
+
+    // Basic validation
     let error = '';
     if (
-      (name === 'firstName' || name === 'lastName' || name === 'username') &&
+      ['firstName', 'lastName', 'username', 'email'].includes(name) &&
       !value.trim()
     ) {
       error = `${name.charAt(0).toUpperCase() + name.slice(1)} is required.`;
@@ -101,162 +122,238 @@ export default function RegisterModal({ isOpen, onClose }: Props) {
     if (name === 'skills' && value.length === 0) {
       error = 'Please select at least one skill.';
     }
-    setFieldErrors((prev) => ({ ...prev, [name]: error }));
-  };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-
-    setFormData((prev) => {
-      const updated = { ...prev, [name]: value };
-      return updated;
-    });
-
-    if (name === 'username') {
-      setHasEditedUsername(true);
-    }
-
-    validateField(name as keyof FormDataType, value);
+    setTalentFieldErrors((prev: TalentFieldErrors) => ({
+      ...prev,
+      [name]: error,
+    }));
   };
 
   const handleSkillToggle = (skill: string) => {
-    setFormData((prev) => {
+    setTalentFormData((prev: TalentFormDataType) => {
       const updatedSkills = prev.skills.includes(skill)
-        ? prev.skills.filter((s) => s !== skill)
+        ? prev.skills.filter((s: string) => s !== skill)
         : [...prev.skills, skill];
-      validateField('skills', updatedSkills);
+
       return { ...prev, skills: updatedSkills };
+    });
+
+    // Clear skill error if skills are selected
+    if (talentFieldErrors.skills && talentFormData.skills.length > 0) {
+      setTalentFieldErrors((prev: TalentFieldErrors) => ({
+        ...prev,
+        skills: '',
+      }));
+    }
+  };
+
+  const handleSocialChange = (index: number, field: string, value: string) => {
+    setTalentFormData((prev: TalentFormDataType) => {
+      const updatedSocials = [...prev.socials];
+      updatedSocials[index] = {
+        ...updatedSocials[index],
+        [field]: value,
+      };
+      return { ...prev, socials: updatedSocials };
     });
   };
 
   const handleAddSocial = () => {
-    const platforms: SocialPlatform[] = ['twitter', 'github', 'linkedin'];
-    const used = formData.socials.map((s) => s.platform);
-    const next = platforms.find((p) => !used.includes(p));
-    if (!next) return; // All platforms already added
-    setFormData((prev) => ({
+    const platforms = ['twitter', 'linkedin', 'github'];
+    const usedPlatforms = talentFormData.socials.map(
+      (s: SocialLink) => s.platform
+    );
+    const availablePlatforms = platforms.filter(
+      (p: string) => !usedPlatforms.includes(p)
+    );
+
+    if (availablePlatforms.length > 0) {
+      setTalentFormData((prev: TalentFormDataType) => ({
+        ...prev,
+        socials: [
+          ...prev.socials,
+          { platform: availablePlatforms[0], username: '' },
+        ],
+      }));
+    }
+  };
+
+  const handleRemoveSocial = (index: number) => {
+    setTalentFormData((prev: TalentFormDataType) => {
+      const updatedSocials = [...prev.socials];
+      updatedSocials.splice(index, 1);
+      return { ...prev, socials: updatedSocials };
+    });
+  };
+
+  // Sponsor form handlers
+  const handleSponsorFieldChange = (name: string, value: any) => {
+    setSponsorFormData((prev: SponsorFormDataType) => ({
       ...prev,
-      socials: [...prev.socials, { platform: next, username: '' }],
+      [name]: value,
+    }));
+
+    // Basic validation
+    let error = '';
+    if (
+      ['firstName', 'lastName', 'username', 'email', 'companyName'].includes(
+        name
+      ) &&
+      !value.trim()
+    ) {
+      error = `${name.charAt(0).toUpperCase() + name.slice(1)} is required.`;
+    }
+
+    if (
+      name === 'companyUrl' &&
+      value.trim() &&
+      !value.startsWith('https://')
+    ) {
+      error = 'Company URL must start with https://.';
+    }
+
+    setSponsorFieldErrors((prev: SponsorFieldErrors) => ({
+      ...prev,
+      [name]: error,
     }));
   };
 
-  const handleSocialChange = (
-    index: number,
-    field: 'platform' | 'username',
-    value: string
-  ) => {
-    const updated = [...formData.socials];
-    if (field === 'platform') {
-      updated[index].platform = value as SocialPlatform;
-    } else {
-      updated[index].username = value;
-    }
-    setFormData((prev) => ({ ...prev, socials: updated }));
-  };
-
-  const getPlatformIcon = (platform: string) => {
-    switch (platform) {
-      case 'twitter':
-        return <FaXTwitter className="text-gray-500 text-xl" />;
-      case 'github':
-        return <FaGithub className="text-gray-500 text-xl" />;
-      case 'linkedin':
-        return <FaLinkedin className="text-gray-500 text-xl" />;
-      default:
-        return null;
-    }
-  };
-
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    if (file && file.size <= 5 * 1024 * 1024) {
-      setFormData((prev) => ({ ...prev, profileImage: file }));
-    } else {
-      alert('Image must be under 5MB.');
-    }
-  };
-
-  const connectUserWallet = async () => {
-    if (!isConnected) {
-      try {
-        const publicKey = await connectWallet({});
-        // Update the wallet address in the form data
-        if (publicKey) {
-          setFormData((prev) => ({
-            ...prev,
-            walletAddress: publicKey,
-          }));
-          toast.success('Wallet connected successfully!');
-
-          // Continue with form submission
-          setStep('form');
-        }
-      } catch (error) {
-        console.error('Error connecting wallet:', error);
-        toast.error('Failed to connect wallet. Please try again.');
-      }
-    }
+  const handleSponsorFileChange = (name: string, file: File | null) => {
+    setSponsorFormData((prev: SponsorFormDataType) => ({
+      ...prev,
+      [name]: file,
+    }));
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const errors: FieldErrors = {};
-    if (!formData.firstName.trim())
-      errors.firstName = 'First Name is required.';
-    if (!formData.lastName.trim()) errors.lastName = 'Last Name is required.';
-    if (!formData.username.trim()) errors.username = 'Username is required.';
-    if (formData.skills.length === 0)
-      errors.skills = 'Please select at least one skill.';
-    if (!formData.email.trim()) errors.email = 'Email is required.';
-    if (!formData.password) errors.password = 'Password is required.';
-    if (formData.password !== formData.confirmPassword) {
-      errors.confirmPassword = 'Passwords do not match.';
+
+    if (role === 'talent') {
+      // Talent form validation
+      const errors: TalentFieldErrors = {};
+      if (!talentFormData.firstName.trim())
+        errors.firstName = 'First Name is required.';
+      if (!talentFormData.lastName.trim())
+        errors.lastName = 'Last Name is required.';
+      if (!talentFormData.username.trim())
+        errors.username = 'Username is required.';
+      if (talentFormData.skills.length === 0)
+        errors.skills = 'Please select at least one skill.';
+      if (!talentFormData.email.trim()) errors.email = 'Email is required.';
+      if (!talentFormData.password) errors.password = 'Password is required.';
+      if (talentFormData.password !== talentFormData.confirmPassword) {
+        errors.confirmPassword = 'Passwords do not match.';
+      }
+
+      if (Object.keys(errors).length) {
+        setTalentFieldErrors(errors);
+        return;
+      }
+    } else {
+      // Sponsor form validation
+      const errors: SponsorFieldErrors = {};
+      if (!sponsorFormData.firstName.trim())
+        errors.firstName = 'First Name is required.';
+      if (!sponsorFormData.lastName.trim())
+        errors.lastName = 'Last Name is required.';
+      if (!sponsorFormData.username.trim())
+        errors.username = 'Username is required.';
+      if (!sponsorFormData.email.trim()) errors.email = 'Email is required.';
+      if (!sponsorFormData.password) errors.password = 'Password is required.';
+      if (sponsorFormData.password !== sponsorFormData.confirmPassword) {
+        errors.confirmPassword = 'Passwords do not match.';
+      }
+      if (!sponsorFormData.companyName.trim())
+        errors.companyName = 'Company Name is required.';
+      if (!sponsorFormData.companyUsername.trim())
+        errors.companyUsername = 'Company Username is required.';
+      if (
+        sponsorFormData.companyUrl &&
+        !sponsorFormData.companyUrl.startsWith('https://')
+      )
+        errors.companyUrl = 'Company URL must start with https://.';
+      if (!sponsorFormData.industry)
+        errors.industry = 'Please select an industry.';
+
+      if (Object.keys(errors).length) {
+        setSponsorFieldErrors(errors);
+        return;
+      }
     }
 
-    if (Object.keys(errors).length) {
-      setFieldErrors(errors);
-      return;
-    }
-
-    setFieldErrors({});
-
-    // If wallet isn't connected, prompt to connect first
-    if (!formData.walletAddress && !isConnected) {
-      setStep('wallet');
-      return;
-    }
-
-    // If wallet is connected but form data doesn't have the address
-    if (isConnected && publicKey && !formData.walletAddress) {
-      setFormData((prev) => ({
-        ...prev,
-        walletAddress: publicKey,
-      }));
-    }
-
-    setIsSubmitting(true);
     try {
-      await registerTalent({
-        email: formData.email,
-        password: formData.password,
-        // profileImageFile: formData.profileImage,
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        username: formData.username,
-        walletAddress: formData.walletAddress || publicKey || '',
-        location: formData.location,
-        skills: formData.skills,
-        socials: formData.socials.filter((s) => s.username.trim() !== ''),
-      });
+      setIsSubmitting(true);
+
+      // Create new user with Firebase auth
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        role === 'talent' ? talentFormData.email : sponsorFormData.email,
+        role === 'talent' ? talentFormData.password : sponsorFormData.password
+      );
+      const user = userCredential.user;
+
+      if (role === 'sponsor') {
+        // Register as sponsor
+        await registerSponsor({
+          email: sponsorFormData.email,
+          password: sponsorFormData.password,
+          firstName: sponsorFormData.firstName,
+          lastName: sponsorFormData.lastName,
+          username: sponsorFormData.username,
+          location: '',
+          walletAddress: sponsorFormData.walletAddress || '',
+          profileImageFile: sponsorFormData.profileImage,
+          companyLogoFile: sponsorFormData.companyLogo,
+          companyName: sponsorFormData.companyName,
+          companyUsername: sponsorFormData.companyUsername,
+          companyUrl: sponsorFormData.companyUrl,
+          companyTwitter: sponsorFormData.companyTwitter,
+          entityName: sponsorFormData.entityName,
+          industry: sponsorFormData.industry,
+          shortBio: sponsorFormData.shortBio,
+          socials: [
+            {
+              platform: 'twitter',
+              username: sponsorFormData.companyTwitter,
+            },
+          ],
+          telegram: sponsorFormData.telegram,
+        });
+      } else {
+        // Register as talent
+        await registerTalent({
+          email: talentFormData.email,
+          firstName: talentFormData.firstName,
+          lastName: talentFormData.lastName,
+          username: talentFormData.username,
+          location: talentFormData.location,
+          walletAddress: talentFormData.walletAddress || '',
+          skills: talentFormData.skills,
+          password: talentFormData.password,
+          socials: talentFormData.socials,
+        });
+      }
+
       const userProfile = {
         uid: auth.currentUser?.uid || '',
-        username: formData.username,
-        firstName: formData.firstName,
-        lastName: formData.lastName,
+        username:
+          role === 'talent'
+            ? talentFormData.username
+            : sponsorFormData.username,
+        firstName:
+          role === 'talent'
+            ? talentFormData.firstName
+            : sponsorFormData.firstName,
+        lastName:
+          role === 'talent'
+            ? talentFormData.lastName
+            : sponsorFormData.lastName,
         email: auth.currentUser?.email || '',
-        role: 'talent' as UserRole,
-        walletConnected: !!formData.walletAddress || isConnected,
+        role: role as UserRole,
+        walletConnected:
+          role === 'talent'
+            ? !!talentFormData.walletAddress || isConnected
+            : !!sponsorFormData.walletAddress || isConnected,
         isProfileComplete: true,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
@@ -304,48 +401,48 @@ export default function RegisterModal({ isOpen, onClose }: Props) {
             : 'invisible opacity-0 pointer-events-none'
         )}
       >
-        <div
-          className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-          onClick={() => setStep('form')}
-        />
-        <div className="relative w-full max-w-xl shadow-2xl z-[9999] bg-transparent max-h-[90vh]">
+        <div className="absolute inset-0 bg-black/40" onClick={onClose}></div>
+        <motion.div
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.3 }}
+          className="relative w-full max-w-md rounded-lg bg-white p-8 shadow-lg dark:bg-gray-900"
+        >
           <button
-            type="button"
-            onClick={() => setStep('form')}
-            className="absolute top-4 right-4 text-gray-300 hover:text-white transition z-20"
-            aria-label="Back"
+            onClick={onClose}
+            className="absolute right-4 top-4 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
           >
-            <IoClose className="w-6 h-6" />
+            <IoClose size={24} />
           </button>
-          <div className="rounded-2xl overflow-hidden">
-            <div className="backdrop-blur-xl bg-white/10 border border-white/20 p-8">
-              <h2 className="text-2xl font-bold mb-2 text-center text-white">
-                Connect Your Wallet
-              </h2>
-              <p className="text-sm text-gray-300 text-center mb-8">
-                Connect your Stellar wallet to complete your registration
-              </p>
 
-              <div className="flex flex-col items-center justify-center space-y-4">
-                <motion.button
-                  onClick={connectUserWallet}
-                  className="bg-white text-black font-medium py-3 px-6 rounded-lg hover:bg-white/90 transition-colors w-full flex items-center justify-center"
-                  whileHover={{ scale: 1.03 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  Connect Wallet
-                </motion.button>
+          <h2 className="mb-6 text-2xl font-bold dark:text-white">
+            Connect Wallet
+          </h2>
 
-                <button
-                  onClick={() => setStep('form')}
-                  className="text-gray-300 hover:text-white transition-colors text-sm"
-                >
-                  Skip for now
-                </button>
-              </div>
-            </div>
+          <div className="space-y-4">
+            <button
+              onClick={async () => {
+                try {
+                  await connect();
+                  toast.success('Wallet connected successfully!');
+                  setStep('form');
+                } catch (error) {
+                  toast.error('Failed to connect wallet. Please try again.');
+                }
+              }}
+              className="flex w-full items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white p-3 text-center font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
+            >
+              Connect MetaMask
+            </button>
+
+            <button
+              onClick={() => setStep('form')}
+              className="text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+            >
+              Skip for now
+            </button>
           </div>
-        </div>
+        </motion.div>
       </div>
     );
   }
@@ -359,325 +456,70 @@ export default function RegisterModal({ isOpen, onClose }: Props) {
           : 'invisible opacity-0 pointer-events-none'
       )}
     >
-      <div
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-        onClick={onClose}
-      />
-      <div className="relative w-full max-w-xl shadow-2xl z-[9999] bg-transparent max-h-[90vh]">
+      <div className="absolute inset-0 bg-black/40" onClick={onClose}></div>
+      <motion.div
+        initial={{ y: 20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.3 }}
+        className="relative max-h-[90vh] w-full max-w-md overflow-y-auto rounded-lg bg-white p-8 shadow-lg dark:bg-gray-900"
+      >
         <button
-          type="button"
           onClick={onClose}
-          className="absolute top-4 right-4 text-gray-300 hover:text-white transition z-20"
-          aria-label="Close"
+          className="absolute right-4 top-4 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
         >
-          <IoClose className="w-6 h-6" />
+          <IoClose size={24} />
         </button>
-        <div className="rounded-2xl overflow-hidden">
-          <div className="max-h-[80vh] overflow-y-auto backdrop-blur-xl bg-white/10 border border-white/20 p-8 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
-            <h2 className="text-2xl font-bold mb-2 text-center text-white">
-              Complete your Profile
-            </h2>
-            <p className="text-sm text-gray-300 text-center mb-6">
-              We'll tailor your Earn experience based on your profile
-            </p>
 
-            <form onSubmit={handleSubmit}>
-              <div className="flex items-center justify-center mb-6">
-                <label
-                  htmlFor="profile-upload"
-                  className="cursor-pointer group"
-                >
-                  <div className="w-20 h-20 rounded-full border-2 border-dashed border-white/40 bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors">
-                    {formData.profileImage ? (
-                      <img
-                        src={URL.createObjectURL(formData.profileImage)}
-                        alt="Preview"
-                        className="w-full h-full object-cover rounded-full"
-                      />
-                    ) : (
-                      <svg
-                        className="w-6 h-6 text-white/70 group-hover:text-white transition-colors"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1M12 12V4m0 0L8 8m4-4l4 4"
-                        />
-                      </svg>
-                    )}
-                  </div>
-                  <input
-                    id="profile-upload"
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageUpload}
-                    className="hidden"
-                  />
-                  <p className="text-xs text-gray-300 mt-1 text-center">
-                    Upload Photo
-                  </p>
-                </label>
-              </div>
+        <h2 className="mb-6 text-2xl font-bold dark:text-white">
+          {role === 'sponsor' ? 'Create Sponsor Account' : 'Create Account'}
+        </h2>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-                <div>
-                  <input
-                    name="firstName"
-                    placeholder="First Name"
-                    className="input"
-                    value={formData.firstName}
-                    onChange={handleChange}
-                  />
-                  {fieldErrors.firstName && (
-                    <p className="text-red-300 text-sm mt-1">
-                      {fieldErrors.firstName}
-                    </p>
-                  )}
-                </div>
-                <div>
-                  <input
-                    name="lastName"
-                    placeholder="Last Name"
-                    className="input"
-                    value={formData.lastName}
-                    onChange={handleChange}
-                  />
-                  {fieldErrors.lastName && (
-                    <p className="text-red-300 text-sm mt-1">
-                      {fieldErrors.lastName}
-                    </p>
-                  )}
-                </div>
-              </div>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {role === 'talent' ? (
+            <TalentRegistrationForm
+              formData={talentFormData}
+              fieldErrors={talentFieldErrors}
+              isSubmitting={isSubmitting}
+              onFieldChange={handleTalentFieldChange}
+              onSkillToggle={handleSkillToggle}
+              onSocialChange={handleSocialChange}
+              onAddSocial={handleAddSocial}
+              onRemoveSocial={handleRemoveSocial}
+            />
+          ) : (
+            <SponsorRegistrationForm
+              formData={sponsorFormData}
+              fieldErrors={sponsorFieldErrors}
+              isSubmitting={isSubmitting}
+              onFieldChange={handleSponsorFieldChange}
+              onFileChange={handleSponsorFileChange}
+            />
+          )}
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-                {/* Username Field */}
-                <div>
-                  <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-300">
-                      @
-                    </span>
-                    <input
-                      name="username"
-                      className="input pl-8"
-                      value={formData.username}
-                      onChange={handleChange}
-                      placeholder="Username"
-                    />
-                  </div>
-                  {fieldErrors.username && (
-                    <p className="text-red-300 text-sm mt-1">
-                      {fieldErrors.username}
-                    </p>
-                  )}
-                </div>
+          <button
+            type="submit"
+            className="btn-primary w-full py-2"
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? 'Creating Account...' : 'Create Account'}
+          </button>
+        </form>
 
-                {/* Location Field */}
-                <div>
-                  <input
-                    name="location"
-                    placeholder="Location (e.g. Lagos, NG)"
-                    className="input"
-                    value={formData.location}
-                    onChange={handleChange}
-                  />
-                </div>
-              </div>
-
-              {/* Wallet Status */}
-              <div className="mb-4">
-                <div
-                  className={clsx(
-                    'p-3 rounded-lg flex items-center',
-                    isConnected || formData.walletAddress
-                      ? 'bg-green-900/20 border border-green-700/30'
-                      : 'bg-white/10 border border-white/20'
-                  )}
-                >
-                  <div className="flex-1">
-                    <p className="text-white font-medium">
-                      {isConnected || formData.walletAddress
-                        ? 'Wallet Connected'
-                        : 'Connect Your Wallet'}
-                    </p>
-                    <p className="text-xs text-gray-300">
-                      {isConnected || formData.walletAddress
-                        ? publicKey || formData.walletAddress
-                        : 'You can connect now or after registration'}
-                    </p>
-                  </div>
-                  {!(isConnected || formData.walletAddress) && (
-                    <motion.button
-                      type="button"
-                      onClick={connectUserWallet}
-                      className="bg-white text-black text-sm font-medium py-1.5 px-3 rounded-lg hover:bg-white/90 transition-colors"
-                      whileHover={{ scale: 1.03 }}
-                      whileTap={{ scale: 0.98 }}
-                    >
-                      Connect
-                    </motion.button>
-                  )}
-                </div>
-              </div>
-
-              <div className="mb-4">
-                <div>
-                  <input
-                    type="email"
-                    name="email"
-                    placeholder="Email Address"
-                    className="input"
-                    value={formData.email}
-                    onChange={handleChange}
-                  />
-                  {fieldErrors.email && (
-                    <p className="text-red-300 text-sm mt-1">
-                      {fieldErrors.email}
-                    </p>
-                  )}
-                </div>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-                <div>
-                  <PasswordInput
-                    name="password"
-                    placeholder="Password"
-                    className="input"
-                    value={formData.password}
-                    onChange={handleChange}
-                  />
-                  {fieldErrors.password && (
-                    <p className="text-red-300 text-sm mt-1">
-                      {fieldErrors.password}
-                    </p>
-                  )}
-                </div>
-                <div>
-                  <PasswordInput
-                    name="confirmPassword"
-                    placeholder="Confirm Password"
-                    className="input"
-                    value={formData.confirmPassword}
-                    onChange={handleChange}
-                  />
-                  {fieldErrors.confirmPassword && (
-                    <p className="text-red-300 text-sm mt-1">
-                      {fieldErrors.confirmPassword}
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              <div className="mb-4">
-                <label className="block mb-2 text-sm font-medium text-white">
-                  Your Skills *
-                </label>
-                <div className="flex flex-wrap gap-2">
-                  {defaultSkills.map((skill) => (
-                    <button
-                      key={skill}
-                      type="button"
-                      onClick={() => handleSkillToggle(skill)}
-                      className={clsx(
-                        'text-sm px-3 py-1 rounded-full border transition-all',
-                        formData.skills.includes(skill)
-                          ? 'bg-blue-500/30 text-blue-200 border-blue-500/50'
-                          : 'bg-white/10 text-gray-300 border-white/20 hover:bg-white/20'
-                      )}
-                    >
-                      {skill} {formData.skills.includes(skill) ? '✓' : '+'}
-                    </button>
-                  ))}
-                </div>
-                {fieldErrors.skills && (
-                  <p className="text-red-300 text-sm mt-1">
-                    {fieldErrors.skills}
-                  </p>
-                )}
-              </div>
-              <div className="mb-4">
-                <label className="block mb-2 text-sm font-medium text-white">
-                  Socials
-                </label>
-
-                {formData.socials.map((link, idx) => (
-                  <div key={idx} className="flex items-center gap-2 mb-2">
-                    {getPlatformIcon(link.platform)}
-                    <input
-                      placeholder={`Enter your ${link.platform} username`}
-                      className="input flex-1"
-                      value={link.username}
-                      onChange={(e) =>
-                        handleSocialChange(idx, 'username', e.target.value)
-                      }
-                    />
-                  </div>
-                ))}
-
-                {formData.socials.length < 3 && (
-                  <button
-                    type="button"
-                    onClick={handleAddSocial}
-                    className="text-sm text-white mt-2 font-medium hover:underline"
-                  >
-                    + ADD MORE
-                  </button>
-                )}
-              </div>
-
-              <motion.button
-                type="submit"
-                className="bg-white text-black font-medium py-3 px-4 rounded-lg hover:bg-white/90 transition-colors w-full flex items-center justify-center"
-                disabled={isSubmitting}
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                {isSubmitting ? (
-                  <span className="flex gap-2 items-center justify-center">
-                    <span className="w-2 h-2 rounded-full bg-black animate-bounce [animation-delay:-0.3s]" />
-                    <span className="w-2 h-2 rounded-full bg-black animate-bounce [animation-delay:-0.15s]" />
-                    <span className="w-2 h-2 rounded-full bg-black animate-bounce" />
-                  </span>
-                ) : (
-                  'Create Profile'
-                )}
-              </motion.button>
-
-              <div className="mt-6 relative flex items-center justify-center">
-                <div className="absolute left-0 w-full border-t border-white/10"></div>
-                <div className="relative bg-[#070708] px-4 text-sm text-gray-300">
-                  or register with
-                </div>
-              </div>
-
-              <motion.button
-                type="button"
-                disabled={isGoogleSubmitting}
-                className="mt-6 w-full flex items-center justify-center gap-2 border border-white/20 bg-white/10 hover:bg-white/15 text-white py-3 px-4 rounded-lg transition-colors"
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                {isGoogleSubmitting ? (
-                  <span className="flex gap-2 items-center justify-center">
-                    <span className="w-2 h-2 rounded-full bg-white animate-bounce [animation-delay:-0.3s]"></span>
-                    <span className="w-2 h-2 rounded-full bg-white animate-bounce [animation-delay:-0.15s]"></span>
-                    <span className="w-2 h-2 rounded-full bg-white animate-bounce"></span>
-                  </span>
-                ) : (
-                  <>
-                    <FcGoogle className="w-5 h-5" />
-                    <span>Google</span>
-                  </>
-                )}
-              </motion.button>
-            </form>
-          </div>
+        <div className="my-6 flex items-center justify-center">
+          <span className="h-px flex-1 bg-gray-200 dark:bg-gray-700"></span>
+          <span className="mx-3 text-sm text-gray-500 dark:text-gray-400">
+            OR
+          </span>
+          <span className="h-px flex-1 bg-gray-200 dark:bg-gray-700"></span>
         </div>
-      </div>
+
+        <div className="space-y-3">
+          <button className="flex w-full items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white p-3 text-center font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700">
+            <FcGoogle size={20} />
+            Continue with Google
+          </button>
+        </div>
+      </motion.div>
     </div>
   );
 }

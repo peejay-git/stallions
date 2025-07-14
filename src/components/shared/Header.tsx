@@ -1,5 +1,6 @@
 'use client';
 
+import ChooseRoleModal from '@/components/core/auth/ChooseRoleModal';
 import LoginModal from '@/components/core/auth/LoginModal';
 import RegisterModal from '@/components/core/auth/RegisterModal';
 import { useAuth } from '@/hooks/useAuth';
@@ -9,6 +10,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
+import toast from 'react-hot-toast';
 
 // Pre-defined nav links to avoid recreation on render
 const navLinks = [
@@ -24,9 +26,12 @@ const Header = () => {
   const pathname = usePathname();
   const { isConnected, disconnect, publicKey, connect } = useWallet();
   const [showRegister, setShowRegister] = useState(false);
+  const [selectedRole, setSelectedRole] = useState<'talent' | 'sponsor' | null>(null);
   const [showLogin, setShowLogin] = useState(false);
+  const [chooseRoleOpen, setChooseRoleOpen] = useState(false);
   const router = useRouter();
   const { user, AuthModals, isAuthenticated } = useAuth();
+  const { updateUserProfile } = useAuthStore((state) => state);
   const logout = useAuthStore((state) => state.logout);
 
   // Close menu when route changes
@@ -53,19 +58,54 @@ const Header = () => {
       disconnect();
     }
     router.push('/');
-  }, [disconnect, logout, isConnected, router]);
+  }, [logout, isConnected, disconnect, router]);
+
+  const handleRoleSelection = useCallback(
+    async (role: 'talent' | 'sponsor') => {
+      if (chooseRoleOpen && !isAuthenticated) {
+        // For registration flow
+        setSelectedRole(role);
+        setChooseRoleOpen(false);
+        setShowRegister(true);
+      } else {
+        // For existing user profile update
+        try {
+          await updateUserProfile({ role });
+          setChooseRoleOpen(false);
+          toast.success(
+            `Profile updated as ${role === 'talent' ? 'Talent' : 'Sponsor'}`
+          );
+        } catch (error) {
+          console.error('Error updating role:', error);
+          toast.error('Failed to update role. Please try again.');
+        }
+      }
+    },
+    [chooseRoleOpen, isAuthenticated, updateUserProfile]
+  );
 
   return (
     <header className="sticky top-0 z-40 bg-[#070708] shadow-md">
+      {/* Role Selection Modal */}
+      <ChooseRoleModal
+        isOpen={chooseRoleOpen}
+        onClose={() => setChooseRoleOpen(false)}
+        onChooseRole={handleRoleSelection}
+      />
       {showRegister && (
         <RegisterModal
           isOpen={showRegister}
           onClose={() => setShowRegister(false)}
+          selectedRole={selectedRole}
         />
       )}
 
       {showLogin && (
-        <LoginModal isOpen={showLogin} onClose={() => setShowLogin(false)} />
+        <LoginModal
+          isOpen={showLogin}
+          onClose={() => setShowLogin(false)}
+          onSwitchToRegister={() => setChooseRoleOpen(true)}
+        />
       )}
 
       {/* Render auth modals (Profile completion and Wallet prompt) */}
@@ -150,9 +190,28 @@ const Header = () => {
               {isAuthenticated ? (
                 <div className="flex items-center gap-x-2 text-sm text-white">
                   {isConnected && publicKey ? (
-                    <span className="font-mono">
+                    <button
+                      onClick={disconnect}
+                      className="bg-red-500/20 hover:bg-red-500/30 text-red-400 font-mono py-1.5 px-4 rounded-lg flex items-center gap-x-1 transition-colors"
+                      title="Disconnect wallet"
+                    >
                       {`${publicKey.slice(0, 4)}...${publicKey.slice(-4)}`}
-                    </span>
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                        <polyline points="16 17 21 12 16 7"></polyline>
+                        <line x1="21" y1="12" x2="9" y2="12"></line>
+                      </svg>
+                    </button>
                   ) : null}
                   {!publicKey && (
                     <button

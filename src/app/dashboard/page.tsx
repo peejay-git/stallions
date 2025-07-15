@@ -397,7 +397,7 @@ export default function DashboardPage() {
           <div className="backdrop-blur-xl bg-white/10 border border-white/20 rounded-xl overflow-hidden">
             <div className="flex border-b border-gray-600">
               {/* Only show Your Bounties tab for sponsors */}
-              {isSponsor && (
+              {isSponsor ? (
                 <button
                   className={`px-6 py-4 font-medium text-sm focus:outline-none transition-all duration-300 ${
                     activeTab === 'created'
@@ -408,17 +408,18 @@ export default function DashboardPage() {
                 >
                   Your Bounties
                 </button>
+              ) : (
+                <button
+                  className={`px-6 py-4 font-medium text-sm focus:outline-none transition-all duration-300 ${
+                    activeTab === 'submissions'
+                      ? 'text-white border-b-2 border-white'
+                      : 'text-gray-400 hover:text-white'
+                  }`}
+                  onClick={() => setActiveTab('submissions')}
+                >
+                  Your Submissions
+                </button>
               )}
-              <button
-                className={`px-6 py-4 font-medium text-sm focus:outline-none transition-all duration-300 ${
-                  activeTab === 'submissions'
-                    ? 'text-white border-b-2 border-white'
-                    : 'text-gray-400 hover:text-white'
-                }`}
-                onClick={() => setActiveTab('submissions')}
-              >
-                Your Submissions
-              </button>
             </div>
 
             <div className="p-6">

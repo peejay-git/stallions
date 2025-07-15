@@ -678,7 +678,11 @@ export default function BountyDetailPage() {
                 <div className="text-sm opacity-90">Reward</div>
                 <div className="text-xl font-bold">
                   {assetSymbols[bounty.reward.asset] || ''}
-                  {bounty.reward.amount} {bounty.reward.asset}
+                  {/* Show adjusted reward amount (after fee) for talents */}
+                  {isSponsor
+                    ? bounty.reward.amount
+                    : (parseFloat(bounty.reward.amount) * 0.95).toFixed(2)}{' '}
+                  {bounty.reward.asset}
                 </div>
               </div>
 
@@ -745,22 +749,32 @@ export default function BountyDetailPage() {
                   <span className="text-white">Total Reward:</span>
                   <span className="text-white font-medium">
                     {assetSymbols[bounty.reward.asset] || ''}
-                    {bounty.reward.amount} {bounty.reward.asset}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center mb-3 text-sm">
-                  <span className="text-gray-300">Platform Fee (5%):</span>
-                  <span className="text-gray-300">
-                    {assetSymbols[bounty.reward.asset] || ''}
-                    {(parseFloat(bounty.reward.amount) * 0.01).toFixed(2)}{' '}
+                    {isSponsor
+                      ? bounty.reward.amount
+                      : (parseFloat(bounty.reward.amount) * 0.95).toFixed(2)}{' '}
                     {bounty.reward.asset}
                   </span>
                 </div>
-                <div className="border-t border-white/10 my-3"></div>
+                
+                {/* Only show platform fee to sponsors */}
+                {isSponsor && (
+                  <>
+                    <div className="flex justify-between items-center mb-3 text-sm">
+                      <span className="text-gray-300">Platform Fee (5%):</span>
+                      <span className="text-gray-300">
+                        {assetSymbols[bounty.reward.asset] || ''}
+                        {(parseFloat(bounty.reward.amount) * 0.05).toFixed(2)}{' '}
+                        {bounty.reward.asset}
+                      </span>
+                    </div>
+                    <div className="border-t border-white/10 my-3"></div>
+                  </>
+                )}
+                
                 {bounty.distribution && bounty.distribution.length > 0 ? (
                   <>
                     <div className="text-sm text-gray-300 mb-2">
-                      Distribution after platform fee:
+                      {isSponsor ? 'Distribution after platform fee:' : 'Distribution:'}
                     </div>
                     <div className="space-y-2">
                       {bounty.distribution.map((dist) => {
@@ -791,9 +805,9 @@ export default function BountyDetailPage() {
                   </>
                 ) : (
                   <div className="text-sm text-gray-300">
-                    Winner takes all (after 1% platform fee):{' '}
+                    Winner takes all{isSponsor ? ' (after 5% platform fee)' : ''}:{' '}
                     {assetSymbols[bounty.reward.asset] || ''}
-                    {(parseFloat(bounty.reward.amount) * 0.99).toFixed(2)}{' '}
+                    {(parseFloat(bounty.reward.amount) * 0.95).toFixed(2)}{' '}
                     {bounty.reward.asset}
                   </div>
                 )}

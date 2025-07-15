@@ -4,6 +4,8 @@ import { PasswordInput } from '@/components/ui';
 import WalletConnectButton from '../WalletConnectButton';
 import React from 'react';
 import { FaGithub, FaLinkedin, FaXTwitter } from 'react-icons/fa6';
+import { AnimatePresence, motion } from 'framer-motion';
+import { CheckmarkIcon } from 'react-hot-toast';
 
 export type TalentFormDataType = {
   firstName: string;
@@ -51,7 +53,6 @@ export const defaultSkills = [
 const TalentRegistrationForm: React.FC<TalentRegistrationFormProps> = ({
   formData,
   fieldErrors,
-  isSubmitting,
   onFieldChange,
   onSkillToggle,
   onSocialChange,
@@ -135,13 +136,20 @@ const TalentRegistrationForm: React.FC<TalentRegistrationFormProps> = ({
               key={skill}
               type="button"
               onClick={() => onSkillToggle(skill)}
-              className={`px-3 py-1 text-sm rounded-full transition-colors ${
-                formData.skills.includes(skill)
-                  ? 'bg-primary text-white'
-                  : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
-              }`}
+              className={`flex items-center gap-2 px-3 py-1 text-sm rounded-full bg-primary text-white`}
             >
-              {skill}
+              {skill}{' '}
+              {formData.skills.includes(skill) ? (
+                <AnimatePresence>
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                  >
+                    <CheckmarkIcon />
+                  </motion.div>
+                </AnimatePresence>
+              ) : null}
             </button>
           ))}
         </div>

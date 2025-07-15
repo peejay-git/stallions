@@ -25,6 +25,7 @@ type TalentRegistrationData = Omit<
   'confirmPassword' | 'profileImage'
 > & {
   profileImageFile?: File | null;
+  uid?: string; // Optional UID for when user already exists
 };
 
 interface WalletData {
@@ -43,12 +44,12 @@ export async function registerSponsor(data: any) {
     walletAddress,
     ...rest
   } = data;
-  const userCredential = await createUserWithEmailAndPassword(
-    auth,
-    email,
-    password
-  );
-  const uid = userCredential.user.uid;
+
+  // Use existing Firebase auth user (created in RegisterModal)
+  const uid = auth.currentUser?.uid;
+  if (!uid) {
+    throw new Error('No authenticated user found');
+  }
 
   await setDoc(doc(db, 'users', uid), {
     uid,
@@ -88,19 +89,19 @@ export async function registerSponsor(data: any) {
 
   useAuthStore.getState().setUser(userProfile);
 
-  return userCredential;
+  return { user: auth.currentUser, isNewUser: false };
 }
 // #endregion
 
 // #region Talent Register Controller
 export async function registerTalent(data: TalentRegistrationData) {
   const { email, password, profileImageFile, walletAddress, ...rest } = data;
-  const userCredential = await createUserWithEmailAndPassword(
-    auth,
-    email,
-    password
-  );
-  const uid = userCredential.user.uid;
+  
+  // Use existing Firebase auth user (created in RegisterModal)
+  const uid = auth.currentUser?.uid;
+  if (!uid) {
+    throw new Error('No authenticated user found');
+  }
 
   // Save user data to Firestore
   await setDoc(doc(db, 'users', uid), {
@@ -142,7 +143,7 @@ export async function registerTalent(data: TalentRegistrationData) {
 
   setUser(userProfile);
 
-  return userCredential;
+  return { user: auth.currentUser, isNewUser: false };
 }
 // #endregion
 

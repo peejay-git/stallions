@@ -292,6 +292,7 @@ export default function RegisterModal({
       );
       const user = userCredential.user;
 
+      // Now store additional data in Firestore via our service functions
       if (role === 'sponsor') {
         // Register as sponsor
         await registerSponsor({
@@ -318,6 +319,10 @@ export default function RegisterModal({
             },
           ],
           telegram: sponsorFormData.telegram,
+        }).catch(async (error) => {
+          // If Firestore save fails, delete the Auth user to prevent orphaned accounts
+          if (user) await user.delete();
+          throw error;
         });
       } else {
         // Register as talent
@@ -331,6 +336,10 @@ export default function RegisterModal({
           skills: talentFormData.skills,
           password: talentFormData.password,
           socials: talentFormData.socials,
+        }).catch(async (error) => {
+          // If Firestore save fails, delete the Auth user to prevent orphaned accounts
+          if (user) await user.delete();
+          throw error;
         });
       }
 
@@ -371,6 +380,7 @@ export default function RegisterModal({
       if (error instanceof FirebaseError) {
         switch (error.code) {
           case 'auth/email-already-in-use':
+            console.log('THERE IS AN ERROR', error);
             toast.error('Email already in use. Please use another.');
             break;
           case 'auth/invalid-email':

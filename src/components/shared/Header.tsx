@@ -328,6 +328,19 @@ const Header = () => {
           </div>
 
           <div className="pt-4 pb-3 border-t border-white/10">
+            {/* Complete Profile button for connected wallets without accounts */}
+            {isConnected && !user && (
+              <button
+                onClick={() => {
+                  setChooseRoleOpen(true);
+                  setIsMenuOpen(false);
+                }}
+                className="bg-white text-black font-medium py-1.5 w-full mb-2 rounded-lg hover:bg-white/90"
+              >
+                Complete Profile
+              </button>
+            )}
+            
             {/* Authentication/Wallet buttons for mobile */}
             {isAuthenticated ? (
               <button

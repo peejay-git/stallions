@@ -270,7 +270,7 @@ export default function DashboardPage() {
               <h1 className="text-2xl font-semibold text-white">
                 Welcome {user?.firstName || '...'}
               </h1>
-              <p className="text-gray-400">@{user?.username || '...'}</p>
+              <p className="text-gray-400">{user?.username || '...'}</p>
             </div>
           </div>
 

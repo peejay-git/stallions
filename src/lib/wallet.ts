@@ -115,25 +115,6 @@ const createWalletKit = async () => {
       }
     };
 
-    // Add error handling for address retrieval
-    // const originalGetAddress = newKit.getAddress.bind(newKit);
-    // newKit.getAddress = async () => {
-    //   try {
-    //     const result = await originalGetAddress();
-    //     if (!result || !result.address) {
-    //       throw new Error('No address returned from wallet');
-    //     }
-    //     return result;
-    //   } catch (error) {
-    //     console.error('Error getting address:', error);
-    //     throw new Error(
-    //       error instanceof Error
-    //         ? error.message
-    //         : 'Failed to get address from wallet'
-    //     );
-    //   }
-    // };
-
     return newKit;
   } catch (error) {
     return null;

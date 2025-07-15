@@ -193,7 +193,7 @@ const Header = () => {
                 <div className="flex items-center gap-x-2 text-sm text-white">
                   {isConnected && publicKey ? (
                     <button
-                      onClick={disconnect}
+                      onClick={handleLogout}
                       className="bg-red-500/20 hover:bg-red-500/30 text-red-400 font-mono py-1.5 px-4 rounded-lg flex items-center gap-x-1 transition-colors"
                       title="Disconnect wallet"
                     >
@@ -215,20 +215,23 @@ const Header = () => {
                       </svg>
                     </button>
                   ) : null}
-                  {!publicKey && (
-                    <button
-                      onClick={handleWalletConnect}
-                      className="bg-white text-black font-medium py-1.5 px-4 rounded-lg hover:bg-white/90"
-                    >
-                      Connect Wallet
-                    </button>
-                  )}
-                  <button
-                    onClick={handleLogout}
-                    className="bg-white text-black font-medium py-1.5 px-4 rounded-lg hover:bg-white/90"
-                  >
-                    Logout
-                  </button>
+                  {!isConnected &&
+                    (!publicKey ? (
+                      <>
+                        <button
+                          onClick={handleWalletConnect}
+                          className="bg-white text-black font-medium py-1.5 px-4 rounded-lg hover:bg-white/90"
+                        >
+                          Connect Wallet
+                        </button>
+                        <button
+                          onClick={handleLogout}
+                          className="bg-white text-black font-medium py-1.5 px-4 rounded-lg hover:bg-white/90"
+                        >
+                          Logout
+                        </button>
+                      </>
+                    ) : null)}
                 </div>
               ) : (
                 <button
@@ -340,7 +343,7 @@ const Header = () => {
                 Complete Profile
               </button>
             )}
-            
+
             {/* Authentication/Wallet buttons for mobile */}
             {isAuthenticated ? (
               <button

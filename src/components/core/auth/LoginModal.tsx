@@ -5,13 +5,11 @@ import { useWallet } from '@/hooks/useWallet';
 import { forgotPassword } from '@/lib/authService';
 import { auth } from '@/lib/firebase';
 import useAuthStore from '@/lib/stores/auth.store';
-import { getWalletKit } from '@/lib/wallet';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { AnimatePresence, motion } from 'framer-motion';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
-import { FcGoogle } from 'react-icons/fc';
 import { FiLock, FiMail } from 'react-icons/fi';
 import { IoClose } from 'react-icons/io5';
 import { SiBlockchaindotcom } from 'react-icons/si';
@@ -37,22 +35,17 @@ export default function LoginModal({
   const [fieldErrors, setFieldErrors] = useState({ email: '', password: '' });
   const [formError, setFormError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isGoogleSubmitting, setIsGoogleSubmitting] = useState(false);
   const [isWalletSubmitting, setIsWalletSubmitting] = useState(false);
-  const [walletEmail, setWalletEmail] = useState('');
   const [currentView, setCurrentView] = useState<LoginView>('main');
-  const [animationComplete, setAnimationComplete] = useState(false);
   const [resetEmail, setResetEmail] = useState('');
   const [isResettingPassword, setIsResettingPassword] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
-      setAnimationComplete(true);
       document.body.classList.add('overflow-hidden');
       // Force scroll to top when modal opens
       window.scrollTo(0, 0);
     } else {
-      setAnimationComplete(false);
       document.body.classList.remove('overflow-hidden');
       // Reset view when closing modal
       setCurrentView('main');
@@ -122,8 +115,6 @@ export default function LoginModal({
         // It will show a success toast if found
         // Otherwise, close modal and switch to register
         setTimeout(() => {
-          console.log('USER', useAuthStore.getState().user);
-
           if (!useAuthStore.getState().user) {
             onClose();
             onSwitchToRegister?.();
@@ -131,7 +122,7 @@ export default function LoginModal({
             onClose();
             router.push(`/dashboard?redirect=${encodeURIComponent(location)}`);
           }
-        }, 500); // Short delay to allow wallet auth to complete
+        }, 1000); // Short delay to allow wallet auth to complete
       }
     } catch (err: any) {
       console.error(err);
@@ -153,10 +144,8 @@ export default function LoginModal({
     setIsSubmitting(true);
 
     try {
-      // Try direct Firebase auth first
-      let userCredential;
       try {
-        userCredential = await signInWithEmailAndPassword(
+        await signInWithEmailAndPassword(
           auth,
           formData.email,
           formData.password
@@ -177,41 +166,6 @@ export default function LoginModal({
 
       toast.success('Login successful!');
       onClose();
-
-      // Check if wallet needs to be connected
-      setTimeout(async () => {
-        // Get the latest user data from the auth store
-        const currentUser = useAuthStore.getState().user;
-
-        // For sponsors, automatically prompt wallet connection if they don't have one
-        if (currentUser?.role === 'sponsor' && !currentUser.walletConnected) {
-          try {
-            const kit = await getWalletKit();
-            if (kit) {
-              const publicKey = await connect();
-              if (publicKey) {
-                // Update user's wallet info through the auth store
-                await useAuthStore.getState().connectWalletToUser({
-                  address: publicKey,
-                  publicKey,
-                  network: 'TESTNET',
-                  connectedAt: new Date().toISOString(),
-                });
-
-                toast.success('Wallet connected successfully!');
-              }
-            }
-          } catch (walletError) {
-            console.error('Error connecting wallet:', walletError);
-            toast.error(
-              'Failed to connect wallet. Please try again in your dashboard.'
-            );
-          }
-        }
-
-        // Redirect to dashboard
-        router.push('/dashboard');
-      }, 100);
     } catch (err: any) {
       if (err.code) {
         switch (err.code) {
@@ -407,33 +361,6 @@ export default function LoginModal({
           )}
         </motion.button>
       </form>
-
-      <div className="mt-6 relative flex items-center justify-center">
-        <div className="absolute left-0 w-full border-t border-white/10"></div>
-        <div className="relative bg-[#070708] px-4 text-sm text-gray-300">
-          or continue with
-        </div>
-      </div>
-
-      <motion.div
-        className="mt-6 relative"
-        initial={{ y: 20, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ delay: 0.7 }}
-      >
-        <span className="absolute -top-2 right-0 text-xs bg-white/20 text-white px-2 py-0.5 rounded-full">
-          Coming Soon
-        </span>
-        <motion.button
-          disabled={true}
-          className="w-full flex items-center justify-center gap-2 border border-white/20 bg-white/10 hover:bg-white/10 text-white py-3 px-4 rounded-lg transition-colors opacity-70 cursor-not-allowed"
-          whileHover={{ scale: 1 }}
-          whileTap={{ scale: 1 }}
-        >
-          <FcGoogle className="w-5 h-5" />
-          <span>Google Sign-in</span>
-        </motion.button>
-      </motion.div>
 
       <motion.div
         className="mt-6 text-center"

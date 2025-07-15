@@ -12,7 +12,6 @@ import { motion } from 'framer-motion';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
-import { FcGoogle } from 'react-icons/fc';
 import { IoClose } from 'react-icons/io5';
 import {
   SponsorFieldErrors,
@@ -514,21 +513,6 @@ export default function RegisterModal({
               {isSubmitting ? 'Creating Account...' : 'Create Account'}
             </button>
           </form>
-
-          <div className="my-6 flex items-center justify-center">
-            <span className="h-px flex-1 bg-gray-200 dark:bg-gray-700"></span>
-            <span className="mx-3 text-sm text-gray-500 dark:text-gray-400">
-              OR
-            </span>
-            <span className="h-px flex-1 bg-gray-200 dark:bg-gray-700"></span>
-          </div>
-
-          <div className="space-y-3">
-            <button className="flex w-full items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white p-3 text-center font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700">
-              <FcGoogle size={20} />
-              Continue with Google
-            </button>
-          </div>
         </div>
       </motion.div>
     </dialog>

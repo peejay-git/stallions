@@ -1,7 +1,6 @@
 import { TalentFormDataType } from '@/components/core/auth/register';
 import type { UserProfile, UserRole } from '@/types/auth.types';
 import {
-  createUserWithEmailAndPassword,
   onAuthStateChanged,
   sendPasswordResetEmail,
   signInWithEmailAndPassword,
@@ -96,7 +95,7 @@ export async function registerSponsor(data: any) {
 // #region Talent Register Controller
 export async function registerTalent(data: TalentRegistrationData) {
   const { email, password, profileImageFile, walletAddress, ...rest } = data;
-  
+
   // Use existing Firebase auth user (created in RegisterModal)
   const uid = auth.currentUser?.uid;
   if (!uid) {

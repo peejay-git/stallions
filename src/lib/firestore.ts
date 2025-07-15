@@ -16,7 +16,7 @@ import {
   where,
   type QueryConstraint,
   type Timestamp,
-} from 'firebase/firestore/lite';
+} from 'firebase/firestore';
 import { db } from './firebase';
 
 // Export the db instance

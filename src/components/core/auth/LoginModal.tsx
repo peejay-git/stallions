@@ -92,11 +92,6 @@ export default function LoginModal({
     } else {
       await connect({
         onWalletSelected: async (publicKey: string) => {
-          // Wait for user to be set, then check if user exists
-          while (useAuthStore.getState().loading) {
-            await new Promise((resolve) => setTimeout(resolve, 100));
-          }
-
           if (!useAuthStore.getState().user) {
             handleWalletLogin(publicKey);
           }

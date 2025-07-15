@@ -20,7 +20,7 @@ import {
   query,
   updateDoc,
   where,
-} from 'firebase/firestore/lite';
+} from 'firebase/firestore';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 
@@ -143,6 +143,7 @@ const useAuthStore = create<AuthStoreState>()(
               lastLogin: userData.lastLogin,
               isProfileComplete: false, // Will be calculated in setUser
             };
+            console.log(userProfile);
 
             get().setUser(userProfile);
           } else {

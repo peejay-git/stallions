@@ -31,6 +31,8 @@ export default function DashboardPage() {
   );
   const [userSubmissions, setUserSubmissions] = useState<any[]>([]);
   const [loadingSubmissions, setLoadingSubmissions] = useState(false);
+  // TODO: Convert all to USDC
+  const [totalSpentOrEarned, setTotalSpentOrEarned] = useState(0);
 
   // Determine if user is a sponsor or talent
   const isSponsor = user?.role === 'sponsor';
@@ -98,10 +100,24 @@ export default function DashboardPage() {
               }
             });
           }
+
+          // Calculate total spent or earned
+          const totalSpentOrEarned = data.reduce((acc, bounty) => {
+            const bountyAmount = Number(bounty.reward.amount);
+            return acc + bountyAmount;
+          }, 0);
+          setTotalSpentOrEarned(totalSpentOrEarned);
         } else {
           // For talents, we can fetch by user.uid
           const uidBounties = await getBountiesByOwner(user.uid);
           data = [...uidBounties];
+
+          // Calculate total spent or earned
+          const totalSpentOrEarned = data.reduce((acc, bounty) => {
+            const bountyAmount = Number(bounty.reward.amount);
+            return acc + bountyAmount;
+          }, 0);
+          setTotalSpentOrEarned(totalSpentOrEarned);
         }
 
         // Ensure each bounty has required fields
@@ -389,7 +405,9 @@ export default function DashboardPage() {
                 <p className="text-gray-300 text-sm mb-1">
                   {isSponsor ? 'Total Spent' : 'Total Earned'}
                 </p>
-                <p className="text-2xl font-semibold text-white">$0 USDC</p>
+                <p className="text-2xl font-semibold text-white">
+                  ${totalSpentOrEarned} USDC
+                </p>
               </div>
             </div>
           </div>

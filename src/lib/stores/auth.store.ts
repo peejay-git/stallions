@@ -143,7 +143,6 @@ const useAuthStore = create<AuthStoreState>()(
               lastLogin: userData.lastLogin,
               isProfileComplete: false, // Will be calculated in setUser
             };
-            console.log(userProfile);
 
             get().setUser(userProfile);
           } else {

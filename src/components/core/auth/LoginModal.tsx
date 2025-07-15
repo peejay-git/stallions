@@ -105,19 +105,34 @@ export default function LoginModal({
       toast.error('Wallet not connected. Please connect your wallet first.');
       return;
     }
-    if (!user) {
-      disconnect();
-      toast.error('User not found. Please register first.');
-      onClose();
-      onSwitchToRegister?.();
-      return;
-    }
+
+    // Don't check for user here as useWallet hook will attempt to fetch by wallet address
+    // The check below will only run if user is already authenticated via wallet
 
     try {
       setIsWalletSubmitting(true);
-      toast.success('Login successful!');
-      onClose();
-      router.push(`/dashboard?redirect=${encodeURIComponent(location)}`);
+
+      // If user is already authenticated (from auth store), just proceed with login
+      if (user) {
+        toast.success('Login successful!');
+        onClose();
+        router.push(`/dashboard?redirect=${encodeURIComponent(location)}`);
+      } else {
+        // Let the useWallet hook handle fetching user by wallet address
+        // It will show a success toast if found
+        // Otherwise, close modal and switch to register
+        setTimeout(() => {
+          console.log('USER', useAuthStore.getState().user);
+
+          if (!useAuthStore.getState().user) {
+            onClose();
+            onSwitchToRegister?.();
+          } else {
+            onClose();
+            router.push(`/dashboard?redirect=${encodeURIComponent(location)}`);
+          }
+        }, 500); // Short delay to allow wallet auth to complete
+      }
     } catch (err: any) {
       console.error(err);
       toast.error('Wallet login failed. Please try again.');

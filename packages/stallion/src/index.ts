@@ -1,3 +1,4 @@
+import { Networks } from '@stellar/stellar-base';
 import type { i128, Option, u32, u64 } from '@stellar/stellar-sdk/contract';
 import {
   AssembledTransaction,

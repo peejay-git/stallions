@@ -303,7 +303,7 @@ export async function bountyHasSubmissions(bountyId: string): Promise<boolean> {
  * @returns True if update is successful
  */
 export async function updateBounty(
-  bountyId: string, 
+  bountyId: string,
   updatedData: any,
   publicKey?: string
 ) {
@@ -312,7 +312,7 @@ export async function updateBounty(
   if (!currentBounty) {
     throw new Error('Bounty not found');
   }
-  
+
   // Check if the bounty has submissions
   const hasSubmissions = await bountyHasSubmissions(bountyId);
   if (hasSubmissions) {
@@ -323,37 +323,44 @@ export async function updateBounty(
   if (!isNaN(Number(currentBounty.id)) && publicKey) {
     try {
       const { updateBountyOnChain } = await import('@/utils/blockchain');
-      
+
       // Convert distribution from Firebase format to blockchain format if present
       let distribution = undefined;
-      if (currentBounty.distribution && Array.isArray(currentBounty.distribution)) {
-        distribution = currentBounty.distribution.map(dist => ({
+      if (
+        currentBounty.distribution &&
+        Array.isArray(currentBounty.distribution)
+      ) {
+        distribution = currentBounty.distribution.map((dist) => ({
           position: dist.position,
-          percentage: dist.percentage
+          percentage: dist.percentage,
         }));
       }
-      
+
       // Parse deadline into timestamp if present
       let submissionDeadline = undefined;
       if (updatedData.deadline) {
         submissionDeadline = new Date(updatedData.deadline).getTime();
       }
-      
+
       // Update on blockchain
       await updateBountyOnChain({
         userPublicKey: publicKey,
         bountyId: Number(currentBounty.id),
         title: updatedData.title,
         distribution: distribution,
-        submissionDeadline: submissionDeadline
+        submissionDeadline: submissionDeadline,
       });
-      
+
       console.log('Successfully updated bounty on blockchain');
     } catch (error: any) {
       console.error('Error updating bounty on blockchain:', error);
-      
+
       // If blockchain update fails, ask user if they want to continue with off-chain update
-      if (!confirm('Failed to update on blockchain. Continue with off-chain update only?')) {
+      if (
+        !confirm(
+          'Failed to update on blockchain. Continue with off-chain update only?'
+        )
+      ) {
         throw error;
       }
     }

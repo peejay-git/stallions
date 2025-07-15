@@ -5,13 +5,16 @@ import {
   Bounty as ContractBounty,
   Client as SorobanClient,
 } from '../../packages/stallion/src/index';
-import { getWalletKit, TESTNET_PASSPHRASE } from './wallet';
+import { getWalletKit } from './wallet';
+import { getCurrentNetwork } from '@/config/networks';
 
-// Environment variables with defaults
+// Environment variables with defaults - now enhanced with network configuration
 const CONTRACT_ID = process.env.NEXT_PUBLIC_BOUNTY_CONTRACT_ID || '';
-const NETWORK = TESTNET_PASSPHRASE;
+const NETWORK = getCurrentNetwork().passphrase;
 
+// Use network-specific RPC URL if defined in configuration, otherwise fall back to env var or default
 const SOROBAN_RPC_URL =
+  getCurrentNetwork().sorobanRpcUrl ||
   process.env.NEXT_PUBLIC_SOROBAN_RPC_URL ||
   'https://soroban-testnet.stellar.org';
 
@@ -39,7 +42,7 @@ export class SorobanService {
 
   constructor(publicKey?: string) {
     this.contractId = CONTRACT_ID;
-    this.network = NETWORK;
+    this.network = getCurrentNetwork().passphrase; // Always use current network
     this.publicKey = publicKey || null;
 
     try {

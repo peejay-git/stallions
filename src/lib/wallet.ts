@@ -21,16 +21,23 @@ declare global {
 let walletKit: StellarWalletsKit | null = null;
 let initializationPromise: Promise<StellarWalletsKit | null> | null = null;
 
-// Define the network passphrase as a constant to ensure consistency across the app
-export const TESTNET_PASSPHRASE = 'Test SDF Network ; September 2015';
+// Import network configuration from centralized config
+import { getCurrentNetwork, NETWORKS } from '@/config/networks';
+
+// Export network information for use throughout the app
+// Note: These exports are for backward compatibility - new code should use getCurrentNetwork()
+export const NETWORK = getCurrentNetwork().passphrase;
+export const NETWORK_NAME = getCurrentNetwork().name;
+export const NETWORK_DISPLAY_NAME = getCurrentNetwork().displayName;
+
 // Define aliases that might be returned by different wallet implementations
-export const TESTNET_ALIASES = [
-  TESTNET_PASSPHRASE,
-  'Testnet',
-  'TESTNET',
-  'testnet',
-];
-export const NETWORK = TESTNET_PASSPHRASE;
+// Include passphrases from all supported networks for comparison
+export const NETWORK_ALIASES = NETWORKS.flatMap((network) => [
+  network.passphrase,
+  network.name,
+  network.displayName,
+  network.id,
+]);
 
 const createWalletKit = async () => {
   if (typeof window === 'undefined') {
@@ -56,8 +63,8 @@ const createWalletKit = async () => {
     return null;
   }
 
-  // Always use TestNet
-  const network = TESTNET_PASSPHRASE as WalletNetwork;
+  // Always use the current selected network from our config
+  const network = getCurrentNetwork().passphrase as WalletNetwork;
   const appUrl = process.env.NEXT_PUBLIC_APP_URL;
   const trezorContactEmail = process.env.NEXT_PUBLIC_TREZOR_CONTACT_EMAIL;
 
@@ -95,14 +102,15 @@ const createWalletKit = async () => {
       try {
         const result = await originalGetNetwork();
 
-        // Verify the network is TestNet
-        if (
-          !TESTNET_ALIASES.map((x) => x.toLowerCase()).includes(
-            result.networkPassphrase.toLowerCase()
-          )
-        ) {
-          toast.error('Please switch your wallet to TestNet');
-          throw new Error('Please switch to TestNet');
+        // Verify the network is supported
+        const isSupported = NETWORK_ALIASES.some(
+          (alias) =>
+            result.networkPassphrase.toLowerCase() === alias.toLowerCase()
+        );
+        if (!isSupported) {
+          const currentNetwork = getCurrentNetwork().displayName;
+          toast.error(`Please switch your wallet to the ${currentNetwork} network`);
+          throw new Error(`Please switch your wallet to the ${currentNetwork} network`);
         }
         return result;
       } catch (error) {
@@ -205,13 +213,17 @@ export const signTransaction = async (
       );
     }
 
-    // Verify network passphrase matches expected TestNet
-    if (networkPassphrase !== TESTNET_PASSPHRASE) {
-      console.warn('Network mismatch when signing transaction');
-      console.warn('Expected:', TESTNET_PASSPHRASE);
+    // Verify network passphrase matches one of our supported networks
+    const isSupported = NETWORK_ALIASES.some(
+      (alias) => networkPassphrase.toLowerCase() === alias.toLowerCase()
+    );
+
+    if (!isSupported) {
+      console.warn('Expected a supported network passphrase');
+      console.warn('Expected one of:', NETWORK_ALIASES);
       console.warn('Received:', networkPassphrase);
-      toast.error(
-        'Network mismatch detected. Please make sure your wallet is on TestNet.'
+      throw new Error(
+        'Network passphrase does not match any supported network'
       );
     }
 
@@ -237,7 +249,11 @@ export const signTransaction = async (
       ) {
         toast.error('Transaction was rejected by wallet');
       } else if (error.message.includes('network')) {
-        toast.error('Network mismatch. Please switch your wallet to TestNet');
+        toast.error(
+          `Network mismatch. Please switch your wallet to ${
+            getCurrentNetwork().name
+          }`
+        );
       } else {
         toast.error('Failed to sign transaction: ' + error.message);
       }

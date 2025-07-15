@@ -18,6 +18,7 @@ import {
 } from 'firebase/firestore';
 import { auth, db, googleProvider } from './firebase';
 import useAuthStore from './stores/auth.store';
+import { getCurrentNetwork } from '@/config/networks';
 
 type TalentRegistrationData = Omit<
   TalentFormDataType,
@@ -61,7 +62,7 @@ export async function registerSponsor(data: any) {
       ? {
           address: walletAddress,
           publicKey: walletAddress,
-          network: 'TESTNET',
+          network: getCurrentNetwork().name,
         }
       : null,
     createdAt: new Date().toISOString(),
@@ -79,7 +80,7 @@ export async function registerSponsor(data: any) {
       ? {
           address: walletAddress,
           publicKey: walletAddress,
-          network: 'TESTNET',
+          network: getCurrentNetwork().name,
           connectedAt: new Date().toISOString(),
         }
       : undefined,
@@ -114,7 +115,7 @@ export async function registerTalent(data: TalentRegistrationData) {
       ? {
           address: walletAddress,
           publicKey: walletAddress, // Use the actual Stellar public key
-          network: 'TESTNET', // Use the actual network
+          network: getCurrentNetwork().name, // Use the actual network
         }
       : null,
     createdAt: new Date().toISOString(),
@@ -133,7 +134,7 @@ export async function registerTalent(data: TalentRegistrationData) {
       ? {
           address: walletAddress,
           publicKey: walletAddress,
-          network: 'TESTNET',
+          network: getCurrentNetwork().name,
           connectedAt: new Date().toISOString(),
         }
       : undefined,
@@ -376,7 +377,7 @@ export async function walletToAccount(
       const walletInfo = {
         address: walletAddress,
         publicKey: walletAddress,
-        network: 'TESTNET', // Could be made dynamic
+        network: getCurrentNetwork().name,
         connectedAt: new Date().toISOString(),
       };
 

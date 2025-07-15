@@ -187,8 +187,8 @@ const Header = () => {
               </button>
             )}
 
-            {/* Authentication/Wallet buttons */}
-            <div className="hidden md:flex items-center gap-x-4">
+            {/* Auth buttons for desktop */}
+            <div className="hidden md:flex md:items-center md:space-x-4">
               {isAuthenticated ? (
                 <div className="flex items-center gap-x-2 text-sm text-white">
                   {isConnected && publicKey ? (

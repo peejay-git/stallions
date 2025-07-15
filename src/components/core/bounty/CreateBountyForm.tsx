@@ -1,11 +1,11 @@
 'use client';
 
 import { RichTextEditor } from '@/components';
+import { getCurrentNetwork } from '@/config/networks';
 import { useWallet } from '@/hooks/useWallet';
 import useAuthStore from '@/lib/stores/auth.store';
 import { Distribution } from '@/types/bounty';
 import { createBountyOnChain } from '@/utils/blockchain';
-import { SUPPORTED_TOKENS } from '@/utils/constants';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
@@ -27,8 +27,8 @@ export default function CreateBountyForm() {
     description: '',
     category: 'DEVELOPMENT',
     skills: [] as string[],
-    token: SUPPORTED_TOKENS[0].address, // Use first token by default
-    tokenSymbol: SUPPORTED_TOKENS[0].symbol, // Track the token symbol separately for display
+    token: getCurrentNetwork().tokens[0].address, // Use first token by default
+    tokenSymbol: getCurrentNetwork().tokens[0].symbol, // Track the token symbol separately for display
     rewardAmount: '',
     submissionDeadline: '',
     distribution: [] as Distribution[],
@@ -105,7 +105,9 @@ export default function CreateBountyForm() {
       }
     } else if (name === 'token') {
       // When token changes, update both token (address) and tokenSymbol
-      const selectedToken = SUPPORTED_TOKENS.find((t) => t.address === value);
+      const selectedToken = getCurrentNetwork().tokens.find(
+        (t) => t.address === value
+      );
       if (selectedToken) {
         setFormData((prev) => ({
           ...prev,
@@ -399,7 +401,7 @@ export default function CreateBountyForm() {
                   className="w-full bg-white/5 border border-white/20 rounded-lg pl-10 pr-4 py-2 text-white appearance-none"
                   required
                 >
-                  {SUPPORTED_TOKENS.map((token) => (
+                  {getCurrentNetwork().tokens.map((token) => (
                     <option key={token.symbol} value={token.address}>
                       {token.name} ({token.symbol})
                     </option>
@@ -408,8 +410,9 @@ export default function CreateBountyForm() {
                 <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                   <img
                     src={
-                      SUPPORTED_TOKENS.find((t) => t.address === formData.token)
-                        ?.logo || '/images/tokens/usdc.svg'
+                      getCurrentNetwork().tokens.find(
+                        (t) => t.address === formData.token
+                      )?.logo || '/images/tokens/usdc.svg'
                     }
                     alt={formData.tokenSymbol}
                     className="h-5 w-5 rounded-full"

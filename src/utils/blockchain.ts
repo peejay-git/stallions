@@ -1,6 +1,7 @@
 import { SorobanService } from '@/lib/soroban';
 import { Distribution } from '@/types/bounty';
 import toast from 'react-hot-toast';
+import { getCurrentNetwork, getTokenByAddress, getTokenBySymbol } from '@/config/networks';
 
 /**
  * Utility functions for frontend blockchain operations
@@ -73,9 +74,22 @@ export async function createBountyOnChain({
       throw new Error('Wallet public key is missing');
     }
 
-    // The token parameter is now already the address,
-    // so we don't need to look it up in the mapping
-    const tokenAddress = token;
+    // The token parameter could be either a symbol or address, try to resolve it
+    let tokenAddress = token;
+    
+    // If this doesn't look like a Stellar address, try to resolve as symbol
+    if (!token.startsWith('C') && !token.startsWith('G')) {
+      const tokenConfig = getTokenBySymbol(getCurrentNetwork().id, token);
+      if (tokenConfig) {
+        tokenAddress = tokenConfig.address;
+      } else {
+        toast.error(
+          `Token symbol ${token} not found in the current network configuration.`,
+          { id: 'wallet-transaction' }
+        );
+        throw new Error(`Token symbol ${token} not found in the current network`);
+      }
+    }
 
     // Initialize Soroban service with the user's public key
     const sorobanService = new SorobanService(userPublicKey);
@@ -91,7 +105,7 @@ export async function createBountyOnChain({
         title,
         owner: userPublicKey,
         token: tokenAddress, // Use the resolved token address
-        reward: { amount: reward.amount, asset: token }, // Use the token symbol
+        reward: { amount: reward.amount, asset: tokenAddress }, // Use the token address for contract
         distribution,
         submissionDeadline,
       });

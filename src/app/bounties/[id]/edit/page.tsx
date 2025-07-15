@@ -1,6 +1,7 @@
 'use client';
 
 import { Layout, RichTextEditor } from '@/components';
+import { getCurrentNetwork } from '@/config/networks';
 import { useProtectedRoute } from '@/hooks/useProtectedRoute';
 import { useWallet } from '@/hooks/useWallet';
 import {
@@ -10,7 +11,6 @@ import {
   updateBounty,
 } from '@/lib/bounties';
 import useAuthStore from '@/lib/stores/auth.store';
-import { SUPPORTED_TOKENS } from '@/utils/constants';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
@@ -223,12 +223,16 @@ export default function EditBountyPage() {
               // If connection was successful, we should now have a publicKey
               if (!publicKey) {
                 setBlockchainUpdateSkipped(true);
-                toast.error('Failed to connect wallet. Continuing with off-chain update only.');
+                toast.error(
+                  'Failed to connect wallet. Continuing with off-chain update only.'
+                );
               }
             } catch (error) {
               console.error('Error connecting wallet:', error);
               setBlockchainUpdateSkipped(true);
-              toast.error('Failed to connect wallet. Continuing with off-chain update only.');
+              toast.error(
+                'Failed to connect wallet. Continuing with off-chain update only.'
+              );
             }
           } else {
             setBlockchainUpdateSkipped(true);
@@ -239,7 +243,7 @@ export default function EditBountyPage() {
 
       // Update the bounty, passing the public key if available
       await updateBounty(params.id, updatedBounty, publicKey || undefined);
-      
+
       if (bounty && !isNaN(Number(bounty.id)) && publicKey) {
         toast.success('Bounty updated successfully on-chain and off-chain!');
       } else if (bounty && !isNaN(Number(bounty.id)) && !publicKey) {
@@ -248,7 +252,7 @@ export default function EditBountyPage() {
       } else {
         toast.success('Bounty updated successfully!');
       }
-      
+
       router.push(`/bounties/${params.id}`);
     } catch (err: any) {
       console.error(err);
@@ -438,7 +442,7 @@ export default function EditBountyPage() {
                   className="input w-full"
                   required
                 >
-                  {SUPPORTED_TOKENS.map((asset) => (
+                  {getCurrentNetwork().tokens.map((asset) => (
                     <option key={asset.name} value={asset.address}>
                       {asset.symbol} {asset.name}
                     </option>

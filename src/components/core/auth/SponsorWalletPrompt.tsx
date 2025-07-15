@@ -1,5 +1,6 @@
 'use client';
 
+import { getCurrentNetwork } from '@/config/networks';
 import { useWallet } from '@/hooks/useWallet';
 import useAuthStore from '@/lib/stores/auth.store';
 import { motion } from 'framer-motion';
@@ -11,7 +12,7 @@ type Props = {
 };
 
 export default function SponsorWalletPrompt({ onSuccess }: Props) {
-  const { connect, publicKey } = useWallet();
+  const { connect } = useWallet();
   const [isConnecting, setIsConnecting] = useState(false);
   const user = useAuthStore((state: { user: any }) => state.user);
 
@@ -32,7 +33,7 @@ export default function SponsorWalletPrompt({ onSuccess }: Props) {
         const walletInfo = {
           address: publicKey,
           publicKey: publicKey,
-          network: 'TESTNET',
+          network: getCurrentNetwork().name,
         };
 
         // Use auth store to update Firestore and local state

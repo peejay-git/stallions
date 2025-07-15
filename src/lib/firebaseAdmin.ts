@@ -29,9 +29,9 @@ if (!process.env.FIREBASE_PRIVATE_KEY) {
 let privateKey = process.env.FIREBASE_PRIVATE_KEY;
 
 // If the key doesn't contain actual newlines but has \n, replace them
-if (!privateKey.includes('\n') && privateKey.includes('\\n')) {
-  privateKey = privateKey.replace(/\\n/g, '\n');
-}
+// if (!privateKey.includes('\n') && privateKey.includes('\\n')) {
+//   privateKey = privateKey.replace(/\\n/g, '\n');
+// }
 
 // If the key doesn't start with BEGIN PRIVATE KEY, something is wrong
 if (!privateKey.includes('-----BEGIN PRIVATE KEY-----')) {

@@ -17,7 +17,7 @@ import {
 import { BountyCategory, BountyStatus, Distribution } from '@/types/bounty';
 
 export interface FirebaseBounty {
-  id: string;
+  id: string; // When from blockchain: converted from number to string
   title: string;
   description: string;
   distribution: Distribution[];
@@ -295,17 +295,75 @@ export async function bountyHasSubmissions(bountyId: string): Promise<boolean> {
   return !snapshot.empty;
 }
 
-export async function updateBounty(bountyId: string, updatedData: any) {
-  // First check if the bounty has submissions
+/**
+ * Update a bounty in Firestore and optionally on the blockchain
+ * @param bountyId ID of the bounty to update
+ * @param updatedData Updated bounty data
+ * @param publicKey Optional user's public key for blockchain updates
+ * @returns True if update is successful
+ */
+export async function updateBounty(
+  bountyId: string, 
+  updatedData: any,
+  publicKey?: string
+) {
+  // First get the current bounty data to check if it has a blockchain ID
+  const currentBounty = await getBountyById(bountyId);
+  if (!currentBounty) {
+    throw new Error('Bounty not found');
+  }
+  
+  // Check if the bounty has submissions
   const hasSubmissions = await bountyHasSubmissions(bountyId);
-
   if (hasSubmissions) {
     throw new Error('Cannot edit a bounty that already has submissions.');
   }
 
-  const bountyRef = doc(db, 'bounties', bountyId);
+  // If the bounty has a numeric ID (meaning it's on blockchain) and the user provided a public key, update on blockchain
+  if (!isNaN(Number(currentBounty.id)) && publicKey) {
+    try {
+      const { updateBountyOnChain } = await import('@/utils/blockchain');
+      
+      // Convert distribution from Firebase format to blockchain format if present
+      let distribution = undefined;
+      if (currentBounty.distribution && Array.isArray(currentBounty.distribution)) {
+        distribution = currentBounty.distribution.map(dist => ({
+          position: dist.position,
+          percentage: dist.percentage
+        }));
+      }
+      
+      // Parse deadline into timestamp if present
+      let submissionDeadline = undefined;
+      if (updatedData.deadline) {
+        submissionDeadline = new Date(updatedData.deadline).getTime();
+      }
+      
+      // Update on blockchain
+      await updateBountyOnChain({
+        userPublicKey: publicKey,
+        bountyId: Number(currentBounty.id),
+        title: updatedData.title,
+        distribution: distribution,
+        submissionDeadline: submissionDeadline
+      });
+      
+      console.log('Successfully updated bounty on blockchain');
+    } catch (error: any) {
+      console.error('Error updating bounty on blockchain:', error);
+      
+      // If blockchain update fails, ask user if they want to continue with off-chain update
+      if (!confirm('Failed to update on blockchain. Continue with off-chain update only?')) {
+        throw error;
+      }
+    }
+  } else if (!isNaN(Number(currentBounty.id)) && !publicKey) {
+    // Warn that blockchain update was skipped because no wallet is connected
+    console.warn('Skipping blockchain update because wallet is not connected');
+  }
 
-  // Update the bounty with the new data
+  // Update the bounty in Firestore
+  const bountyRef = doc(db, 'bounties', bountyId);
   await updateDoc(bountyRef, {
     ...updatedData,
     updatedAt: serverTimestamp(),

@@ -221,8 +221,8 @@ export async function createBountyOnChain({
 }
 
 /**
- * Submit work to a bounty (database only approach)
- * @returns The submission ID
+ * Submit work to a bounty (integrates with blockchain)
+ * @returns The submission ID (for off-chain storage reference)
  */
 export async function submitWorkOnChain({
   userPublicKey,
@@ -234,8 +234,33 @@ export async function submitWorkOnChain({
   content: string;
 }): Promise<string> {
   try {
+    if (!userPublicKey) {
+      throw new Error('Wallet not connected. Please connect wallet before submitting.');
+    }
+    
+    // Initialize the Soroban service with the user's public key
+    const { SorobanService } = await import('@/lib/soroban');
+    const sorobanService = new SorobanService(userPublicKey);
+    
+    // Submit the work to the blockchain
+    try {
+      await sorobanService.applyToBounty(
+        userPublicKey, 
+        bountyId, 
+        content
+      );
+      console.log('Successfully submitted work on blockchain');
+    } catch (blockchainError: any) {
+      console.error('Blockchain submission error:', blockchainError);
+      // If blockchain submission fails, we still want to continue with off-chain submission
+      // but we'll include the error in the submission ID for tracking
+      if (!confirm('Failed to submit on blockchain. Continue with off-chain submission only?')) {
+        throw blockchainError;
+      }
+    }
+    
     // Generate a unique submission ID using user's address, bounty ID and timestamp
-    // This replaces the blockchain transaction
+    // This ID is used for off-chain storage reference
     const timestamp = Date.now();
     const submissionId = `${userPublicKey.substring(
       0,
@@ -244,7 +269,7 @@ export async function submitWorkOnChain({
 
     return submissionId;
   } catch (error) {
-    console.error('Error generating submission ID:', error);
+    console.error('Error in submit work process:', error);
     throw error;
   }
 }

@@ -95,16 +95,19 @@ export default function SubmissionDetailsModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-      <div className="bg-black/5 rounded-lg w-full max-w-4xl">
-        <div className="flex justify-between items-center p-4 border-b border-gray-600">
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      {/* Overlay */}
+      <div className="fixed inset-0 bg-black bg-opacity-70 transition-opacity" />
+      {/* Modal */}
+      <div className="relative z-10 bg-[#262626] text-white rounded-xl shadow-2xl w-full max-w-2xl p-6">
+        <div className="flex justify-between items-center border-b border-gray-700 pb-4 mb-4">
           <h2 className="text-xl font-semibold">Submission Details</h2>
           <button onClick={onClose} className="text-gray-300 hover:text-white">
             <FiX className="w-6 h-6" />
           </button>
         </div>
 
-        <div className="p-4">
+        <div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <div>
               <p className="text-gray-400 text-sm mb-1">Applicant</p>
@@ -116,7 +119,7 @@ export default function SubmissionDetailsModal({
                   )}
                 </span>
                 {submission.walletAddress && (
-                  <span className="text-blue-300">Wallet Connected</span>
+                  <span className="text-gray-400 bg-gray-700/40 px-2 py-0.5 rounded text-xs ml-2">Wallet Connected</span>
                 )}
               </div>
             </div>
@@ -143,13 +146,24 @@ export default function SubmissionDetailsModal({
             </div>
           </div>
 
-          <div className="bg-black/20 p-4 rounded-lg">
-            <div className="mb-4">
-              <h3 className="text-lg font-semibold mb-2">Submission Content</h3>
-              <div className="prose prose-invert max-w-none">
-                {getContentToShow()}
-              </div>
+          <div className="bg-[#262626] p-4 rounded-lg mb-4">
+            <h3 className="text-lg font-semibold mb-2">Submission Content</h3>
+            <div className="prose prose-invert max-w-none">
+              {getContentToShow()}
             </div>
+            {submission.links && (
+              <div className="mt-4">
+                <span className="block text-gray-400 text-sm mb-1">Submission Link</span>
+                <a
+                  href={submission.links}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary underline break-all hover:text-white transition-colors"
+                >
+                  {submission.links}
+                </a>
+              </div>
+            )}
           </div>
 
           <div className="mt-4 flex justify-end gap-2">

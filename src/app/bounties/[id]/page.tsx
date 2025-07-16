@@ -5,6 +5,7 @@ import {
   BountyDetailSkeleton,
   RichTextViewer,
   SubmissionDetailsModal,
+  SubmitWorkForm,
 } from '@/components';
 import { assetSymbols } from '@/components/core/bounty/BountyCard';
 import { useWallet } from '@/hooks/useWallet';
@@ -197,7 +198,7 @@ export default function BountyDetailPage() {
   // Detect logged-in user and get their ID
   useEffect(() => {
     const auth = getAuth(); // Initialize Firebase auth
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    const unsubscribe = onAuthStateChanged(auth, (user: import("firebase/auth").User | null) => {
       if (user) {
         // If user is logged in, set the user ID (uid)
         setUserId(user.uid);
@@ -471,6 +472,12 @@ export default function BountyDetailPage() {
             Rejected
           </span>
         );
+      case 'COMPLETED':
+        return (
+          <span className="px-3 py-1 bg-green-900/40 text-green-300 border border-green-700/30 rounded-full text-sm font-medium">
+            Completed
+          </span>
+        );
       default:
         return null;
     }
@@ -579,11 +586,12 @@ export default function BountyDetailPage() {
     setIsModalOpen(true);
   };
 
+  const isTalent = userRole === 'talent';
+  const isOwner = publicKey === bounty?.owner;
+  const canViewSubmissions = isOwner || isSponsor;
+
   if (loading) return <BountyDetailSkeleton />;
   if (!bounty) return <div className="text-center py-12">Bounty not found</div>;
-
-  const isOwner = publicKey === bounty.owner;
-  const canViewSubmissions = isOwner || isSponsor;
 
   return (
     <div className="min-h-screen py-12 px-4 sm:px-6">
@@ -816,6 +824,16 @@ export default function BountyDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* Talent Submission Form (only for talents, not sponsors/owners, and if bounty is open and not expired) */}
+      {isTalent && !isSponsor && !isOwner && bounty && bounty.status === BountyStatus.OPEN && !isBountyExpired() && (
+        <div className="max-w-5xl mx-auto mb-8">
+          <SubmitWorkForm
+            bountyId={parseInt(bounty.id)}
+            submissionDeadline={new Date(bounty.deadline).getTime()}
+          />
+        </div>
+      )}
 
       {/* Submissions section (visible to bounty owner) */}
       {canViewSubmissions && (

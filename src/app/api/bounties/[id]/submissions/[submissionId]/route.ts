@@ -2,6 +2,7 @@ import { db } from '@/lib/firebase';
 import { doc, getDoc, updateDoc } from '@/lib/firestore';
 import { BlockchainError } from '@/utils/errorHandler';
 import { NextRequest, NextResponse } from 'next/server';
+import { adminDb } from '@/lib/firebaseAdmin';
 
 export const dynamic = 'force-dynamic';
 
@@ -100,25 +101,31 @@ export async function PATCH(
       );
     }
 
-    // Get the bounty to verify ownership
-    const bountyRef = doc(db, 'bounties', id);
-    const bountySnap = await getDoc(bountyRef);
+    // Get the bounty to verify ownership (admin SDK)
+    const bountyRef = adminDb.collection('bounties').doc(id);
+    const bountySnap = await bountyRef.get();
 
-    if (!bountySnap.exists()) {
+    if (!bountySnap.exists) {
       return NextResponse.json({ error: 'Bounty not found' }, { status: 404 });
     }
 
     const bountyData = bountySnap.data();
+    if (!bountyData) {
+      return NextResponse.json({ error: 'Bounty data missing' }, { status: 500 });
+    }
 
-    // Get user data to check if they're a sponsor
-    const userRef = doc(db, 'users', userId);
-    const userSnap = await getDoc(userRef);
+    // Get user data to check if they're a sponsor (admin SDK)
+    const userRef = adminDb.collection('users').doc(userId);
+    const userSnap = await userRef.get();
 
-    if (!userSnap.exists()) {
+    if (!userSnap.exists) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
     const userData = userSnap.data();
+    if (!userData) {
+      return NextResponse.json({ error: 'User data missing' }, { status: 500 });
+    }
     const isSponsor = userData.role === 'sponsor';
     const isOwner = bountyData.owner === userId;
 
@@ -135,10 +142,10 @@ export async function PATCH(
       console.log(`Ranking submission ${submissionId} as ${ranking}`);
 
       // Update the ranking in the database
-      const submissionRef = doc(db, 'submissions', submissionId);
-      const submissionSnap = await getDoc(submissionRef);
+      const submissionRef = adminDb.collection('submissions').doc(submissionId);
+      const submissionSnap = await submissionRef.get();
 
-      if (!submissionSnap.exists()) {
+      if (!submissionSnap.exists) {
         return NextResponse.json(
           { error: 'Submission not found' },
           { status: 404 }
@@ -147,7 +154,10 @@ export async function PATCH(
 
       // Verify the submission belongs to this bounty
       const submissionData = submissionSnap.data();
-      if (submissionData.bountyId !== id) {
+      if (!submissionData) {
+        return NextResponse.json({ error: 'Submission data missing' }, { status: 500 });
+      }
+      if (submissionData.bountyId !== id && submissionData.bountyId !== parseInt(id)) {
         return NextResponse.json(
           { error: 'Submission does not belong to this bounty' },
           { status: 400 }
@@ -155,7 +165,7 @@ export async function PATCH(
       }
 
       // Update the ranking in the database
-      await updateDoc(submissionRef, {
+      await submissionRef.update({
         ranking: ranking,
         updatedAt: new Date().toISOString(),
       });
@@ -184,10 +194,10 @@ export async function PATCH(
       console.log(`Accepting submission ${submissionId}`);
 
       // Update the status in the database
-      const submissionRef = doc(db, 'submissions', submissionId);
-      const submissionSnap = await getDoc(submissionRef);
+      const submissionRef = adminDb.collection('submissions').doc(submissionId);
+      const submissionSnap = await submissionRef.get();
 
-      if (!submissionSnap.exists()) {
+      if (!submissionSnap.exists) {
         return NextResponse.json(
           { error: 'Submission not found' },
           { status: 404 }
@@ -196,7 +206,10 @@ export async function PATCH(
 
       // Verify the submission belongs to this bounty
       const submissionData = submissionSnap.data();
-      if (submissionData.bountyId !== id) {
+      if (!submissionData) {
+        return NextResponse.json({ error: 'Submission data missing' }, { status: 500 });
+      }
+      if (submissionData.bountyId !== id && submissionData.bountyId !== parseInt(id)) {
         return NextResponse.json(
           { error: 'Submission does not belong to this bounty' },
           { status: 400 }
@@ -204,7 +217,7 @@ export async function PATCH(
       }
 
       // Update the status in the database
-      await updateDoc(submissionRef, {
+      await submissionRef.update({
         status: 'ACCEPTED',
         updatedAt: new Date().toISOString(),
       });

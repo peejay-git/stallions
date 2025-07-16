@@ -38,41 +38,6 @@ export default function DashboardPage() {
   const isSponsor = user?.role === 'sponsor';
   const isTalent = user?.role === 'talent';
 
-  // Fetch user data including wallet info
-  const loadUserData = async () => {
-    try {
-      if (!user) return;
-
-      // Fetch user data from auth store
-      await fetchUser();
-
-      // If already connected, don't try to reconnect
-      if (isConnected) return;
-
-      // Check if user has wallet connected in their profile
-      if (user.walletInfo?.address || (user as any).wallet?.address) {
-        // Try to automatically connect the wallet once
-        try {
-          await connect();
-          // After successful connection, fetch submissions
-          setUserSubmissions([]);
-          setLoadingSubmissions(true);
-        } catch (error) {
-          console.error('Failed to auto-connect wallet:', error);
-        }
-      }
-    } catch (err) {
-      console.error('Error loading wallet data:', err);
-    }
-  };
-
-  // Only run loadUserData when user changes or when not connected
-  useEffect(() => {
-    if (!isConnected) {
-      loadUserData();
-    }
-  }, [user]);
-
   // Fetch bounties
   useEffect(() => {
     const fetchData = async () => {

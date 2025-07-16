@@ -10,7 +10,7 @@ import {
   query,
   updateDoc,
   where,
-} from 'firebase/firestore/lite';
+} from 'firebase/firestore';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';

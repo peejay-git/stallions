@@ -34,6 +34,9 @@ const defaultContext: WalletContextType = {
 // Create the context
 const WalletContext = createContext<WalletContextType>(defaultContext);
 
+// Track modal state to prevent multiple opens
+let modalOpen = false;
+
 // Provider component
 export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
   const [isConnected, setIsConnected] = useState(false);
@@ -77,6 +80,13 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
       return null;
     }
 
+    // Prevent opening the modal if it's already open
+    if (modalOpen) {
+      toast.error('Stellar Wallets Kit modal is already open');
+      return null;
+    }
+    modalOpen = true;
+
     setIsConnecting(true);
 
     let address: string | null = null;
@@ -115,6 +125,7 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
         notAvailableText,
         onClosed: () => {
           setIsConnecting(false);
+          modalOpen = false;
         },
       });
 
@@ -130,6 +141,7 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
       return null;
     } finally {
       setIsConnecting(false);
+      modalOpen = false;
     }
   };
 

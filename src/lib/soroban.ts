@@ -1,3 +1,4 @@
+import { getCurrentNetwork } from '@/config/networks';
 import { Distribution } from '@/types/bounty';
 import { BlockchainError } from '@/utils/errorHandler';
 import {
@@ -6,7 +7,6 @@ import {
   Client as SorobanClient,
 } from '../../packages/stallion/src/index';
 import { getWalletKit } from './wallet';
-import { getCurrentNetwork } from '@/config/networks';
 
 // Environment variables with defaults - now enhanced with network configuration
 const CONTRACT_ID = process.env.NEXT_PUBLIC_BOUNTY_CONTRACT_ID || '';
@@ -89,7 +89,15 @@ export class SorobanService {
       });
 
       const result = await tx.simulate();
-      const sentTx = await result.signAndSend();
+      const sentTx = await result.signAndSend({
+        signTransaction: async (transaction) => {
+          const walletKit = await getWalletKit();
+          if (!walletKit) {
+            throw new Error('Wallet not connected');
+          }
+          return await walletKit.signTransaction(transaction);
+        },
+      });
 
       // await confirmation
       if (sentTx.result.isOk()) {
@@ -406,7 +414,17 @@ export class SorobanService {
         bounty_id: bountyId,
       });
       const result = await tx.simulate();
-      const sentTx = await result.signAndSend();
+
+      // Sign and send the transaction to the blockchain
+      const walletKit = await getWalletKit();
+      if (!walletKit) {
+        throw new Error('Wallet not initialized');
+      }
+      const sentTx = await result.signAndSend({
+        signTransaction: async (transaction) => {
+          return await walletKit.signTransaction(transaction);
+        },
+      });
 
       // await confirmation
       if (sentTx.result.isOk()) {
@@ -478,7 +496,17 @@ export class SorobanService {
       });
 
       const result = await tx.simulate();
-      const sentTx = await result.signAndSend();
+
+      // Sign and send the transaction to the blockchain
+      const walletKit = await getWalletKit();
+      if (!walletKit) {
+        throw new Error('Wallet not initialized');
+      }
+      const sentTx = await result.signAndSend({
+        signTransaction: async (transaction) => {
+          return await walletKit.signTransaction(transaction);
+        },
+      });
 
       // await confirmation
       if (sentTx.result.isOk()) {
@@ -521,7 +549,17 @@ export class SorobanService {
       });
 
       const result = await tx.simulate();
-      const sentTx = await result.signAndSend();
+
+      // Sign and send the transaction to the blockchain
+      const walletKit = await getWalletKit();
+      if (!walletKit) {
+        throw new Error('Wallet not initialized');
+      }
+      const sentTx = await result.signAndSend({
+        signTransaction: async (transaction) => {
+          return await walletKit.signTransaction(transaction);
+        },
+      });
 
       // await confirmation
       if (sentTx.result.isOk()) {
@@ -551,7 +589,17 @@ export class SorobanService {
       });
 
       const result = await tx.simulate();
-      const sentTx = await result.signAndSend();
+
+      // Sign and send the transaction to the blockchain
+      const walletKit = await getWalletKit();
+      if (!walletKit) {
+        throw new Error('Wallet not initialized');
+      }
+      const sentTx = await result.signAndSend({
+        signTransaction: async (transaction) => {
+          return await walletKit.signTransaction(transaction);
+        },
+      });
 
       // await confirmation
       if (sentTx.result.isOk()) {

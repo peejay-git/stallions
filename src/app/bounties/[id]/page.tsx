@@ -11,6 +11,7 @@ import { assetSymbols } from '@/components/core/bounty/BountyCard';
 import { useWallet } from '@/hooks/useWallet';
 import {
   bountyHasSubmissions,
+  deleteBounty,
   FirebaseBounty,
   getBountyById,
 } from '@/lib/bounties';
@@ -32,9 +33,12 @@ export default function BountyDetailPage() {
   const [userRole, setUserRole] = useState<string | null>(null);
   const [isSponsor, setIsSponsor] = useState(false);
   const [canEdit, setCanEdit] = useState(false);
+  const [isOwner, setIsOwner] = useState(false);
+  const [hasNoSubmissions, setHasNoSubmissions] = useState(false);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [loadingSubmissions, setLoadingSubmissions] = useState(false);
   const [rankingsApproved, setRankingsApproved] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const { publicKey } = useWallet();
   const [winners, setWinners] = useState<any[]>([]);
   const [loadingWinners, setLoadingWinners] = useState(false);
@@ -120,6 +124,22 @@ export default function BountyDetailPage() {
     return () => clearInterval(timer);
   }, [bounty]);
 
+  // Check if the bounty has submissions - for delete button display
+  useEffect(() => {
+    async function checkSubmissions() {
+      if (bounty && isOwner) {
+        try {
+          const submissions = await bountyHasSubmissions(bounty.id);
+          setHasNoSubmissions(!submissions);
+        } catch (err) {
+          console.error('Error checking submissions:', err);
+        }
+      }
+    }
+
+    checkSubmissions();
+  }, [bounty, isOwner]);
+
   const fetchWinners = async (bountyId: string) => {
     try {
       setLoadingWinners(true);
@@ -198,71 +218,74 @@ export default function BountyDetailPage() {
   // Detect logged-in user and get their ID
   useEffect(() => {
     const auth = getAuth(); // Initialize Firebase auth
-    const unsubscribe = onAuthStateChanged(auth, (user: import("firebase/auth").User | null) => {
-      if (user) {
-        // If user is logged in, set the user ID (uid)
-        setUserId(user.uid);
+    const unsubscribe = onAuthStateChanged(
+      auth,
+      (user: import('firebase/auth').User | null) => {
+        if (user) {
+          // If user is logged in, set the user ID (uid)
+          setUserId(user.uid);
 
-        // Check if the user is a sponsor by getting their role from auth store
-        const checkUserRole = async () => {
-          try {
-            // Refresh user data from Firestore to ensure we have the latest
-            await useAuthStore.getState().fetchUserFromFirestore();
+          // Check if the user is a sponsor by getting their role from auth store
+          const checkUserRole = async () => {
+            try {
+              // Refresh user data from Firestore to ensure we have the latest
+              await useAuthStore.getState().fetchUserFromFirestore();
 
-            // Get the user role from auth store
-            const currentUser = useAuthStore.getState().user;
-            if (currentUser) {
-              const role = currentUser.role;
-              setUserRole(role);
-              setIsSponsor(role === 'sponsor');
+              // Get the user role from auth store
+              const currentUser = useAuthStore.getState().user;
+              if (currentUser) {
+                const role = currentUser.role;
+                setUserRole(role);
+                setIsSponsor(role === 'sponsor');
+              }
+            } catch (error) {
+              console.error('Error checking user role:', error);
             }
-          } catch (error) {
-            console.error('Error checking user role:', error);
-          }
-        };
+          };
 
-        checkUserRole();
-      } else {
-        // User is not logged in
-        setUserId(null);
-        setUserRole(null);
-        setIsSponsor(false);
+          checkUserRole();
+        } else {
+          // User is not logged in
+          setUserId(null);
+          setUserRole(null);
+          setIsSponsor(false);
+        }
       }
-    });
+    );
 
     return () => unsubscribe(); // Clean up on unmount
   }, []);
 
-  // Check if user can edit this bounty (is owner and no submissions)
+  // Check if user can edit this  // Check if the user can edit this bounty
   useEffect(() => {
     const checkEditPermission = async () => {
-      const id = params.id;
-      if (!id || typeof id !== 'string') return;
+      if (!bounty) return;
 
-      if (!bounty || !publicKey) {
-        setCanEdit(false);
-        return;
-      }
+      const auth = getAuth();
+      // Check if user is authenticated
+      onAuthStateChanged(auth, async (user) => {
+        if (!user) {
+          setCanEdit(false);
+          setIsOwner(false);
+          return;
+        }
 
-      if (bounty.owner !== publicKey) {
-        setCanEdit(false);
-        return;
-      }
+        setUserId(user.uid);
 
-      try {
-        // Check if bounty has submissions
-        const hasSubmissions = await bountyHasSubmissions(id);
-        setCanEdit(!hasSubmissions);
-      } catch (err) {
-        console.error('Error checking bounty submissions:', err);
-        setCanEdit(false);
-      }
+        // Check if user is the owner of this bounty
+        const isOwnerValue = bounty.owner === publicKey;
+        setIsOwner(isOwnerValue);
+
+        const hasSubmissionsAlready = await bountyHasSubmissions(bounty.id);
+
+        // User can edit if they're the owner AND there are no submissions
+        setCanEdit(isOwnerValue && !hasSubmissionsAlready);
+        setHasNoSubmissions(!hasSubmissionsAlready);
+      });
     };
 
-    if (bounty && publicKey) {
-      checkEditPermission();
-    }
-  }, [bounty, publicKey, params.id]);
+    checkEditPermission();
+  }, [bounty]);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -586,8 +609,35 @@ export default function BountyDetailPage() {
     setIsModalOpen(true);
   };
 
+  // Handle bounty deletion
+  const handleDeleteBounty = async () => {
+    if (!bounty) return;
+
+    // Confirm deletion
+    if (
+      !confirm(
+        'Are you sure you want to delete this bounty? This action cannot be undone.'
+      )
+    ) {
+      return;
+    }
+
+    try {
+      setIsDeleting(true);
+      await deleteBounty(bounty.id, publicKey || undefined);
+      toast.success('Bounty deleted successfully!');
+      // Redirect to bounties page after successful deletion
+      window.location.href = '/bounties';
+    } catch (error: any) {
+      console.error('Error deleting bounty:', error);
+      toast.error(error.message || 'Error deleting bounty');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   const isTalent = userRole === 'talent';
-  const isOwner = publicKey === bounty?.owner;
+  // isOwner is already defined as state
   const canViewSubmissions = isOwner || isSponsor;
 
   if (loading) return <BountyDetailSkeleton />;
@@ -694,14 +744,25 @@ export default function BountyDetailPage() {
                 </div>
               </div>
 
-              {canEdit && (
-                <Link
-                  href={`/bounties/${params.id}/edit`}
-                  className="bg-white/10 backdrop-blur-xl border border-white/20 text-white font-medium py-2 px-4 rounded-lg hover:bg-white/20 transition-colors w-full md:w-auto"
-                >
-                  Edit Bounty
-                </Link>
-              )}
+              <div className="flex flex-col justify-end gap-3 w-full md:w-auto">
+                {canEdit && (
+                  <Link
+                    href={`/bounties/${params.id}/edit`}
+                    className="bg-white/10 backdrop-blur-xl border border-white/20 text-white font-medium py-2 px-4 rounded-lg hover:bg-white/20 transition-colors w-full md:w-auto text-center"
+                  >
+                    Edit Bounty
+                  </Link>
+                )}
+                {isOwner && hasNoSubmissions && (
+                  <button
+                    onClick={handleDeleteBounty}
+                    disabled={isDeleting}
+                    className="bg-red-500/20 backdrop-blur-xl border border-red-500/30 text-white font-medium py-2 px-4 rounded-lg hover:bg-red-500/30 transition-colors w-full md:w-auto disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isDeleting ? 'Deleting...' : 'Delete Bounty'}
+                  </button>
+                )}
+              </div>
             </div>
           </div>
 
@@ -759,11 +820,13 @@ export default function BountyDetailPage() {
                     {assetSymbols[bounty.reward.asset] || ''}
                     {isSponsor
                       ? bounty.reward.amount
-                      : (parseFloat(bounty.reward.amount) * 0.95).toFixed(2)}{' '}
+                      : (parseFloat(bounty.reward.amount) * 0.95).toFixed(
+                          2
+                        )}{' '}
                     {bounty.reward.asset}
                   </span>
                 </div>
-                
+
                 {/* Only show platform fee to sponsors */}
                 {isSponsor && (
                   <>
@@ -771,18 +834,22 @@ export default function BountyDetailPage() {
                       <span className="text-gray-300">Platform Fee (5%):</span>
                       <span className="text-gray-300">
                         {assetSymbols[bounty.reward.asset] || ''}
-                        {(parseFloat(bounty.reward.amount) * 0.05).toFixed(2)}{' '}
+                        {(parseFloat(bounty.reward.amount) * 0.05).toFixed(
+                          2
+                        )}{' '}
                         {bounty.reward.asset}
                       </span>
                     </div>
                     <div className="border-t border-white/10 my-3"></div>
                   </>
                 )}
-                
+
                 {bounty.distribution && bounty.distribution.length > 0 ? (
                   <>
                     <div className="text-sm text-gray-300 mb-2">
-                      {isSponsor ? 'Distribution after platform fee:' : 'Distribution:'}
+                      {isSponsor
+                        ? 'Distribution after platform fee:'
+                        : 'Distribution:'}
                     </div>
                     <div className="space-y-2">
                       {bounty.distribution.map((dist) => {
@@ -813,7 +880,8 @@ export default function BountyDetailPage() {
                   </>
                 ) : (
                   <div className="text-sm text-gray-300">
-                    Winner takes all{isSponsor ? ' (after 5% platform fee)' : ''}:{' '}
+                    Winner takes all
+                    {isSponsor ? ' (after 5% platform fee)' : ''}:{' '}
                     {assetSymbols[bounty.reward.asset] || ''}
                     {(parseFloat(bounty.reward.amount) * 0.95).toFixed(2)}{' '}
                     {bounty.reward.asset}
@@ -826,14 +894,19 @@ export default function BountyDetailPage() {
       </div>
 
       {/* Talent Submission Form (only for talents, not sponsors/owners, and if bounty is open and not expired) */}
-      {isTalent && !isSponsor && !isOwner && bounty && bounty.status === BountyStatus.OPEN && !isBountyExpired() && (
-        <div className="max-w-5xl mx-auto mb-8">
-          <SubmitWorkForm
-            bountyId={parseInt(bounty.id)}
-            submissionDeadline={new Date(bounty.deadline).getTime()}
-          />
-        </div>
-      )}
+      {isTalent &&
+        !isSponsor &&
+        !isOwner &&
+        bounty &&
+        bounty.status === BountyStatus.OPEN &&
+        !isBountyExpired() && (
+          <div className="max-w-5xl mx-auto mb-8">
+            <SubmitWorkForm
+              bountyId={parseInt(bounty.id)}
+              submissionDeadline={new Date(bounty.deadline).getTime()}
+            />
+          </div>
+        )}
 
       {/* Submissions section (visible to bounty owner) */}
       {canViewSubmissions && (

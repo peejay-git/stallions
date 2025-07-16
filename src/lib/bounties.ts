@@ -4,6 +4,7 @@ import { db } from '@/lib/firebase';
 import {
   addDoc,
   collection,
+  deleteDoc,
   doc,
   getDoc,
   getDocs,
@@ -375,6 +376,64 @@ export async function updateBounty(
     ...updatedData,
     updatedAt: serverTimestamp(),
   });
+
+  return true;
+}
+
+/**
+ * Delete a bounty from Firestore and optionally from the blockchain
+ * @param bountyId ID of the bounty to delete
+ * @param publicKey Optional user's public key for blockchain deletion
+ * @returns True if deletion is successful
+ */
+export async function deleteBounty(
+  bountyId: string,
+  publicKey?: string
+): Promise<boolean> {
+  // First get the current bounty data to check if it has a blockchain ID
+  const currentBounty = await getBountyById(bountyId);
+  if (!currentBounty) {
+    throw new Error('Bounty not found');
+  }
+
+  // Check if the bounty has submissions
+  const hasSubmissions = await bountyHasSubmissions(bountyId);
+  if (hasSubmissions) {
+    throw new Error('Cannot delete a bounty that already has submissions.');
+  }
+
+  // If the bounty has a numeric ID (meaning it's on blockchain) and the user provided a public key, delete from blockchain
+  if (!isNaN(Number(currentBounty.id)) && publicKey) {
+    try {
+      const { deleteBountyOnChain } = await import('@/utils/blockchain');
+
+      // Delete from blockchain
+      await deleteBountyOnChain({
+        userPublicKey: publicKey,
+        bountyId: Number(currentBounty.id),
+      });
+
+      console.log('Successfully deleted bounty from blockchain');
+    } catch (error: any) {
+      console.error('Error deleting bounty from blockchain:', error);
+
+      // If blockchain deletion fails, ask user if they want to continue with off-chain deletion
+      if (
+        !confirm(
+          'Failed to delete on blockchain. Continue with off-chain deletion only?'
+        )
+      ) {
+        throw error;
+      }
+    }
+  } else if (!isNaN(Number(currentBounty.id)) && !publicKey) {
+    // Warn that blockchain deletion was skipped because no wallet is connected
+    console.warn('Skipping blockchain deletion because wallet is not connected');
+  }
+
+  // Delete the bounty from Firestore
+  const bountyRef = doc(db, 'bounties', bountyId);
+  await deleteDoc(bountyRef);
 
   return true;
 }

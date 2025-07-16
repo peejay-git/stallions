@@ -53,7 +53,7 @@ export interface Submission {
   walletAddress?: string;
   userId?: string | null;
   content: string;
-  links?: string;
+  link: string;
   created: string;
   status: BountyStatus;
   ranking: number | null;

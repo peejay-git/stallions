@@ -1,6 +1,7 @@
 import { useWallet } from '@/hooks/useWallet';
 import { db } from '@/lib/firebase';
 import useAuthStore from '@/lib/stores/auth.store';
+import type { SubmissionData } from '@/types/submission';
 import { submitWorkOnChain } from '@/utils/blockchain';
 import {
   collection,
@@ -39,6 +40,9 @@ export default function SubmitWorkForm({
   const [userWalletAddress, setUserWalletAddress] = useState<string | null>(
     null
   );
+  const [userSubmission, setUserSubmission] = useState<SubmissionData | null>(
+    null
+  );
   const [hasSubmitted, setHasSubmitted] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const { publicKey } = useWallet();
@@ -48,7 +52,7 @@ export default function SubmitWorkForm({
   const [formData, setFormData] = useState({
     content: '',
     detailedDescription: '',
-    links: '',
+    link: '',
   });
 
   // Fetch user's wallet address from Firestore
@@ -107,17 +111,21 @@ export default function SubmitWorkForm({
         }
 
         // Then check if user already submitted
-        const submissionsRef = collection(db, 'submissions');
         const q = query(
-          submissionsRef,
+          collection(db, 'submissions'),
           where('bountyId', '==', bountyId.toString()),
           where('userId', '==', user.uid)
         );
         const snapshot = await getDocs(q);
 
         if (!snapshot.empty) {
+          // Store the user's submission data
+          const submissionData = snapshot.docs[0].data() as SubmissionData;
+          setUserSubmission({
+            ...submissionData,
+            id: snapshot.docs[0].id,
+          });
           setStep('already-submitted');
-          setHasSubmitted(true);
         } else {
           setStep('form');
         }
@@ -160,9 +168,7 @@ export default function SubmitWorkForm({
 
       // Check if we have the user's wallet address
       if (!userWalletAddress) {
-        throw new Error(
-          'No wallet address found. Please update your profile with a wallet address.'
-        );
+        throw new Error('No wallet address found. Please connect your wallet.');
       }
 
       // Double-check if bounty has expired
@@ -189,17 +195,21 @@ export default function SubmitWorkForm({
       setStep('submitting');
       toast.loading('Submitting your work...', { id: 'submit-work' });
 
-      // Submit work to blockchain and get submission ID
+      // Submit to blockchain (Soroban contract)
       let blockchainSubmissionId;
       try {
         blockchainSubmissionId = await submitWorkOnChain({
           userPublicKey: userWalletAddress,
           bountyId,
-          content: formData.links, // Use links as the on-chain content (shorter)
+          content: formData.link, // Use link as the on-chain content
         });
       } catch (blockchainError) {
         console.error('Error submitting to blockchain:', blockchainError);
-        throw new Error('Failed to generate submission ID. Please try again.');
+        toast.remove('submit-work');
+        setIsLoading(false);
+        setStep('form');
+        // We don't display a toast here because submitWorkOnChain already shows an error toast
+        return;
       }
 
       if (!blockchainSubmissionId) {
@@ -221,7 +231,7 @@ export default function SubmitWorkForm({
           applicantAddress: userWalletAddress,
           userId: user.uid,
           content: formData.detailedDescription,
-          links: formData.links,
+          link: formData.link,
         }),
       });
 
@@ -269,16 +279,58 @@ export default function SubmitWorkForm({
   if (step === 'already-submitted') {
     return (
       <div className="p-8">
-        <h2 className="text-xl font-semibold mb-4 text-white">Submit Work</h2>
-        <div className="bg-yellow-900/40 text-yellow-300 border border-yellow-700/30 p-4 rounded-lg">
-          <p>You have already submitted work for this bounty.</p>
-          <p className="mt-2">You can only submit once per bounty.</p>
+        <h2 className="text-xl font-semibold mb-4 text-white">
+          Your Submission
+        </h2>
+        <div className="bg-blue-900/30 text-white border border-blue-700/30 p-6 rounded-lg">
+          <div className="flex flex-col gap-4">
+            {userSubmission?.createdAt && (
+              <div>
+                <h3 className="text-blue-300 font-medium mb-1">Submitted on</h3>
+                <p className="text-white">
+                  {new Date(userSubmission.createdAt).toLocaleString()}
+                </p>
+              </div>
+            )}
+
+            {userSubmission?.link && (
+              <div>
+                <h3 className="text-blue-300 font-medium mb-1">Link</h3>
+                <p className="text-white">
+                  <a
+                    href={userSubmission.link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hover:underline text-blue-200"
+                  >
+                    {userSubmission.link}
+                  </a>
+                </p>
+              </div>
+            )}
+
+            {userSubmission?.content && (
+              <div>
+                <h3 className="text-blue-300 font-medium mb-1">Description</h3>
+                <p className="text-white whitespace-pre-wrap">
+                  {userSubmission.content}
+                </p>
+              </div>
+            )}
+
+            <div className="mt-4">
+              <p className="bg-gray-900/60 p-3 rounded text-gray-400 text-sm">
+                <span className="text-white font-medium block mb-1">Note</span>
+                You can only submit once per bounty.
+              </p>
+            </div>
+          </div>
         </div>
       </div>
     );
   }
 
-  if (step === 'expired') {
+  if (step === 'expired' || new Date() > new Date(submissionDeadline)) {
     return (
       <div className="p-8">
         <h2 className="text-xl font-semibold mb-4 text-white">Submit Work</h2>
@@ -326,13 +378,13 @@ export default function SubmitWorkForm({
             </p>
           </div>
 
-          {/* Links */}
+          {/* Link */}
           <div>
             <label className="block text-white mb-2">Link to Work</label>
             <input
               type="text"
-              name="links"
-              value={formData.links}
+              name="link"
+              value={formData.link}
               onChange={handleChange}
               placeholder="GitHub repository URL, deployed app URL, etc."
               className="w-full bg-white/5 border border-white/20 rounded-lg px-4 py-2 text-white"

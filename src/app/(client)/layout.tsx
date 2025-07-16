@@ -1,13 +1,13 @@
 'use client';
 
 import { ReactNode, memo, useEffect, useState } from 'react';
-import { Header } from '../shared';
+import { Header } from '@/components/shared';
 
 interface LayoutProps {
   children: ReactNode;
 }
 
-const Layout = ({ children }: LayoutProps) => {
+const ClientLayout = ({ children }: LayoutProps) => {
   const [isLoaded, setIsLoaded] = useState(false);
 
   // Ensure content transition is smooth
@@ -31,5 +31,5 @@ const Layout = ({ children }: LayoutProps) => {
   );
 };
 
-// Memoize to prevent unnecessary re-renders
-export default memo(Layout);
+// No need to memoize since it's a layout component
+export default ClientLayout;

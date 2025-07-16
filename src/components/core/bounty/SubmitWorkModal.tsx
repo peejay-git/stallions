@@ -1,13 +1,13 @@
 'use client';
 
+import { RichTextEditor } from '@/components';
 import { useWallet } from '@/hooks/useWallet';
+import useAuthStore from '@/lib/stores/auth.store';
 import { submitWorkOnChain } from '@/utils/blockchain';
 import { doc, getFirestore, setDoc, Timestamp } from 'firebase/firestore';
+import { nanoid } from 'nanoid';
 import { FormEvent, useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
-import { RichTextEditor } from '@/components';
-import { nanoid } from 'nanoid';
-import useAuthStore from '@/lib/stores/auth.store';
 
 interface SubmitWorkModalProps {
   isOpen: boolean;
@@ -63,7 +63,7 @@ export default function SubmitWorkModal({
 
     try {
       setSubmitting(true);
-      
+
       // Create submission content including work description and link
       const content = JSON.stringify({
         description: workContent,

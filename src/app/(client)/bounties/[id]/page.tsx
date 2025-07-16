@@ -39,9 +39,7 @@ export default function BountyDetailPage() {
   const [loadingSubmissions, setLoadingSubmissions] = useState(false);
   const [rankingsApproved, setRankingsApproved] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const { publicKey } = useWallet();
-  const [winners, setWinners] = useState<any[]>([]);
-  const [loadingWinners, setLoadingWinners] = useState(false);
+  const { publicKey, isConnected, connect } = useWallet();
   const [selectedSubmission, setSelectedSubmission] =
     useState<Submission | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -62,10 +60,7 @@ export default function BountyDetailPage() {
         const data = await getBountyById(id);
         setBounty(data);
 
-        // If bounty is completed, fetch winners
-        if (data && data.status === BountyStatus.COMPLETED) {
-          fetchWinners(data.id);
-        }
+        // Winner fetching code removed as it's no longer needed
       } catch (err: any) {
         setError(err.message || 'Error fetching bounty');
       } finally {
@@ -140,20 +135,7 @@ export default function BountyDetailPage() {
     checkSubmissions();
   }, [bounty, isOwner]);
 
-  const fetchWinners = async (bountyId: string) => {
-    try {
-      setLoadingWinners(true);
-      const response = await fetch(`/api/bounties/${bountyId}/winners`);
-      if (response.ok) {
-        const data = await response.json();
-        setWinners(data);
-      }
-    } catch (error) {
-      console.error('Error fetching winners:', error);
-    } finally {
-      setLoadingWinners(false);
-    }
-  };
+  // Winner fetching functionality removed as it's not being used
 
   // Fetch submissions when bounty and userId are available
   useEffect(() => {
@@ -580,8 +562,7 @@ export default function BountyDetailPage() {
         });
       }
 
-      // Fetch the updated winners
-      fetchWinners(bounty.id);
+      // Winner fetching code removed as it's no longer needed
     } catch (err: any) {
       console.error('Error approving rankings:', err);
       toast.error(err.message || 'Failed to approve rankings', {
@@ -613,6 +594,13 @@ export default function BountyDetailPage() {
   const handleDeleteBounty = async () => {
     if (!bounty) return;
 
+    // Check if wallet is connected
+    if (!isConnected || !publicKey) {
+      toast.error('Please connect your wallet to delete this bounty');
+      connect(); // Prompt to connect wallet
+      return;
+    }
+
     // Confirm deletion
     if (
       !confirm(
@@ -624,7 +612,7 @@ export default function BountyDetailPage() {
 
     try {
       setIsDeleting(true);
-      await deleteBounty(bounty.id, publicKey || undefined);
+      await deleteBounty(bounty.id, publicKey);
       toast.success('Bounty deleted successfully!');
       // Redirect to bounties page after successful deletion
       window.location.href = '/bounties';
@@ -746,12 +734,19 @@ export default function BountyDetailPage() {
 
               <div className="flex flex-col justify-end gap-3 w-full md:w-auto">
                 {canEdit && (
-                  <Link
-                    href={`/bounties/${params.id}/edit`}
+                  <button
+                    onClick={() => {
+                      if (!isConnected || !publicKey) {
+                        toast.error('Please connect your wallet to edit this bounty');
+                        connect();
+                        return;
+                      }
+                      window.location.href = `/bounties/${params.id}/edit`;
+                    }}
                     className="bg-white/10 backdrop-blur-xl border border-white/20 text-white font-medium py-2 px-4 rounded-lg hover:bg-white/20 transition-colors w-full md:w-auto text-center"
                   >
                     Edit Bounty
-                  </Link>
+                  </button>
                 )}
                 {isOwner && hasNoSubmissions && (
                   <button

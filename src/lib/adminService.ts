@@ -64,7 +64,7 @@ export async function getAllSubmissions() {
         status: data.status || 'PENDING',
         bountyTitle: data.bountyTitle || '',
         applicant: data.applicantAddress || '',
-        links: data.links || '',
+        link: data.link || '',
         ranking: data.ranking || null,
       };
     });

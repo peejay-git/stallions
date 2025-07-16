@@ -1,7 +1,6 @@
 'use client';
 
 import { FeaturedBountyCard, ParticlesBackground } from '@/components';
-import { Layout } from '@/components/base';
 import { FirebaseBounty, getFeaturedBounties } from '@/lib/bounties';
 import { motion } from 'framer-motion';
 import Image from 'next/image';
@@ -31,7 +30,7 @@ export default function Home() {
   }, []);
 
   return (
-    <Layout>
+    <>
       <ParticlesBackground />
 
       <div className="relative overflow-hidden">
@@ -382,6 +381,6 @@ export default function Home() {
           </div>
         </footer>
       </div>
-    </Layout>
+    </>
   );
 }

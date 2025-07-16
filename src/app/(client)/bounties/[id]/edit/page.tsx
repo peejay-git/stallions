@@ -1,6 +1,6 @@
 'use client';
 
-import { Layout, RichTextEditor } from '@/components';
+import { RichTextEditor } from '@/components';
 import { getCurrentNetwork } from '@/config/networks';
 import { useProtectedRoute } from '@/hooks/useProtectedRoute';
 import { useWallet } from '@/hooks/useWallet';
@@ -265,219 +265,215 @@ export default function EditBountyPage() {
 
   if (loading || authLoading) {
     return (
-      <Layout>
-        <div className="min-h-screen py-12 px-4 sm:px-6">
-          <div className="max-w-3xl mx-auto">
-            <div className="animate-pulse">
-              <div className="h-8 bg-white/10 rounded w-1/3 mb-8"></div>
-              <div className="backdrop-blur-xl bg-white/10 border border-white/20 rounded-xl p-8">
-                <div className="h-6 bg-white/10 rounded w-1/4 mb-6"></div>
-                <div className="h-10 bg-white/10 rounded mb-6"></div>
-                <div className="h-6 bg-white/10 rounded w-1/4 mb-6"></div>
-                <div className="h-40 bg-white/10 rounded mb-6"></div>
-                <div className="h-6 bg-white/10 rounded w-1/4 mb-6"></div>
-                <div className="h-10 bg-white/10 rounded mb-6"></div>
-                <div className="h-12 bg-white/10 rounded w-1/3"></div>
-              </div>
+      <div className="min-h-screen py-12 px-4 sm:px-6">
+        <div className="max-w-3xl mx-auto">
+          <div className="animate-pulse">
+            <div className="h-8 bg-white/10 rounded w-1/3 mb-8"></div>
+            <div className="backdrop-blur-xl bg-white/10 border border-white/20 rounded-xl p-8">
+              <div className="h-6 bg-white/10 rounded w-1/4 mb-6"></div>
+              <div className="h-10 bg-white/10 rounded mb-6"></div>
+              <div className="h-6 bg-white/10 rounded w-1/4 mb-6"></div>
+              <div className="h-40 bg-white/10 rounded mb-6"></div>
+              <div className="h-6 bg-white/10 rounded w-1/4 mb-6"></div>
+              <div className="h-10 bg-white/10 rounded mb-6"></div>
+              <div className="h-12 bg-white/10 rounded w-1/3"></div>
             </div>
           </div>
         </div>
-      </Layout>
+      </div>
     );
   }
 
   return (
-    <Layout>
-      <div className="min-h-screen py-12 px-4 sm:px-6">
-        <div className="max-w-3xl mx-auto">
-          <h1 className="text-3xl font-bold mb-8 text-white">Edit Bounty</h1>
+    <div className="min-h-screen py-12 px-4 sm:px-6">
+      <div className="max-w-3xl mx-auto">
+        <h1 className="text-3xl font-bold mb-8 text-white">Edit Bounty</h1>
 
-          {error && (
-            <div className="bg-red-900/20 text-red-300 border border-red-700/30 p-4 rounded-lg mb-6">
-              {error}
-            </div>
-          )}
+        {error && (
+          <div className="bg-red-900/20 text-red-300 border border-red-700/30 p-4 rounded-lg mb-6">
+            {error}
+          </div>
+        )}
 
-          <form
-            onSubmit={handleSubmit}
-            className="backdrop-blur-xl bg-white/10 border border-white/20 rounded-xl p-8"
-          >
-            <div className="mb-6">
+        <form
+          onSubmit={handleSubmit}
+          className="backdrop-blur-xl bg-white/10 border border-white/20 rounded-xl p-8"
+        >
+          <div className="mb-6">
+            <label
+              htmlFor="title"
+              className="block text-white font-medium mb-2"
+            >
+              Title*
+            </label>
+            <input
+              type="text"
+              id="title"
+              name="title"
+              value={formData.title}
+              onChange={handleChange}
+              className="input w-full"
+              placeholder="E.g. 'Design a Logo for Our DAO'"
+              required
+            />
+          </div>
+
+          <div className="mb-6">
+            <label
+              htmlFor="description"
+              className="block text-white font-medium mb-2"
+            >
+              Description*
+            </label>
+            <RichTextEditor
+              value={formData.description}
+              onChange={handleQuillChange}
+              placeholder="Provide a detailed description for your bounty..."
+            />
+            <p className="text-xs text-gray-400 mt-1">
+              Use the rich text editor above to format your bounty description
+              with headings, lists, and other formatting.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div>
               <label
-                htmlFor="title"
+                htmlFor="category"
                 className="block text-white font-medium mb-2"
               >
-                Title*
+                Category*
               </label>
-              <input
-                type="text"
-                id="title"
-                name="title"
-                value={formData.title}
+              <select
+                id="category"
+                name="category"
+                value={formData.category}
                 onChange={handleChange}
                 className="input w-full"
-                placeholder="E.g. 'Design a Logo for Our DAO'"
+                required
+              >
+                <option value="">Select a category</option>
+                {categoriesOptions.map((category) => (
+                  <option key={category} value={category}>
+                    {category}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label
+                htmlFor="deadline"
+                className="block text-white font-medium mb-2"
+              >
+                Deadline*
+              </label>
+              <input
+                type="date"
+                id="deadline"
+                name="deadline"
+                value={formData.deadline}
+                onChange={handleChange}
+                className="input w-full"
                 required
               />
             </div>
+          </div>
 
-            <div className="mb-6">
+          <div className="mb-6">
+            <label className="block text-white font-medium mb-2">
+              Skills Required*
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {skillsOptions.map((skill) => (
+                <button
+                  key={skill}
+                  type="button"
+                  onClick={() => handleSkillToggle(skill)}
+                  className={`text-sm px-3 py-1 rounded-full border transition-colors ${
+                    formData.skills.includes(skill)
+                      ? 'bg-blue-500/30 text-blue-200 border-blue-500/50'
+                      : 'bg-white/10 text-gray-300 border-white/20 hover:bg-white/20'
+                  }`}
+                >
+                  {skill} {formData.skills.includes(skill) ? '✓' : '+'}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <div>
               <label
-                htmlFor="description"
+                htmlFor="reward.amount"
                 className="block text-white font-medium mb-2"
               >
-                Description*
+                Reward Amount*
               </label>
-              <RichTextEditor
-                value={formData.description}
-                onChange={handleQuillChange}
-                placeholder="Provide a detailed description for your bounty..."
+              <input
+                type="number"
+                id="reward.amount"
+                name="reward.amount"
+                value={formData.reward.amount}
+                onChange={handleChange}
+                className="input w-full"
+                placeholder="E.g. 100"
+                required
+                min="0"
+                step="0.01"
               />
-              <p className="text-xs text-gray-400 mt-1">
-                Use the rich text editor above to format your bounty description
-                with headings, lists, and other formatting.
-              </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-              <div>
-                <label
-                  htmlFor="category"
-                  className="block text-white font-medium mb-2"
-                >
-                  Category*
-                </label>
-                <select
-                  id="category"
-                  name="category"
-                  value={formData.category}
-                  onChange={handleChange}
-                  className="input w-full"
-                  required
-                >
-                  <option value="">Select a category</option>
-                  {categoriesOptions.map((category) => (
-                    <option key={category} value={category}>
-                      {category}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label
-                  htmlFor="deadline"
-                  className="block text-white font-medium mb-2"
-                >
-                  Deadline*
-                </label>
-                <input
-                  type="date"
-                  id="deadline"
-                  name="deadline"
-                  value={formData.deadline}
-                  onChange={handleChange}
-                  className="input w-full"
-                  required
-                />
-              </div>
-            </div>
-
-            <div className="mb-6">
-              <label className="block text-white font-medium mb-2">
-                Skills Required*
+            <div>
+              <label
+                htmlFor="reward.asset"
+                className="block text-white font-medium mb-2"
+              >
+                Asset Type*
               </label>
-              <div className="flex flex-wrap gap-2">
-                {skillsOptions.map((skill) => (
-                  <button
-                    key={skill}
-                    type="button"
-                    onClick={() => handleSkillToggle(skill)}
-                    className={`text-sm px-3 py-1 rounded-full border transition-colors ${
-                      formData.skills.includes(skill)
-                        ? 'bg-blue-500/30 text-blue-200 border-blue-500/50'
-                        : 'bg-white/10 text-gray-300 border-white/20 hover:bg-white/20'
-                    }`}
-                  >
-                    {skill} {formData.skills.includes(skill) ? '✓' : '+'}
-                  </button>
+              <select
+                id="reward.asset"
+                name="reward.asset"
+                value={formData.reward.asset}
+                onChange={handleChange}
+                className="input w-full"
+                required
+              >
+                {getCurrentNetwork().tokens.map((asset) => (
+                  <option key={asset.name} value={asset.address}>
+                    {asset.symbol} {asset.name}
+                  </option>
                 ))}
-              </div>
+              </select>
             </div>
+          </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-              <div>
-                <label
-                  htmlFor="reward.amount"
-                  className="block text-white font-medium mb-2"
-                >
-                  Reward Amount*
-                </label>
-                <input
-                  type="number"
-                  id="reward.amount"
-                  name="reward.amount"
-                  value={formData.reward.amount}
-                  onChange={handleChange}
-                  className="input w-full"
-                  placeholder="E.g. 100"
-                  required
-                  min="0"
-                  step="0.01"
-                />
-              </div>
-
-              <div>
-                <label
-                  htmlFor="reward.asset"
-                  className="block text-white font-medium mb-2"
-                >
-                  Asset Type*
-                </label>
-                <select
-                  id="reward.asset"
-                  name="reward.asset"
-                  value={formData.reward.asset}
-                  onChange={handleChange}
-                  className="input w-full"
-                  required
-                >
-                  {getCurrentNetwork().tokens.map((asset) => (
-                    <option key={asset.name} value={asset.address}>
-                      {asset.symbol} {asset.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            <div className="flex gap-4">
-              <button
-                disabled={submitting}
-                onClick={() => router.push(`/bounties/${params.id}`)}
-                className="bg-white/10 backdrop-blur-xl border border-white/20 text-white font-medium py-3 px-6 rounded-lg hover:bg-white/20 transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="bg-white text-black font-medium py-3 px-6 rounded-lg hover:bg-white/90 transition-colors flex-1"
-                disabled={submitting}
-              >
-                {submitting ? (
-                  <span className="flex gap-2 items-center justify-center">
-                    <span className="w-2 h-2 rounded-full bg-black animate-bounce [animation-delay:-0.3s]"></span>
-                    <span className="w-2 h-2 rounded-full bg-black animate-bounce [animation-delay:-0.15s]"></span>
-                    <span className="w-2 h-2 rounded-full bg-black animate-bounce"></span>
-                  </span>
-                ) : (
-                  'Update Bounty'
-                )}
-              </button>
-            </div>
-          </form>
-        </div>
+          <div className="flex gap-4">
+            <button
+              disabled={submitting}
+              onClick={() => router.push(`/bounties/${params.id}`)}
+              className="bg-white/10 backdrop-blur-xl border border-white/20 text-white font-medium py-3 px-6 rounded-lg hover:bg-white/20 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="bg-white text-black font-medium py-3 px-6 rounded-lg hover:bg-white/90 transition-colors flex-1"
+              disabled={submitting}
+            >
+              {submitting ? (
+                <span className="flex gap-2 items-center justify-center">
+                  <span className="w-2 h-2 rounded-full bg-black animate-bounce [animation-delay:-0.3s]"></span>
+                  <span className="w-2 h-2 rounded-full bg-black animate-bounce [animation-delay:-0.15s]"></span>
+                  <span className="w-2 h-2 rounded-full bg-black animate-bounce"></span>
+                </span>
+              ) : (
+                'Update Bounty'
+              )}
+            </button>
+          </div>
+        </form>
       </div>
-    </Layout>
+    </div>
   );
 }

@@ -3,7 +3,7 @@
  *
  * This file provides configuration for different Stellar networks (testnet, public, etc.)
  * and their associated token addresses.
- * 
+ *
  * The active network is determined by the NEXT_PUBLIC_NETWORK environment variable or defaults to testnet.
  */
 
@@ -82,6 +82,12 @@ export const NETWORKS: NetworkConfig[] = [
         logo: '/images/tokens/kale.svg',
         address: 'CB23WRDQWGSP6YPMY4UV5C4OW5CBTXKYN3XEATG7KJEZCXMJBYEHOUOV',
       },
+      {
+        symbol: 'USDGLO',
+        name: 'Glo Dollar',
+        logo: '/images/tokens/usdglo.svg',
+        address: 'CB226ZOEYXTBPD3QEGABTJYSKZVBP2PASEISLG3SBMTN5CE4QZUVZ3CE',
+      },
     ],
   },
 ];
@@ -121,8 +127,11 @@ export const getTokenByAddress = (
 // Get the current active network based on environment variable or default to testnet
 export const getCurrentNetwork = (): NetworkConfig => {
   // Get network from environment variable if available
-  const envNetwork = typeof process !== 'undefined' ? process.env.NEXT_PUBLIC_NETWORK : undefined;
-  
+  const envNetwork =
+    typeof process !== 'undefined'
+      ? process.env.NEXT_PUBLIC_NETWORK
+      : undefined;
+
   if (envNetwork) {
     const network = getNetworkById(envNetwork);
     if (network) {
@@ -130,10 +139,12 @@ export const getCurrentNetwork = (): NetworkConfig => {
     }
     // If env network specified but not found, log a warning
     if (typeof window !== 'undefined') {
-      console.warn(`Network '${envNetwork}' specified in NEXT_PUBLIC_NETWORK not found. Using default.`);
+      console.warn(
+        `Network '${envNetwork}' specified in NEXT_PUBLIC_NETWORK not found. Using default.`
+      );
     }
   }
-  
+
   // Default to the network marked as default, or first in the list
   return getDefaultNetwork();
 };

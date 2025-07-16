@@ -1,11 +1,130 @@
+import { getCurrentNetwork, getTokenBySymbol } from '@/config/networks';
 import { SorobanService } from '@/lib/soroban';
 import { Distribution } from '@/types/bounty';
 import toast from 'react-hot-toast';
-import { getCurrentNetwork, getTokenByAddress, getTokenBySymbol } from '@/config/networks';
 
 /**
  * Utility functions for frontend blockchain operations
  */
+
+/**
+ * Handle blockchain error and show appropriate toast message
+ * @param error The error object
+ * @param context Context of where the error occurred (e.g., 'creating bounty', 'updating bounty')
+ * @param toastId Toast ID for deduplication
+ */
+export function handleBlockchainError(error: any, context: string = 'blockchain operation', toastId: string = 'wallet-transaction'): never {
+  console.error(`Error in ${context}:`, error);
+
+  // Parse JSON error messages if they exist
+  let errorMessage = error.message || 'Unknown error';
+
+  try {
+    // Sometimes errors come as JSON strings
+    if (typeof errorMessage === 'string' && errorMessage.includes('{')) {
+      const jsonStart = errorMessage.indexOf('{');
+      if (jsonStart >= 0) {
+        const jsonPart = errorMessage.substring(jsonStart);
+        const parsedError = JSON.parse(jsonPart);
+
+        if (parsedError.message) {
+          errorMessage = parsedError.message;
+        } else if (parsedError.code) {
+          errorMessage = `Error code: ${parsedError.code}`;
+          if (parsedError.detail) {
+            errorMessage += ` - ${parsedError.detail}`;
+          }
+        }
+      }
+    }
+  } catch (parseError) {
+    // If JSON parsing fails, just use the original error message
+    console.error('Error parsing error message:', parseError);
+  }
+
+  // Show appropriate error message based on the error type
+  if (error.message?.includes('User declined')) {
+    toast.error('Transaction was declined in wallet.', {
+      id: toastId,
+    });
+  } else if (error.message?.includes('Account not found')) {
+    toast.error(
+      "Account not found on the blockchain. Make sure you have created and funded the accounts you're using.",
+      {
+        id: toastId,
+      }
+    );
+  } else if (error.message?.includes('timeout')) {
+    toast.error('Wallet response timed out. Please try again.', {
+      id: toastId,
+    });
+  } else if (error.message?.toLowerCase().includes('trustline')) {
+    toast.error(
+      'Transaction failed. Please set trustline for the token and make sure you have enough balance.',
+      {
+        id: toastId,
+      }
+    );
+  } else if (error.message?.includes('insufficient balance')) {
+    toast.error('Insufficient balance in your wallet.', {
+      id: toastId,
+    });
+  } else if (error.message?.includes('Unsupported address type')) {
+    toast.error(
+      'Token not supported on this network. Please try USDC instead.',
+      { id: toastId }
+    );
+  } else if (error.message?.includes('Unsupported token')) {
+    toast.error(
+      'The selected token is not configured properly. Please try USDC instead.',
+      { id: toastId }
+    );
+  } else if (error.message?.includes('token')) {
+    toast.error(`Token error: ${error.message}. Please try USDC instead.`, {
+      id: toastId,
+    });
+  } else if (
+    error.message?.includes('Simulation error') ||
+    error.message?.includes('simulate')
+  ) {
+    if (error.message?.includes('The user rejected this request')) {
+      toast.error('Transaction was rejected in wallet.', {
+        id: toastId,
+      });
+    } else {
+      toast.error(
+        `Transaction simulation failed. Please try again with different parameters.`,
+        { id: toastId }
+      );
+    }
+  } else if (
+    error.message?.includes('Contract error') ||
+    error.message?.includes('contract')
+  ) {
+    toast.error(`Smart contract error: ${errorMessage}`, {
+      id: toastId,
+    });
+  } else if (error.message?.includes(`Failed to ${context}`)) {
+    toast.error(`Blockchain error: ${errorMessage}`, {
+      id: toastId,
+    });
+  } else if (error.message?.includes('Account not found')) {
+    toast.error(
+      `Account not found on the blockchain. Make sure you have created and funded the accounts you're using.`,
+      { id: toastId }
+    );
+    console.error(
+      'Account not found error. This usually means the token contract or user account does not exist on the current network.'
+    );
+  } else {
+    toast.error(`Error in ${context}: ${errorMessage}`, {
+      id: toastId,
+    });
+  }
+
+  // Re-throw the error so the caller can handle it if needed
+  throw error;
+}
 
 // Max retries for blockchain operations
 const MAX_RETRIES = 3;
@@ -76,7 +195,7 @@ export async function createBountyOnChain({
 
     // The token parameter could be either a symbol or address, try to resolve it
     let tokenAddress = token;
-    
+
     // If this doesn't look like a Stellar address, try to resolve as symbol
     if (!token.startsWith('C') && !token.startsWith('G')) {
       const tokenConfig = getTokenBySymbol(getCurrentNetwork().id, token);
@@ -87,7 +206,9 @@ export async function createBountyOnChain({
           `Token symbol ${token} not found in the current network configuration.`,
           { id: 'wallet-transaction' }
         );
-        throw new Error(`Token symbol ${token} not found in the current network`);
+        throw new Error(
+          `Token symbol ${token} not found in the current network`
+        );
       }
     }
 
@@ -129,108 +250,8 @@ export async function createBountyOnChain({
       throw blockchainError;
     }
   } catch (error: any) {
-    console.error('Error creating bounty on blockchain:', error);
-
-    // Parse JSON error messages if they exist
-    let errorMessage = error.message || 'Unknown error';
-
-    try {
-      // Sometimes errors come as JSON strings
-      if (typeof errorMessage === 'string' && errorMessage.includes('{')) {
-        const jsonStart = errorMessage.indexOf('{');
-        if (jsonStart >= 0) {
-          const jsonPart = errorMessage.substring(jsonStart);
-          const parsedError = JSON.parse(jsonPart);
-
-          if (parsedError.message) {
-            errorMessage = parsedError.message;
-          } else if (parsedError.code) {
-            errorMessage = `Error code: ${parsedError.code}`;
-            if (parsedError.detail) {
-              errorMessage += ` - ${parsedError.detail}`;
-            }
-          }
-        }
-      }
-    } catch (parseError) {
-      // If JSON parsing fails, just use the original error message
-      console.error('Error parsing error message:', parseError);
-    }
-
-    // Show appropriate error message based on the error type
-    if (error.message?.includes('User declined')) {
-      toast.error('Transaction was declined in wallet.', {
-        id: 'wallet-transaction',
-      });
-    } else if (error.message?.includes('timeout')) {
-      toast.error('Wallet response timed out. Please try again.', {
-        id: 'wallet-transaction',
-      });
-    } else if (error.message?.toLowerCase().includes('trustline')) {
-      toast.error(
-        'Transaction failed. Please set trustline for the token and make sure you have enough balance.',
-        {
-          id: 'wallet-transaction',
-        }
-      );
-    } else if (error.message?.includes('insufficient balance')) {
-      toast.error('Insufficient balance in your wallet.', {
-        id: 'wallet-transaction',
-      });
-    } else if (error.message?.includes('Unsupported address type')) {
-      toast.error(
-        'Token not supported on this network. Please try USDC instead.',
-        { id: 'wallet-transaction' }
-      );
-    } else if (error.message?.includes('Unsupported token')) {
-      toast.error(
-        'The selected token is not configured properly. Please try USDC instead.',
-        { id: 'wallet-transaction' }
-      );
-    } else if (error.message?.includes('token')) {
-      toast.error(`Token error: ${error.message}. Please try USDC instead.`, {
-        id: 'wallet-transaction',
-      });
-    } else if (
-      error.message?.includes('Simulation error') ||
-      error.message?.includes('simulate')
-    ) {
-      if (error.message?.includes('The user rejected this request')) {
-        toast.error('Transaction was rejected in wallet.', {
-          id: 'wallet-transaction',
-        });
-      } else {
-        toast.error(
-          `Transaction simulation failed. Please try again with different parameters.`,
-          { id: 'wallet-transaction' }
-        );
-      }
-    } else if (
-      error.message?.includes('Contract error') ||
-      error.message?.includes('contract')
-    ) {
-      toast.error(`Smart contract error: ${errorMessage}`, {
-        id: 'wallet-transaction',
-      });
-    } else if (error.message?.includes('Failed to create bounty')) {
-      toast.error(`Blockchain error: ${errorMessage}`, {
-        id: 'wallet-transaction',
-      });
-    } else if (error.message?.includes('Account not found')) {
-      toast.error(
-        `Account not found on the blockchain. Make sure you have created and funded the accounts you're using.`,
-        { id: 'wallet-transaction' }
-      );
-      console.error(
-        'Account not found error. This usually means the token contract or user account does not exist on the current network.'
-      );
-    } else {
-      toast.error(`Error creating bounty: ${errorMessage}`, {
-        id: 'wallet-transaction',
-      });
-    }
-
-    throw error;
+    // Use the reusable error handler
+    handleBlockchainError(error, 'creating bounty');
   }
 }
 
@@ -249,30 +270,24 @@ export async function submitWorkOnChain({
 }): Promise<string> {
   try {
     if (!userPublicKey) {
-      throw new Error('Wallet not connected. Please connect wallet before submitting.');
+      throw new Error(
+        'Wallet not connected. Please connect wallet before submitting.'
+      );
     }
-    
+
     // Initialize the Soroban service with the user's public key
     const { SorobanService } = await import('@/lib/soroban');
     const sorobanService = new SorobanService(userPublicKey);
-    
+
     // Submit the work to the blockchain
     try {
-      await sorobanService.applyToBounty(
-        userPublicKey, 
-        bountyId, 
-        content
-      );
+      await sorobanService.applyToBounty(userPublicKey, bountyId, content);
       console.log('Successfully submitted work on blockchain');
     } catch (blockchainError: any) {
       console.error('Blockchain submission error:', blockchainError);
-      // If blockchain submission fails, we still want to continue with off-chain submission
-      // but we'll include the error in the submission ID for tracking
-      if (!confirm('Failed to submit on blockchain. Continue with off-chain submission only?')) {
-        throw blockchainError;
-      }
+      throw blockchainError;
     }
-    
+
     // Generate a unique submission ID using user's address, bounty ID and timestamp
     // This ID is used for off-chain storage reference
     const timestamp = Date.now();
@@ -282,9 +297,8 @@ export async function submitWorkOnChain({
     )}-${bountyId}-${timestamp}`;
 
     return submissionId;
-  } catch (error) {
-    console.error('Error in submit work process:', error);
-    throw error;
+  } catch (error: any) {
+    handleBlockchainError(error, 'submitting work');
   }
 }
 
@@ -319,9 +333,8 @@ export async function updateBountyOnChain({
       distribution: formattedDistribution,
       submissionDeadline,
     });
-  } catch (error) {
-    console.error('Error updating bounty on blockchain:', error);
-    throw error;
+  } catch (error: any) {
+    handleBlockchainError(error, 'updating bounty');
   }
 }
 
@@ -341,8 +354,7 @@ export async function deleteBountyOnChain({
 
     // Delete the bounty on the blockchain
     await sorobanService.deleteBounty(bountyId);
-  } catch (error) {
-    console.error('Error deleting bounty on blockchain:', error);
-    throw error;
+  } catch (error: any) {
+    handleBlockchainError(error, 'deleting bounty');
   }
 }

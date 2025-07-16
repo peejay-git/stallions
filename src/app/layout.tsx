@@ -26,18 +26,6 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <head>
-        {/* Preload essential assets */}
-        <link rel="preload" href="/images/unicorn-logo.svg" as="image" />
-
-        {/* Preload Albedo script for faster wallet detection */}
-        <link
-          rel="preload"
-          href="https://albedo.link/albedo-intent.js"
-          as="script"
-          crossOrigin="anonymous"
-        />
-      </head>
       <body className={`${inter.className} bg-[#070708]`}>
         <WalletProvider>
           <AppClientWrapper>{children}</AppClientWrapper>

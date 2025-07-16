@@ -1,5 +1,6 @@
 'use client';
 
+import { useAdminProtectedRoute } from '@/hooks/useAdminProtectedRoute';
 import useAuthStore from '@/lib/stores/auth.store';
 import { AuthState } from '@/types/auth.types';
 import Link from 'next/link';
@@ -12,6 +13,7 @@ export default function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
+  useAdminProtectedRoute();
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const pathname = usePathname();
   const router = useRouter();

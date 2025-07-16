@@ -6,6 +6,7 @@ import { useWallet } from '@/hooks/useWallet';
 import useAuthStore from '@/lib/stores/auth.store';
 import { Distribution } from '@/types/bounty';
 import { createBountyOnChain } from '@/utils/blockchain';
+import { DEFAULT_BOUNTY_DESCRIPTION } from '@/utils/constants/bountyTemplates';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
@@ -24,12 +25,7 @@ export default function CreateBountyForm() {
   // Form state
   const [formData, setFormData] = useState({
     title: '',
-    description: `<p><strong>Project Overview</strong><br/>Briefly describe the project and its goals.</p>
-<p><strong>Task Details</strong><br/>- What needs to be done?<br/>- Any specific requirements?</p>
-<p><strong>Deliverables</strong><br/>- List what you expect to receive.</p>
-<p><strong>Evaluation Criteria</strong><br/>- How will submissions be judged?</p>
-<p><strong>Timeline</strong><br/>- Submission deadline<br/>- Judging deadline</p>
-<p><strong>Additional Notes</strong><br/>- Any other info for applicants.</p>`,
+    description: DEFAULT_BOUNTY_DESCRIPTION,
     category: 'DEVELOPMENT',
     skills: [] as string[],
     token: getCurrentNetwork().tokens[0].address, // Use first token by default

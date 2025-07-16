@@ -107,7 +107,7 @@ export class SorobanService {
       throw new BlockchainError('Failed to get submission', 'CONTRACT_ERROR');
     } catch (error) {
       console.error('Error getting submission:', error);
-      throw new BlockchainError('Failed to get submission', 'CONTRACT_ERROR');
+      throw error;
     }
   }
 
@@ -247,13 +247,7 @@ export class SorobanService {
       }
     } catch (error) {
       console.error('Error creating bounty:', error);
-      if (error instanceof BlockchainError) {
-        throw error;
-      }
-      throw new BlockchainError(
-        error instanceof Error ? error.message : 'Failed to create bounty',
-        'TRANSACTION_ERROR'
-      );
+      throw error;
     }
   }
 
@@ -273,7 +267,7 @@ export class SorobanService {
       return bounties;
     } catch (error) {
       console.error('Error getting bounties:', error);
-      throw new BlockchainError('Failed to get bounties', 'CONTRACT_ERROR');
+      throw error;
     }
   }
 
@@ -298,10 +292,7 @@ export class SorobanService {
       return bounties;
     } catch (error) {
       console.error('Error getting user bounties:', error);
-      throw new BlockchainError(
-        'Failed to get user bounties',
-        'CONTRACT_ERROR'
-      );
+      throw error;
     }
   }
 
@@ -323,10 +314,7 @@ export class SorobanService {
       return bounties;
     } catch (error) {
       console.error('Error getting owner bounties:', error);
-      throw new BlockchainError(
-        'Failed to get owner bounties',
-        'CONTRACT_ERROR'
-      );
+      throw error;
     }
   }
 
@@ -348,10 +336,7 @@ export class SorobanService {
       return bounties;
     } catch (error) {
       console.error('Error getting bounties by status:', error);
-      throw new BlockchainError(
-        'Failed to get bounties by status',
-        'CONTRACT_ERROR'
-      );
+      throw error;
     }
   }
 
@@ -373,10 +358,7 @@ export class SorobanService {
       return bounties;
     } catch (error) {
       console.error('Error getting bounties by token:', error);
-      throw new BlockchainError(
-        'Failed to get bounties by token',
-        'CONTRACT_ERROR'
-      );
+      throw error;
     }
   }
 
@@ -398,10 +380,7 @@ export class SorobanService {
       return bounties;
     } catch (error) {
       console.error('Error getting active bounties:', error);
-      throw new BlockchainError(
-        'Failed to get active bounties',
-        'CONTRACT_ERROR'
-      );
+      throw error;
     }
   }
 
@@ -434,7 +413,7 @@ export class SorobanService {
       throw new BlockchainError('Failed to get bounty', 'CONTRACT_ERROR');
     } catch (error) {
       console.error('Error getting bounty:', error);
-      throw new BlockchainError('Failed to get bounty', 'CONTRACT_ERROR');
+      throw error;
     }
   }
 
@@ -469,10 +448,7 @@ export class SorobanService {
       return [];
     } catch (error) {
       console.error('Error getting bounty submissions:', error);
-      throw new BlockchainError(
-        'Failed to get bounty submissions',
-        'CONTRACT_ERROR'
-      );
+      throw error;
     }
   }
 
@@ -516,7 +492,7 @@ export class SorobanService {
       throw new BlockchainError('Failed to submit work', 'CONTRACT_ERROR');
     } catch (error) {
       console.error('Error submitting work:', error);
-      throw new BlockchainError('Failed to submit work', 'CONTRACT_ERROR');
+      throw error;
     }
   }
 
@@ -569,7 +545,7 @@ export class SorobanService {
       throw new BlockchainError('Failed to update bounty', 'CONTRACT_ERROR');
     } catch (error) {
       console.error('Error updating bounty:', error);
-      throw new BlockchainError('Failed to update bounty', 'TRANSACTION_ERROR');
+      throw error;
     }
   }
 
@@ -609,7 +585,7 @@ export class SorobanService {
       throw new BlockchainError('Failed to delete bounty', 'CONTRACT_ERROR');
     } catch (error) {
       console.error('Error deleting bounty:', error);
-      throw new BlockchainError('Failed to delete bounty', 'TRANSACTION_ERROR');
+      throw error;
     }
   }
 
@@ -674,10 +650,7 @@ export class SorobanService {
         'CONTRACT_ERROR'
       );
     } catch (error) {
-      throw new BlockchainError(
-        error instanceof Error ? error.message : 'Failed to select winners',
-        'TRANSACTION_ERROR'
-      );
+      throw error;
     }
   }
 }

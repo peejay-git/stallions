@@ -4,10 +4,7 @@ export interface SubmissionData {
   applicantAddress: string;
   userId?: string | null;
   content?: string;
-  links?: string;
+  link?: string;
   createdAt?: string;
-  submittedAt?: {
-    toDate: () => Date;
-  };
   status?: string;
 }

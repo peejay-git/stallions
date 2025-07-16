@@ -1,7 +1,8 @@
 'use client';
 
+import { getCurrentNetwork } from '@/config/networks';
 import { useWallet } from '@/hooks/useWallet';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import toast from 'react-hot-toast';
 import { FaWallet } from 'react-icons/fa';
 import { FiExternalLink } from 'react-icons/fi';
@@ -15,10 +16,10 @@ interface WalletConnectButtonProps {
 const WalletConnectButton: React.FC<WalletConnectButtonProps> = ({
   onAddressChange,
   currentAddress,
-  buttonClassName = 'flex items-center justify-center gap-2 w-full p-3 border rounded-lg border-gray-300 bg-white font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700'
+  buttonClassName = 'flex items-center justify-center gap-2 w-full p-3 border rounded-lg border-gray-300 bg-white font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700',
 }) => {
   const { connect, isConnected, publicKey, isConnecting } = useWallet();
-  
+
   useEffect(() => {
     if (isConnected && publicKey && !currentAddress) {
       onAddressChange(publicKey);
@@ -54,7 +55,9 @@ const WalletConnectButton: React.FC<WalletConnectButtonProps> = ({
             </span>
           </div>
           <a
-            href={`https://stellar.expert/explorer/public/account/${publicKey}`}
+            href={`https://stellar.expert/explorer/${
+              getCurrentNetwork().name
+            }/account/${publicKey}`}
             target="_blank"
             rel="noopener noreferrer"
             className="text-primary hover:underline flex items-center gap-1"

@@ -355,15 +355,7 @@ export async function updateBounty(
       console.log('Successfully updated bounty on blockchain');
     } catch (error: any) {
       console.error('Error updating bounty on blockchain:', error);
-
-      // If blockchain update fails, ask user if they want to continue with off-chain update
-      if (
-        !confirm(
-          'Failed to update on blockchain. Continue with off-chain update only?'
-        )
-      ) {
-        throw error;
-      }
+      throw error;
     }
   } else if (!isNaN(Number(currentBounty.id)) && !publicKey) {
     // Warn that blockchain update was skipped because no wallet is connected
@@ -416,19 +408,13 @@ export async function deleteBounty(
       console.log('Successfully deleted bounty from blockchain');
     } catch (error: any) {
       console.error('Error deleting bounty from blockchain:', error);
-
-      // If blockchain deletion fails, ask user if they want to continue with off-chain deletion
-      if (
-        !confirm(
-          'Failed to delete on blockchain. Continue with off-chain deletion only?'
-        )
-      ) {
-        throw error;
-      }
+      throw error;
     }
   } else if (!isNaN(Number(currentBounty.id)) && !publicKey) {
     // Warn that blockchain deletion was skipped because no wallet is connected
-    console.warn('Skipping blockchain deletion because wallet is not connected');
+    console.warn(
+      'Skipping blockchain deletion because wallet is not connected'
+    );
   }
 
   // Delete the bounty from Firestore

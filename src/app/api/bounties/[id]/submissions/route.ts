@@ -152,7 +152,7 @@ export async function POST(
       );
     }
 
-    const { applicantAddress, userId, content, submissionId, links } =
+    const { applicantAddress, userId, content, submissionId, link } =
       requestData;
 
     // Log parsed data
@@ -161,7 +161,7 @@ export async function POST(
       applicantAddress,
       userId,
       content: content?.substring(0, 50) + '...',
-      links,
+      link,
       submissionId,
     });
 
@@ -243,7 +243,7 @@ export async function POST(
         applicantAddress,
         content,
         submissionId,
-        links,
+        link,
         userId
       );
 

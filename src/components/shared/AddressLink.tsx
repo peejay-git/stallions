@@ -1,5 +1,6 @@
-"use client";
+'use client';
 
+import { getNetworkById } from '@/config/networks';
 import React from 'react';
 import { FiExternalLink } from 'react-icons/fi';
 
@@ -13,7 +14,7 @@ interface AddressLinkProps {
 
 /**
  * AddressLink component displays a formatted Stellar address with a link to Stellar Expert explorer
- * 
+ *
  * @param address - The Stellar address to display and link to
  * @param className - Optional additional CSS classes
  * @param showExternalIcon - Whether to show an external link icon (default: true)
@@ -28,18 +29,19 @@ const AddressLink: React.FC<AddressLinkProps> = ({
   network = 'public',
 }) => {
   if (!address) return <span className={className}>Unknown</span>;
-  
+
   // Format the address for display (e.g., GDUA...5XB7)
-  const formattedAddress = address.length > (truncateLength * 2) 
-    ? `${address.slice(0, truncateLength)}...${address.slice(-truncateLength)}`
-    : address;
-  
-  const explorerBaseUrl = network === 'public' 
-    ? 'https://stellar.expert/explorer/public' 
-    : 'https://stellar.expert/explorer/testnet';
+  const formattedAddress =
+    address.length > truncateLength * 2
+      ? `${address.slice(0, truncateLength)}...${address.slice(
+          -truncateLength
+        )}`
+      : address;
+
+  const explorerBaseUrl = getNetworkById(network)?.explorerBaseUrl;
 
   return (
-    <a 
+    <a
       href={`${explorerBaseUrl}/account/${address}`}
       target="_blank"
       rel="noopener noreferrer"
@@ -47,9 +49,7 @@ const AddressLink: React.FC<AddressLinkProps> = ({
       title={address}
     >
       {formattedAddress}
-      {showExternalIcon && (
-        <FiExternalLink className="ml-1 h-3 w-3" />
-      )}
+      {showExternalIcon && <FiExternalLink className="ml-1 h-3 w-3" />}
     </a>
   );
 };

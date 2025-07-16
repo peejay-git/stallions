@@ -23,6 +23,10 @@ export const networks = {
     networkPassphrase: 'Test SDF Network ; September 2015',
     contractId: 'CCR32V65TMOA5VFREEUFUOJMN36P2QROR7RUPI4VVEURVCJMKQT7YRM7',
   },
+  public: {
+    networkPassphrase: 'Public Global Stellar Network ; September 2015',
+    contractId: 'CCR32V65TMOA5VFREEUFUOJMN36P2QROR7RUPI4VVEURVCJMKQT7YRM7',
+  },
 } as const;
 
 export const Errors = {

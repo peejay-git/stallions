@@ -46,7 +46,7 @@ export async function GET(
       applicant: data.applicantAddress,
       content: data.content || '',
       details: data.content || '',
-      links: data.links || '',
+      link: data.link || '',
       created: data.createdAt || new Date().toISOString(),
       status: data.status || 'PENDING',
       ranking: data.ranking || null,
@@ -111,7 +111,10 @@ export async function PATCH(
 
     const bountyData = bountySnap.data();
     if (!bountyData) {
-      return NextResponse.json({ error: 'Bounty data missing' }, { status: 500 });
+      return NextResponse.json(
+        { error: 'Bounty data missing' },
+        { status: 500 }
+      );
     }
 
     // Get user data to check if they're a sponsor (admin SDK)
@@ -155,9 +158,15 @@ export async function PATCH(
       // Verify the submission belongs to this bounty
       const submissionData = submissionSnap.data();
       if (!submissionData) {
-        return NextResponse.json({ error: 'Submission data missing' }, { status: 500 });
+        return NextResponse.json(
+          { error: 'Submission data missing' },
+          { status: 500 }
+        );
       }
-      if (submissionData.bountyId !== id && submissionData.bountyId !== parseInt(id)) {
+      if (
+        submissionData.bountyId !== id &&
+        submissionData.bountyId !== parseInt(id)
+      ) {
         return NextResponse.json(
           { error: 'Submission does not belong to this bounty' },
           { status: 400 }
@@ -207,9 +216,15 @@ export async function PATCH(
       // Verify the submission belongs to this bounty
       const submissionData = submissionSnap.data();
       if (!submissionData) {
-        return NextResponse.json({ error: 'Submission data missing' }, { status: 500 });
+        return NextResponse.json(
+          { error: 'Submission data missing' },
+          { status: 500 }
+        );
       }
-      if (submissionData.bountyId !== id && submissionData.bountyId !== parseInt(id)) {
+      if (
+        submissionData.bountyId !== id &&
+        submissionData.bountyId !== parseInt(id)
+      ) {
         return NextResponse.json(
           { error: 'Submission does not belong to this bounty' },
           { status: 400 }

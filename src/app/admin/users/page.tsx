@@ -1,6 +1,5 @@
 'use client';
 
-import { AdminLayout } from '@/components';
 import { useAdminProtectedRoute } from '@/hooks/useAdminProtectedRoute';
 import { getAllUsers, makeUserAdmin } from '@/lib/adminService';
 import { useEffect, useState } from 'react';
@@ -95,11 +94,9 @@ export default function AdminUsersPage() {
 
   if (authLoading) {
     return (
-      <AdminLayout>
-        <div className="flex items-center justify-center h-screen">
-          <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-        </div>
-      </AdminLayout>
+      <div className="flex items-center justify-center h-screen">
+        <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+      </div>
     );
   }
 
@@ -108,7 +105,7 @@ export default function AdminUsersPage() {
   }
 
   return (
-    <AdminLayout>
+    <>
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-white mb-2">Manage Users</h1>
         <p className="text-gray-400">
@@ -267,6 +264,6 @@ export default function AdminUsersPage() {
           </div>
         )}
       </div>
-    </AdminLayout>
+    </>
   );
 }

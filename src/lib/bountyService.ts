@@ -11,7 +11,7 @@ interface FirestoreSubmissionData {
   bountyId: string;
   applicantAddress: string;
   content: string;
-  links: string;
+  link: string;
   userId: string | null;
   createdAt: string;
   updatedAt: string;
@@ -27,7 +27,7 @@ interface SubmissionWithRanking {
   submission: string;
   content: string;
   details: string;
-  links: string;
+  link: string;
   created: string;
   status: string;
   ranking: number | null;
@@ -131,7 +131,7 @@ export class BountyService {
     applicantAddress: string,
     content: string,
     submissionId: string,
-    links?: string,
+    link?: string,
     userId?: string
   ) {
     try {
@@ -141,7 +141,7 @@ export class BountyService {
         bountyId,
         applicantAddress,
         content,
-        links: links || '',
+        link: link || '',
         userId: userId || null,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
@@ -176,10 +176,10 @@ export class BountyService {
           bountyId,
           applicant: data.applicantAddress,
           userId: data.userId || null,
-          submission: data.links || '',
+          submission: data.link || '',
           content: data.content || '',
           details: data.content || '',
-          links: data.links || '',
+          link: data.link || '',
           created: data.createdAt || new Date().toISOString(),
           status: data.status || 'PENDING',
           ranking: data.ranking || null,
@@ -326,13 +326,13 @@ export class BountyService {
       if (bountyId === undefined || bountyId === null) {
         throw new Error('bountyId must be a valid number');
       }
-      
+
       // Convert to string and ensure it's not empty
       const bountyIdStr = String(bountyId);
       if (!bountyIdStr) {
         throw new Error('bountyId must convert to a non-empty string');
       }
-      
+
       // Save to Firestore
       const bountyRef = this.bountiesRef.doc(bountyIdStr);
       await bountyRef.set(bountyData);

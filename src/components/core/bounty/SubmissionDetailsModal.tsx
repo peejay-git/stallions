@@ -25,7 +25,7 @@ export default function SubmissionDetailsModal({
   rankingsApproved = false,
   otherSubmissions = [],
 }: SubmissionDetailsModalProps) {
-  const [tab, setTab] = useState<'details' | 'links'>('details');
+  const [tab, setTab] = useState<'details' | 'link'>('details');
 
   if (!isOpen) return null;
   if (!submission) return null;
@@ -119,7 +119,9 @@ export default function SubmissionDetailsModal({
                   )}
                 </span>
                 {submission.walletAddress && (
-                  <span className="text-gray-400 bg-gray-700/40 px-2 py-0.5 rounded text-xs ml-2">Wallet Connected</span>
+                  <span className="text-gray-400 bg-gray-700/40 px-2 py-0.5 rounded text-xs ml-2">
+                    Wallet Connected
+                  </span>
                 )}
               </div>
             </div>
@@ -151,16 +153,16 @@ export default function SubmissionDetailsModal({
             <div className="prose prose-invert max-w-none">
               {getContentToShow()}
             </div>
-            {submission.links && (
-              <div className="mt-4">
-                <span className="block text-gray-400 text-sm mb-1">Submission Link</span>
+            {submission.link && (
+              <div>
+                <h3 className="text-blue-300 font-medium mb-2">Link</h3>
                 <a
-                  href={submission.links}
+                  href={submission.link}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-primary underline break-all hover:text-white transition-colors"
+                  className="text-blue-400 hover:underline"
                 >
-                  {submission.links}
+                  {submission.link}
                 </a>
               </div>
             )}

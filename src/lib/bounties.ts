@@ -281,8 +281,9 @@ export async function submitBounty({
     bountyId,
     userId,
     ...submissionData,
-    submittedAt: serverTimestamp(),
     status: 'PENDING',
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
   });
 
   return docRef.id;

@@ -19,6 +19,7 @@ npm run init-firebase
 ```
 
 This will create the following collections with sample data:
+
 - `users`
 - `bounties`
 - `submissions`
@@ -56,6 +57,7 @@ npm run init-firebase-auth
 ```
 
 This will:
+
 1. Create sample users in Firebase Authentication
 2. Create corresponding user documents in Firestore
 3. Initialize bounties and submissions collections
@@ -120,6 +122,6 @@ submissions (collection)
       ├── userId: string (for app submissions) OR applicantAddress: string (for blockchain submissions)
       ├── content: string (submission details)
       ├── status: string (e.g., "PENDING")
-      ├── submittedAt: timestamp OR createdAt: timestamp
+      ├── createdAt: timestamp
       └── updatedAt: timestamp (optional)
-``` 
+```

@@ -1,11 +1,11 @@
 'use client';
 
 import { Bounty } from '@/types/bounty';
+import { SubmissionData } from '@/types/submission';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { FiAward, FiClock, FiDollarSign, FiTag, FiUser } from 'react-icons/fi';
-import { SubmissionData, SubmissionData } from '@/types/submission';
 
 export default function BountyWinnersPage() {
   const [completedBounties, setCompletedBounties] = useState<Bounty[]>([]);
@@ -50,25 +50,35 @@ export default function BountyWinnersPage() {
     fetchCompletedBounties();
   }, []);
 
-  // Extract winners from completed bounties
-  const extractWinners = (bounty: Bounty): SubmissionData[] => {
-    return bounty.distribution.map((dist) => {
-      // Find the submission with this ranking (position)
-      const winner = submissions.find(
-        (s: SubmissionData) =>
-          s.bountyId === bounty.id.toString() && s.ranking === dist.position
-      );
+  // Extract winners from completed bounties based on distribution data
+  const extractWinners = (bounty: Bounty, allSubmissions: SubmissionData[]): SubmissionData[] => {
+    if (!bounty.distribution || !Array.isArray(bounty.distribution)) {
+      console.error('Missing distribution data for bounty:', bounty.id);
+      return [];
+    }
 
-      return {
+    return bounty.distribution.map((dist) => {
+      // For each position in the distribution, create a SubmissionData object
+      // Try to match with existing submission data if possible based on bountyId
+      const matchingSubmission = allSubmissions.find(
+        (s) => s.bountyId === bounty.id.toString()
+      );
+      
+      // Common winner data regardless if we find a submission or not
+      const winnerData = {
+        id: matchingSubmission?.id || `winner-${bounty.id}-${dist.position}`,
+        bountyId: bounty.id.toString(),
+        applicantAddress: matchingSubmission?.applicantAddress || `Winner ${dist.position}`,
+        userId: matchingSubmission?.userId || null,
+        link: matchingSubmission?.link || '',
+        status: matchingSubmission?.status || 'ACCEPTED',
+        // Add additional properties for UI display that aren't in the SubmissionData type
         position: dist.position,
-        applicantAddress:
-          winner?.applicant || `winner_${dist.position}_address`,
         percentage: dist.percentage,
         amount: calculateRewardAmount(bounty.reward.amount, dist.percentage),
-        asset: bounty.reward.asset,
-        bountyId: bounty.id,
-        bountyTitle: bounty.title,
       };
+      
+      return winnerData as SubmissionData;
     });
   };
 
@@ -80,7 +90,9 @@ export default function BountyWinnersPage() {
     return ((total * percentage) / 100).toString();
   };
 
-  const allWinners = completedBounties.flatMap(extractWinners);
+  const allWinners = completedBounties.flatMap((bounty) =>
+    extractWinners(bounty, submissions)
+  );
 
   const positionToMedal = (position: number) => {
     switch (position) {

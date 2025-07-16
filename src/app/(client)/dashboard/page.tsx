@@ -4,7 +4,7 @@ import { SponsorWalletPrompt, TalentWalletConnector } from '@/components';
 import { assetSymbols } from '@/components/core/bounty/BountyCard';
 import { useProtectedRoute } from '@/hooks/useProtectedRoute';
 import { useWallet } from '@/hooks/useWallet';
-import { getBountiesByOwner } from '@/lib/bounties';
+import { FirebaseBounty, getBountiesByOwner } from '@/lib/bounties';
 import useAuthStore from '@/lib/stores/auth.store';
 import { AuthState } from '@/types/auth.types';
 import { BountyStatus } from '@/types/bounty';
@@ -15,7 +15,7 @@ import { useEffect, useState } from 'react';
 export default function DashboardPage() {
   useProtectedRoute();
   const router = useRouter();
-  const { isConnected, publicKey, connect } = useWallet();
+  const { isConnected, publicKey } = useWallet();
   const [activeTab, setActiveTab] = useState<'created' | 'submissions'>(
     'created'
   );
@@ -27,8 +27,10 @@ export default function DashboardPage() {
   );
   const [userSubmissions, setUserSubmissions] = useState<any[]>([]);
   const [loadingSubmissions, setLoadingSubmissions] = useState(false);
-  // TODO: Convert all to USDC
-  const [totalSpentOrEarned, setTotalSpentOrEarned] = useState(0);
+  // Track totals by token
+  const [totalSpentOrEarned, setTotalSpentOrEarned] = useState<
+    Record<string, number>
+  >({});
 
   // Determine if user is a sponsor or talent
   const isSponsor = user?.role === 'sponsor';
@@ -43,7 +45,7 @@ export default function DashboardPage() {
         setLoading(true);
 
         // Try to fetch bounties using both user.uid and publicKey
-        let data: any[] = [];
+        let data: FirebaseBounty[] = [];
 
         // For sponsors, we need both user.uid and wallet
         if (isSponsor) {
@@ -62,23 +64,43 @@ export default function DashboardPage() {
             });
           }
 
-          // Calculate total spent or earned
-          const totalSpentOrEarned = data.reduce((acc, bounty) => {
-            const bountyAmount = Number(bounty.reward.amount);
-            return acc + bountyAmount;
-          }, 0);
-          setTotalSpentOrEarned(totalSpentOrEarned);
+          // Calculate total spent or earned per token
+          const totalByToken = data.reduce((acc, bounty) => {
+            const asset = bounty.reward?.asset || 'USDC';
+            const bountyAmount = Number(bounty.reward?.amount || 0);
+
+            // Initialize if the token doesn't exist yet in our accumulator
+            if (!acc[asset]) {
+              acc[asset] = 0;
+            }
+
+            // Add this bounty's amount to the token total
+            acc[asset] += bountyAmount;
+            return acc;
+          }, {} as Record<string, number>);
+
+          setTotalSpentOrEarned(totalByToken);
         } else {
           // For talents, we can fetch by user.uid
           const uidBounties = await getBountiesByOwner(user.uid);
           data = [...uidBounties];
 
-          // Calculate total spent or earned
-          const totalSpentOrEarned = data.reduce((acc, bounty) => {
-            const bountyAmount = Number(bounty.reward.amount);
-            return acc + bountyAmount;
-          }, 0);
-          setTotalSpentOrEarned(totalSpentOrEarned);
+          // Calculate total spent or earned per token
+          const totalByToken = data.reduce((acc, bounty) => {
+            const asset = bounty.reward?.asset || 'USDC';
+            const bountyAmount = Number(bounty.reward?.amount || 0);
+
+            // Initialize if the token doesn't exist yet in our accumulator
+            if (!acc[asset]) {
+              acc[asset] = 0;
+            }
+
+            // Add this bounty's amount to the token total
+            acc[asset] += bountyAmount;
+            return acc;
+          }, {} as Record<string, number>);
+
+          setTotalSpentOrEarned(totalByToken);
         }
 
         // Ensure each bounty has required fields
@@ -359,9 +381,24 @@ export default function DashboardPage() {
               <p className="text-gray-300 text-sm mb-1">
                 {isSponsor ? 'Total Spent' : 'Total Earned'}
               </p>
-              <p className="text-2xl font-semibold text-white">
-                ${totalSpentOrEarned} USDC
-              </p>
+              <div className="text-2xl font-semibold text-white">
+                {Object.keys(totalSpentOrEarned).length > 0 ? (
+                  Object.entries(totalSpentOrEarned).map(
+                    ([asset, amount], index) => {
+                      // Determine if token has a special symbol
+                      const symbol = assetSymbols[asset] || '';
+                      return (
+                        <div key={asset} className={index > 0 ? 'mt-2' : ''}>
+                          {symbol}
+                          {amount.toFixed(2)} {asset}
+                        </div>
+                      );
+                    }
+                  )
+                ) : (
+                  <div>0.00 USDC</div>
+                )}
+              </div>
             </div>
           </div>
         </div>

@@ -44,9 +44,6 @@ export async function GET(request: NextRequest) {
       return {
         ...data,
         id: doc.id,
-        submittedAt: data.submittedAt?.toDate
-          ? data.submittedAt.toDate()
-          : null,
       };
     });
 

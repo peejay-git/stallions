@@ -2,6 +2,7 @@
 
 import { RichTextEditor } from '@/components';
 import { getCurrentNetwork } from '@/config/networks';
+import { CATEGORY_OPTIONS, SKILLS_OPTIONS } from '@/constants/bounty';
 import { useProtectedRoute } from '@/hooks/useProtectedRoute';
 import { useWallet } from '@/hooks/useWallet';
 import {
@@ -15,44 +16,20 @@ import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 
-const categoriesOptions = [
-  'Development',
-  'Design',
-  'Content',
-  'Marketing',
-  'Community',
-  'Translation',
-  'Research',
-  'Other',
-];
-
-const skillsOptions = [
-  'JavaScript',
-  'React',
-  'Node.js',
-  'Solidity',
-  'Python',
-  'UI/UX',
-  'Graphic Design',
-  'Writing',
-  'Marketing',
-  'Community Management',
-  'Translation',
-  'Research',
-];
+// Use imported constants for categories and skills
+const categoriesOptions = CATEGORY_OPTIONS;
+const skillsOptions = SKILLS_OPTIONS;
 
 export default function EditBountyPage() {
   useProtectedRoute();
   const params = useParams<{ id: string }>();
   const router = useRouter();
   const { user, loading: authLoading } = useAuthStore();
-  const { publicKey, connect, isConnected } = useWallet();
-  const [userId, setUserId] = useState<string | null>(null);
+  const { publicKey, connect } = useWallet();
   const [bounty, setBounty] = useState<FirebaseBounty | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [blockchainUpdateSkipped, setBlockchainUpdateSkipped] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -72,7 +49,6 @@ export default function EditBountyPage() {
 
       // TODO: If no wallet, allow user to connect their wallet
       if (user && user.walletInfo?.publicKey) {
-        setUserId(user.uid);
         try {
           // Fetch bounty data
           const id = params.id;
@@ -183,7 +159,6 @@ export default function EditBountyPage() {
     e.preventDefault();
     setSubmitting(true);
     setError(null);
-    setBlockchainUpdateSkipped(false);
 
     try {
       // Validate form data
@@ -211,32 +186,20 @@ export default function EditBountyPage() {
       // Check if we need to do blockchain updates (if bounty has a numeric ID indicating it's on blockchain)
       if (bounty && !isNaN(Number(bounty.id))) {
         if (!publicKey) {
-          // Ask user if they want to connect wallet for blockchain updates
-          const shouldConnectWallet = window.confirm(
-            'This bounty exists on the blockchain. Would you like to connect your wallet to update it on-chain as well?'
-          );
-
-          if (shouldConnectWallet) {
-            try {
-              // Connect wallet
-              await connect();
-              // If connection was successful, we should now have a publicKey
-              if (!publicKey) {
-                setBlockchainUpdateSkipped(true);
-                toast.error(
-                  'Failed to connect wallet. Continuing with off-chain update only.'
-                );
-              }
-            } catch (error) {
-              console.error('Error connecting wallet:', error);
-              setBlockchainUpdateSkipped(true);
+          try {
+            // Connect wallet
+            await connect();
+            // If connection was successful, we should now have a publicKey
+            if (!publicKey) {
               toast.error(
                 'Failed to connect wallet. Continuing with off-chain update only.'
               );
             }
-          } else {
-            setBlockchainUpdateSkipped(true);
-            toast('Continuing with off-chain update only.', { icon: 'ℹ️' });
+          } catch (error) {
+            console.error('Error connecting wallet:', error);
+            toast.error(
+              'Failed to connect wallet. Continuing with off-chain update only.'
+            );
           }
         }
       }
@@ -245,11 +208,6 @@ export default function EditBountyPage() {
       await updateBounty(params.id, updatedBounty, publicKey || undefined);
 
       if (bounty && !isNaN(Number(bounty.id)) && publicKey) {
-        toast.success('Bounty updated successfully on-chain and off-chain!');
-      } else if (bounty && !isNaN(Number(bounty.id)) && !publicKey) {
-        toast.success('Bounty updated off-chain only.');
-        setBlockchainUpdateSkipped(true);
-      } else {
         toast.success('Bounty updated successfully!');
       }
 

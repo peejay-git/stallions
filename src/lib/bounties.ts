@@ -43,10 +43,7 @@ interface SubmitBountyInput {
 interface FilterOptions {
   statusFilters?: ('OPEN' | 'CLOSE')[];
   categoryFilters?: string[];
-  rewardRange?: {
-    min?: number;
-    max?: number;
-  };
+  assetFilters?: string[]; // Filter by reward asset (e.g., 'XLM', 'USDC')
   skills?: string[]; // User must match at least one
 }
 
@@ -176,66 +173,133 @@ export async function getBountiesByOwner(
 }
 
 export async function getFilteredBounties(filters: FilterOptions) {
+  // If no filters are specified, just return all bounties
+  if (
+    (!filters.statusFilters || filters.statusFilters.length === 0) &&
+    (!filters.categoryFilters || filters.categoryFilters.length === 0) &&
+    (!filters.skills || filters.skills.length === 0) &&
+    (!filters.assetFilters || filters.assetFilters.length === 0)
+  ) {
+    return getAllBounties();
+  }
+
   const bountyRef = collection(db, 'bounties');
   const constraints: QueryConstraint[] = [];
 
+  let activeFilterCount = 0;
+  let inFilterApplied = false;
+
+  // Handle status filters
   if (filters.statusFilters && filters.statusFilters.length > 0) {
     const normalizedStatus = filters.statusFilters
       .slice(0, 10)
       .map((status) => status.toUpperCase());
+
     constraints.push(where('status', 'in', normalizedStatus));
+    inFilterApplied = true;
+    activeFilterCount++;
   }
 
-  if (filters.categoryFilters && filters.categoryFilters.length > 0) {
+  // Handle category filters if no other IN filter is applied
+  if (
+    filters.categoryFilters &&
+    filters.categoryFilters.length > 0 &&
+    !inFilterApplied
+  ) {
     constraints.push(
       where('category', 'in', filters.categoryFilters.slice(0, 10))
     );
+    inFilterApplied = true;
+    activeFilterCount++;
   }
 
-  if (
-    filters.rewardRange?.min !== undefined &&
-    filters.rewardRange.min !== null
-  ) {
-    constraints.push(
-      where('reward.amount', '>=', filters.rewardRange.min.toString())
-    );
-  }
-
-  if (
-    filters.rewardRange?.max !== undefined &&
-    filters.rewardRange.max !== null
-  ) {
-    constraints.push(
-      where('reward.amount', '<=', filters.rewardRange.max.toString())
-    );
-  }
-  if (filters.skills && filters.skills.length > 0) {
+  // Handle skills filter if no other IN filter is applied
+  if (filters.skills && filters.skills.length > 0 && !inFilterApplied) {
     constraints.push(
       where('skills', 'array-contains-any', filters.skills.slice(0, 10))
     );
+    activeFilterCount++;
   }
 
-  // Firestore only allows **one** of in/array-contains-any per query
-  // If you use both 'status in' and 'category in' or 'skills array-contains-any' → you'll hit an error.
+  // Handle asset filters if no other IN filter is applied
   if (
-    [filters.statusFilters, filters.categoryFilters, filters.skills].filter(
-      (f) => Array.isArray(f) && f.length > 0
-    ).length > 1
+    filters.assetFilters &&
+    filters.assetFilters.length > 0 &&
+    !inFilterApplied
   ) {
-    throw new Error(
-      'Firestore only allows one `in` or `array-contains-any` filter per query. Please narrow your filters.'
+    constraints.push(
+      where('reward.asset', 'in', filters.assetFilters.slice(0, 10))
     );
+    activeFilterCount++;
   }
 
+  // Add sorting
   constraints.push(orderBy('createdAt', 'desc'));
 
+  // Execute the query
   const q = query(bountyRef, ...constraints);
   const snapshot = await getDocs(q);
 
-  return snapshot.docs.map((doc) => ({
-    id: doc.id,
-    ...doc.data(),
-  }));
+  // Get initial results with proper typing
+  let results = snapshot.docs.map((doc) => {
+    const data = doc.data() as {
+      status?: string;
+      category?: string;
+      skills?: string[];
+      reward?: { amount?: string };
+      [key: string]: any;
+    };
+
+    return {
+      id: doc.id,
+      ...data,
+    };
+  });
+
+  // Define a type for our bounty object from Firestore
+  type BountyDocument = {
+    id: string;
+    status?: string;
+    category?: string;
+    skills?: string[];
+    reward?: { amount?: string; asset?: string };
+    [key: string]: any;
+  };
+
+  // Apply remaining filters client-side if needed
+
+  // Filter by category if it wasn't already applied in the query
+  if (
+    filters.categoryFilters &&
+    filters.categoryFilters.length > 0 &&
+    inFilterApplied
+  ) {
+    results = results.filter(
+      (bounty: BountyDocument) =>
+        bounty.category && filters.categoryFilters?.includes(bounty.category)
+    );
+  }
+
+  // Filter by skills if it wasn't already applied in the query
+  if (filters.skills && filters.skills.length > 0 && inFilterApplied) {
+    results = results.filter(
+      (bounty: BountyDocument) =>
+        bounty.skills &&
+        Array.isArray(bounty.skills) &&
+        bounty.skills.some((skill: string) => filters.skills?.includes(skill))
+    );
+  }
+
+  // Filter by asset if it wasn't already applied in the query
+  if (filters.assetFilters && filters.assetFilters.length > 0 && inFilterApplied) {
+    results = results.filter((bounty: BountyDocument) =>
+      bounty.reward?.asset &&
+      filters.assetFilters &&
+      filters.assetFilters.includes(bounty.reward.asset)
+    );
+  }
+
+  return results;
 }
 
 export async function submitBounty({

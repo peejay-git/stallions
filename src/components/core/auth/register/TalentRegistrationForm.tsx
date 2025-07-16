@@ -1,11 +1,12 @@
 'use client';
 
 import { PasswordInput } from '@/components/ui';
-import WalletConnectButton from '../WalletConnectButton';
-import React from 'react';
-import { FaGithub, FaLinkedin, FaXTwitter } from 'react-icons/fa6';
+import { SKILLS_OPTIONS } from '@/constants/bounty';
 import { AnimatePresence, motion } from 'framer-motion';
+import React from 'react';
 import { CheckmarkIcon } from 'react-hot-toast';
+import { FaGithub, FaLinkedin, FaXTwitter } from 'react-icons/fa6';
+import WalletConnectButton from '../WalletConnectButton';
 
 export type TalentFormDataType = {
   firstName: string;
@@ -35,20 +36,6 @@ interface TalentRegistrationFormProps {
   onAddSocial: () => void;
   onRemoveSocial: (index: number) => void;
 }
-
-export const defaultSkills = [
-  'Frontend',
-  'Backend',
-  'UI/UX',
-  'Smart Contract',
-  'DevOps',
-  'Product',
-  'Marketing',
-  'Community',
-  'BD',
-  'Finance',
-  'Legal',
-];
 
 const TalentRegistrationForm: React.FC<TalentRegistrationFormProps> = ({
   formData,
@@ -131,7 +118,7 @@ const TalentRegistrationForm: React.FC<TalentRegistrationFormProps> = ({
       <div>
         <p className="text-sm font-medium text-white mb-2">Skills</p>
         <div className="flex flex-wrap gap-2">
-          {defaultSkills.map((skill) => (
+          {SKILLS_OPTIONS.map((skill) => (
             <button
               key={skill}
               type="button"

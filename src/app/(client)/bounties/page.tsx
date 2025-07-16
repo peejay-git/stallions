@@ -1,35 +1,16 @@
 'use client';
 
 import { BountyCard, BountyCardSkeleton, BountyFilter } from '@/components';
-import { getAllBounties, getFilteredBounties } from '@/lib/bounties';
+import {
+  FirebaseBounty,
+  getAllBounties,
+  getFilteredBounties,
+} from '@/lib/bounties';
 import { Bounty, BountyCategory, BountyStatus } from '@/types/bounty';
 import { useEffect, useMemo, useState } from 'react';
 
-// Define a type that matches the actual shape of bounties returned from the API
-interface ApiBounty {
-  id: string;
-  title?: string;
-  description?: string;
-  category?: string;
-  skills?: string[];
-  reward?: {
-    amount: string;
-    asset: string;
-  };
-  status?: string;
-  deadline?: string;
-  owner?: string;
-  createdAt?:
-    | {
-        seconds: number;
-        nanoseconds: number;
-      }
-    | string;
-  updatedAt?: any;
-}
-
 // Convert API bounty to the format expected by BountyCard
-const adaptBounty = (apiBounty: ApiBounty): Bounty => {
+const adaptBounty = (apiBounty: FirebaseBounty): Bounty => {
   return {
     id: parseInt(apiBounty.id) || 0,
     owner: apiBounty.owner || '',
@@ -54,16 +35,11 @@ const adaptBounty = (apiBounty: ApiBounty): Bounty => {
 };
 
 export default function BountiesPage() {
-  const [bounties, setBounties] = useState<ApiBounty[]>([]);
+  const [bounties, setBounties] = useState<FirebaseBounty[]>([]);
   const [loading, setLoading] = useState(true);
-  const [statusFilters, setStatusFilters] = useState<BountyStatus[]>([
-    BountyStatus.OPEN,
-  ]);
+  const [statusFilters, setStatusFilters] = useState<BountyStatus[]>([]);
   const [categoryFilters, setCategoryFilters] = useState<BountyCategory[]>([]);
-  const [rewardRange, setRewardRange] = useState<{
-    min: number;
-    max: number | null;
-  }>({ min: 0, max: null });
+  const [assetFilters, setAssetFilters] = useState<string[]>([]);
   const [skills, setSkills] = useState<string[]>([]);
   const [sortBy, setSortBy] = useState('newest');
   const [searchTerm, setSearchTerm] = useState('');
@@ -72,7 +48,6 @@ export default function BountiesPage() {
   const [isMounted, setIsMounted] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [filter, setFilter] = useState<string | null>(null);
-  const [showCompleted, setShowCompleted] = useState(false);
   const itemsPerPage = 10; // Show 10 bounties per page
 
   // Handle window resize and initial client-side mounted state
@@ -97,13 +72,10 @@ export default function BountiesPage() {
           (status) => status as 'OPEN' | 'CLOSE'
         ),
         categoryFilters,
-        rewardRange: {
-          min: rewardRange.min,
-          max: rewardRange.max ?? undefined,
-        },
+        assetFilters,
         skills,
       });
-      setBounties(filtered);
+      setBounties(filtered as FirebaseBounty[]);
     } catch (error) {
       console.error('Error applying filters:', error);
     } finally {
@@ -114,13 +86,13 @@ export default function BountiesPage() {
   const onReset = () => {
     setLoading(true);
     getAllBounties()
-      .then(setBounties)
+      .then((bounties) => setBounties(bounties as FirebaseBounty[]))
       .finally(() => setLoading(false));
   };
 
   useEffect(() => {
     getAllBounties()
-      .then(setBounties)
+      .then((bounties) => setBounties(bounties as FirebaseBounty[]))
       .finally(() => setLoading(false));
   }, []);
 
@@ -244,11 +216,11 @@ export default function BountiesPage() {
               <BountyFilter
                 statusFilters={statusFilters}
                 categoryFilters={categoryFilters}
-                rewardRange={rewardRange}
+                assetFilters={assetFilters}
                 skills={skills}
                 setStatusFilters={setStatusFilters}
                 setCategoryFilters={setCategoryFilters}
-                setRewardRange={setRewardRange}
+                setAssetFilters={setAssetFilters}
                 setSkills={setSkills}
                 onApply={() => {
                   applyFilters();

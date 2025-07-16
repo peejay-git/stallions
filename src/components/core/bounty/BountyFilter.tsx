@@ -1,6 +1,7 @@
 'use client';
 
 import { BountyCategory, BountyStatus } from '@/types/bounty';
+import { SKILLS_OPTIONS } from '@/constants/bounty';
 import { motion } from 'framer-motion';
 import { useState } from 'react';
 import {
@@ -11,17 +12,15 @@ import {
   FiTag,
 } from 'react-icons/fi';
 
-type Props = {
+interface Props {
   statusFilters: BountyStatus[];
   categoryFilters: BountyCategory[];
-  rewardRange: { min: number; max: number | null };
+  assetFilters: string[];
   skills: string[];
-  setStatusFilters: React.Dispatch<React.SetStateAction<BountyStatus[]>>;
-  setCategoryFilters: React.Dispatch<React.SetStateAction<BountyCategory[]>>;
-  setRewardRange: React.Dispatch<
-    React.SetStateAction<{ min: number; max: number | null }>
-  >;
-  setSkills: React.Dispatch<React.SetStateAction<string[]>>;
+  setStatusFilters: (filters: BountyStatus[]) => void;
+  setCategoryFilters: (filters: BountyCategory[]) => void;
+  setAssetFilters: (assets: string[]) => void;
+  setSkills: (skills: string[]) => void;
   onApply: () => void;
   onReset: () => void;
 };
@@ -29,11 +28,11 @@ type Props = {
 export default function BountyFilter({
   statusFilters,
   categoryFilters,
-  rewardRange,
+  assetFilters,
   skills,
   setStatusFilters,
   setCategoryFilters,
-  setRewardRange,
+  setAssetFilters,
   setSkills,
   onApply,
   onReset,
@@ -60,9 +59,10 @@ export default function BountyFilter({
 
   // Reset all filters
   const resetFilters = () => {
-    setStatusFilters([BountyStatus.OPEN]);
+    setStatusFilters([]);
     setCategoryFilters([]);
-    setRewardRange({ min: 0, max: null });
+    setAssetFilters([]);
+    setSkills([]);
     onReset();
   };
 
@@ -90,11 +90,32 @@ export default function BountyFilter({
             ? 'bg-green-900/40 text-green-300 border-green-700/30'
             : 'bg-white/5 text-gray-400 border-transparent hover:bg-white/10')
         );
+      case BountyStatus.IN_PROGRESS:
+        return (
+          baseStyle +
+          (isActive
+            ? 'bg-yellow-900/40 text-yellow-300 border-yellow-700/30'
+            : 'bg-white/5 text-gray-400 border-transparent hover:bg-white/10')
+        );
+      case BountyStatus.REVIEW:
+        return (
+          baseStyle +
+          (isActive
+            ? 'bg-indigo-900/40 text-indigo-300 border-indigo-700/30'
+            : 'bg-white/5 text-gray-400 border-transparent hover:bg-white/10')
+        );
       case BountyStatus.COMPLETED:
         return (
           baseStyle +
           (isActive
             ? 'bg-purple-900/40 text-purple-300 border-purple-700/30'
+            : 'bg-white/5 text-gray-400 border-transparent hover:bg-white/10')
+        );
+      case BountyStatus.CANCELLED:
+        return (
+          baseStyle +
+          (isActive
+            ? 'bg-red-900/40 text-red-300 border-red-700/30'
             : 'bg-white/5 text-gray-400 border-transparent hover:bg-white/10')
         );
       default:
@@ -112,15 +133,27 @@ export default function BountyFilter({
     switch (status) {
       case BountyStatus.OPEN:
         return 'Active';
+      case BountyStatus.IN_PROGRESS:
+        return 'In Progress';
+      case BountyStatus.REVIEW:
+        return 'In Review';
       case BountyStatus.COMPLETED:
         return 'Completed';
+      case BountyStatus.CANCELLED:
+        return 'Cancelled';
       default:
         return status;
     }
   };
 
   // Only display selected status filters for UI simplicity
-  const mainStatusFilters = [BountyStatus.OPEN, BountyStatus.COMPLETED];
+  const mainStatusFilters = [
+    BountyStatus.OPEN, 
+    BountyStatus.IN_PROGRESS, 
+    BountyStatus.REVIEW, 
+    BountyStatus.COMPLETED, 
+    BountyStatus.CANCELLED
+  ];
 
   return (
     <div className="backdrop-blur-xl bg-white/10 border border-white/20 rounded-xl overflow-hidden text-white">
@@ -215,19 +248,21 @@ export default function BountyFilter({
           </motion.div>
         </div>
 
-        {/* Reward range filter */}
+        {/* Asset filter */}
         <div className="mb-4">
           <button
             className="w-full flex items-center justify-between py-2 px-1 text-left focus:outline-none"
-            onClick={() => setExpanded(expanded === 'reward' ? null : 'reward')}
+            onClick={() =>
+              setExpanded(expanded === 'asset' ? null : 'asset')
+            }
           >
             <span className="font-medium flex items-center">
               <FiDollarSign className="mr-2 text-white/70" />
-              Reward Range
+              Reward Asset
             </span>
             <svg
               className={`w-5 h-5 transition-transform duration-200 ${
-                expanded === 'reward' ? 'transform rotate-180' : ''
+                expanded === 'asset' ? 'transform rotate-180' : ''
               }`}
               fill="none"
               stroke="currentColor"
@@ -243,58 +278,96 @@ export default function BountyFilter({
           </button>
 
           <motion.div
-            initial={expanded === 'reward' ? 'open' : 'closed'}
-            animate={expanded === 'reward' ? 'open' : 'closed'}
+            initial={expanded === 'asset' ? 'open' : 'closed'}
+            animate={expanded === 'asset' ? 'open' : 'closed'}
             variants={{
-              open: { height: 'auto', opacity: 1, marginTop: 8 },
+              open: { height: 'auto', opacity: 1, marginTop: 16 },
               closed: { height: 0, opacity: 0, marginTop: 0 },
             }}
-            transition={{ duration: 0.3 }}
+            transition={{ duration: 0.2 }}
             className="overflow-hidden"
           >
-            <div className="space-y-4 pl-7 pt-1">
-              <div>
-                <label
-                  htmlFor="min-reward"
-                  className="block text-sm text-gray-300 mb-1"
-                >
-                  Min Reward ($)
+            <div className="space-y-3">
+              {/* Common assets */}
+              {['XLM', 'USDC', 'EURC'].map((asset) => (
+                <div key={asset} className="flex items-center">
+                  <input
+                    id={`asset-${asset}`}
+                    type="checkbox"
+                    className="w-4 h-4 rounded bg-black/30 border-white/20 text-primary-600 focus:ring-primary-500"
+                    checked={assetFilters.includes(asset)}
+                    onChange={() => {
+                      if (assetFilters.includes(asset)) {
+                        setAssetFilters(assetFilters.filter(a => a !== asset));
+                      } else {
+                        setAssetFilters([...assetFilters, asset]);
+                      }
+                    }}
+                  />
+                  <label
+                    htmlFor={`asset-${asset}`}
+                    className="ml-2 text-sm font-medium text-gray-200"
+                  >
+                    {asset}
+                  </label>
+                </div>
+              ))}
+              
+              {/* Custom asset input */}
+              <div className="pt-2">
+                <label className="block mb-1 text-sm font-medium text-gray-200">
+                  Other Asset
                 </label>
-                <input
-                  type="number"
-                  id="min-reward"
-                  min="0"
-                  value={rewardRange.min}
-                  onChange={(e) =>
-                    setRewardRange({
-                      ...rewardRange,
-                      min: Number(e.target.value),
-                    })
-                  }
-                  className="input py-1.5 text-sm"
-                />
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    id="custom-asset"
+                    placeholder="Enter asset code"
+                    className="bg-black/30 border border-white/20 text-white rounded-lg flex-grow p-2 text-sm focus:ring-primary-600 focus:border-primary-600"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && (e.target as HTMLInputElement).value) {
+                        const customAsset = (e.target as HTMLInputElement).value.toUpperCase();
+                        if (!assetFilters.includes(customAsset)) {
+                          setAssetFilters([...assetFilters, customAsset]);
+                          (e.target as HTMLInputElement).value = '';
+                        }
+                      }
+                    }}
+                  />
+                  <button
+                    className="bg-white/10 hover:bg-white/20 text-white px-3 rounded-lg"
+                    onClick={() => {
+                      const input = document.getElementById('custom-asset') as HTMLInputElement;
+                      if (input.value) {
+                        const customAsset = input.value.toUpperCase();
+                        if (!assetFilters.includes(customAsset)) {
+                          setAssetFilters([...assetFilters, customAsset]);
+                          input.value = '';
+                        }
+                      }
+                    }}
+                  >
+                    Add
+                  </button>
+                </div>
               </div>
-              <div>
-                <label
-                  htmlFor="max-reward"
-                  className="block text-sm text-gray-300 mb-1"
-                >
-                  Max Reward ($)
-                </label>
-                <input
-                  type="number"
-                  id="max-reward"
-                  min="0"
-                  value={rewardRange.max || ''}
-                  onChange={(e) => {
-                    const value = e.target.value
-                      ? Number(e.target.value)
-                      : null;
-                    setRewardRange({ ...rewardRange, max: value });
-                  }}
-                  className="input py-1.5 text-sm"
-                />
-              </div>
+              
+              {/* Selected custom assets */}
+              {assetFilters.length > 0 && (
+                <div className="flex flex-wrap gap-2 pt-2">
+                  {assetFilters.map(asset => (
+                    <div key={asset} className="bg-white/10 text-white text-xs px-2 py-1 rounded-md flex items-center gap-1">
+                      {asset}
+                      <button 
+                        onClick={() => setAssetFilters(assetFilters.filter(a => a !== asset))}
+                        className="text-white/70 hover:text-white"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </motion.div>
         </div>
@@ -343,15 +416,7 @@ export default function BountyFilter({
                 className="input py-1.5 text-sm mb-3 w-full"
               />
               <div className="flex flex-wrap gap-2">
-                {[
-                  'Rust',
-                  'JavaScript',
-                  'React',
-                  'Soroban',
-                  'Smart Contracts',
-                  'Solidity',
-                  'Design',
-                ].map((skill) => {
+                {SKILLS_OPTIONS.map((skill) => {
                   const isSelected = skills.includes(skill);
                   return (
                     <motion.span

@@ -4,6 +4,7 @@ import { RichTextEditor } from '@/components';
 import { getCurrentNetwork } from '@/config/networks';
 import { useWallet } from '@/hooks/useWallet';
 import useAuthStore from '@/lib/stores/auth.store';
+import { SKILLS_OPTIONS } from '@/constants/bounty';
 import { Distribution } from '@/types/bounty';
 import { createBountyOnChain } from '@/utils/blockchain';
 import { DEFAULT_BOUNTY_DESCRIPTION } from '@/utils/constants/bountyTemplates';
@@ -48,25 +49,8 @@ export default function CreateBountyForm() {
     setFormData((prev) => ({ ...prev, distribution: newDistribution }));
   }, [formData.winnerCount]);
 
-  // Available skills for skill selection
-  const skillsOptions = [
-    'JavaScript',
-    'React',
-    'Node.js',
-    'Solidity',
-    'Blockchain',
-    'Smart Contracts',
-    'Python',
-    'UI/UX',
-    'Graphic Design',
-    'Writing',
-    'Marketing',
-    'Community Management',
-    'Translation',
-    'Research',
-    'Rust',
-    'Stellar',
-  ];
+  // Use imported skills options
+  const skillsOptions = SKILLS_OPTIONS;
 
   // Handle rich text editor content changes
   const handleQuillChange = (value: string) => {

@@ -127,7 +127,7 @@ export default function DashboardPage() {
   useEffect(() => {
     const fetchUserSubmissions = async () => {
       try {
-        if (!user?.uid && !publicKey) return;
+        if (!user?.uid && !user?.walletInfo?.address) return;
 
         setLoadingSubmissions(true);
 
@@ -136,8 +136,8 @@ export default function DashboardPage() {
         if (user?.uid) {
           queryParams.append('userId', user.uid);
         }
-        if (publicKey) {
-          queryParams.append('walletAddress', publicKey);
+        if (user?.walletInfo?.address) {
+          queryParams.append('walletAddress', user.walletInfo.address);
         }
 
         // Fetch submissions from API
@@ -162,7 +162,7 @@ export default function DashboardPage() {
     if (isConnected) {
       fetchUserSubmissions();
     }
-  }, [user?.uid, publicKey, isConnected]);
+  }, [user?.uid, user?.walletInfo?.address, isConnected]);
 
   // Format date to be more readable
   const formatDate = (dateString: string) => {
@@ -274,7 +274,8 @@ export default function DashboardPage() {
                   Account Overview
                 </h2>
                 <p className="text-gray-300 truncate">
-                  {publicKey?.slice(0, 8)}...{publicKey?.slice(-8)}
+                  {user?.walletInfo?.address?.slice(0, 8)}...
+                  {user?.walletInfo?.address?.slice(-8)}
                 </p>
               </div>
               <div className="flex gap-3">
@@ -381,7 +382,7 @@ export default function DashboardPage() {
               <p className="text-gray-300 text-sm mb-1">
                 {isSponsor ? 'Total Spent' : 'Total Earned'}
               </p>
-              <div className="text-2xl font-semibold text-white">
+              <div className="flex flex-col gap-2 text-2xl font-semibold text-white">
                 {Object.keys(totalSpentOrEarned).length > 0 ? (
                   Object.entries(totalSpentOrEarned).map(
                     ([asset, amount], index) => {

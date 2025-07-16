@@ -4,10 +4,12 @@ import { RichTextEditor } from '@/components';
 import { getCurrentNetwork } from '@/config/networks';
 import { useWallet } from '@/hooks/useWallet';
 import useAuthStore from '@/lib/stores/auth.store';
-import { SKILLS_OPTIONS } from '@/constants/bounty';
 import { Distribution } from '@/types/bounty';
 import { createBountyOnChain } from '@/utils/blockchain';
-import { DEFAULT_BOUNTY_DESCRIPTION } from '@/utils/constants/bountyTemplates';
+import {
+  DEFAULT_BOUNTY_DESCRIPTION,
+  SKILLS_OPTIONS,
+} from '@/utils/constants/bounty';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
@@ -320,7 +322,8 @@ export default function CreateBountyForm() {
           <div>
             <label className="block text-white mb-2">Description</label>
             <div className="text-xs text-gray-400 mb-1">
-              You can use or edit the template below to help structure your bounty description.
+              You can use or edit the template below to help structure your
+              bounty description.
             </div>
             <RichTextEditor
               value={formData.description}

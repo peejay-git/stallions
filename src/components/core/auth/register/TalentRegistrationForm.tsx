@@ -1,7 +1,7 @@
 'use client';
 
 import { PasswordInput } from '@/components/ui';
-import { SKILLS_OPTIONS } from '@/constants/bounty';
+import { SKILLS_OPTIONS } from '@/utils/constants/bounty';
 import { AnimatePresence, motion } from 'framer-motion';
 import React from 'react';
 import { CheckmarkIcon } from 'react-hot-toast';

@@ -1,3 +1,4 @@
+import { AddressLink } from '@/components/shared';
 import { Dialog } from '@/components/ui';
 import { Submission } from '@/types/bounty';
 import { FiX } from 'react-icons/fi';
@@ -60,10 +61,7 @@ export default function SubmissionDetailsModal({
               <p className="text-gray-400 text-sm mb-1">Applicant</p>
               <div className="flex items-center gap-2">
                 <span className="text-white">
-                  {submission.applicant.substring(0, 8)}...
-                  {submission.applicant.substring(
-                    submission.applicant.length - 8
-                  )}
+                  <AddressLink address={submission.applicant} />
                 </span>
                 {submission.walletAddress && (
                   <span className="text-gray-400 bg-gray-700/40 px-2 py-0.5 rounded text-xs ml-2">

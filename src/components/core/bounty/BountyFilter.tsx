@@ -1,7 +1,7 @@
 'use client';
 
 import { BountyCategory, BountyStatus } from '@/types/bounty';
-import { SKILLS_OPTIONS } from '@/constants/bounty';
+import { SKILLS_OPTIONS } from '@/utils/constants/bounty';
 import { motion } from 'framer-motion';
 import { useState } from 'react';
 import {
@@ -23,7 +23,7 @@ interface Props {
   setSkills: (skills: string[]) => void;
   onApply: () => void;
   onReset: () => void;
-};
+}
 
 export default function BountyFilter({
   statusFilters,
@@ -148,11 +148,11 @@ export default function BountyFilter({
 
   // Only display selected status filters for UI simplicity
   const mainStatusFilters = [
-    BountyStatus.OPEN, 
-    BountyStatus.IN_PROGRESS, 
-    BountyStatus.REVIEW, 
-    BountyStatus.COMPLETED, 
-    BountyStatus.CANCELLED
+    BountyStatus.OPEN,
+    BountyStatus.IN_PROGRESS,
+    BountyStatus.REVIEW,
+    BountyStatus.COMPLETED,
+    BountyStatus.CANCELLED,
   ];
 
   return (
@@ -252,9 +252,7 @@ export default function BountyFilter({
         <div className="mb-4">
           <button
             className="w-full flex items-center justify-between py-2 px-1 text-left focus:outline-none"
-            onClick={() =>
-              setExpanded(expanded === 'asset' ? null : 'asset')
-            }
+            onClick={() => setExpanded(expanded === 'asset' ? null : 'asset')}
           >
             <span className="font-medium flex items-center">
               <FiDollarSign className="mr-2 text-white/70" />
@@ -298,7 +296,9 @@ export default function BountyFilter({
                     checked={assetFilters.includes(asset)}
                     onChange={() => {
                       if (assetFilters.includes(asset)) {
-                        setAssetFilters(assetFilters.filter(a => a !== asset));
+                        setAssetFilters(
+                          assetFilters.filter((a) => a !== asset)
+                        );
                       } else {
                         setAssetFilters([...assetFilters, asset]);
                       }
@@ -312,7 +312,7 @@ export default function BountyFilter({
                   </label>
                 </div>
               ))}
-              
+
               {/* Custom asset input */}
               <div className="pt-2">
                 <label className="block mb-1 text-sm font-medium text-gray-200">
@@ -325,8 +325,13 @@ export default function BountyFilter({
                     placeholder="Enter asset code"
                     className="bg-black/30 border border-white/20 text-white rounded-lg flex-grow p-2 text-sm focus:ring-primary-600 focus:border-primary-600"
                     onKeyDown={(e) => {
-                      if (e.key === 'Enter' && (e.target as HTMLInputElement).value) {
-                        const customAsset = (e.target as HTMLInputElement).value.toUpperCase();
+                      if (
+                        e.key === 'Enter' &&
+                        (e.target as HTMLInputElement).value
+                      ) {
+                        const customAsset = (
+                          e.target as HTMLInputElement
+                        ).value.toUpperCase();
                         if (!assetFilters.includes(customAsset)) {
                           setAssetFilters([...assetFilters, customAsset]);
                           (e.target as HTMLInputElement).value = '';
@@ -337,7 +342,9 @@ export default function BountyFilter({
                   <button
                     className="bg-white/10 hover:bg-white/20 text-white px-3 rounded-lg"
                     onClick={() => {
-                      const input = document.getElementById('custom-asset') as HTMLInputElement;
+                      const input = document.getElementById(
+                        'custom-asset'
+                      ) as HTMLInputElement;
                       if (input.value) {
                         const customAsset = input.value.toUpperCase();
                         if (!assetFilters.includes(customAsset)) {
@@ -351,15 +358,22 @@ export default function BountyFilter({
                   </button>
                 </div>
               </div>
-              
+
               {/* Selected custom assets */}
               {assetFilters.length > 0 && (
                 <div className="flex flex-wrap gap-2 pt-2">
-                  {assetFilters.map(asset => (
-                    <div key={asset} className="bg-white/10 text-white text-xs px-2 py-1 rounded-md flex items-center gap-1">
+                  {assetFilters.map((asset) => (
+                    <div
+                      key={asset}
+                      className="bg-white/10 text-white text-xs px-2 py-1 rounded-md flex items-center gap-1"
+                    >
                       {asset}
-                      <button 
-                        onClick={() => setAssetFilters(assetFilters.filter(a => a !== asset))}
+                      <button
+                        onClick={() =>
+                          setAssetFilters(
+                            assetFilters.filter((a) => a !== asset)
+                          )
+                        }
                         className="text-white/70 hover:text-white"
                       >
                         ×

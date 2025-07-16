@@ -2,7 +2,6 @@
 
 import { RichTextEditor } from '@/components';
 import { getCurrentNetwork } from '@/config/networks';
-import { CATEGORY_OPTIONS, SKILLS_OPTIONS } from '@/constants/bounty';
 import { useProtectedRoute } from '@/hooks/useProtectedRoute';
 import { useWallet } from '@/hooks/useWallet';
 import {
@@ -12,6 +11,7 @@ import {
   updateBounty,
 } from '@/lib/bounties';
 import useAuthStore from '@/lib/stores/auth.store';
+import { CATEGORY_OPTIONS, SKILLS_OPTIONS } from '@/utils/constants/bounty';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';

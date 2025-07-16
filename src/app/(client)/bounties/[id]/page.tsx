@@ -40,6 +40,7 @@ export default function BountyDetailPage() {
   const [rankingsApproved, setRankingsApproved] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const { publicKey, isConnected, connect } = useWallet();
+  const user = useAuthStore((state) => state.user);
   const [selectedSubmission, setSelectedSubmission] =
     useState<Submission | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -243,27 +244,15 @@ export default function BountyDetailPage() {
     const checkEditPermission = async () => {
       if (!bounty) return;
 
-      const auth = getAuth();
-      // Check if user is authenticated
-      onAuthStateChanged(auth, async (user) => {
-        if (!user) {
-          setCanEdit(false);
-          setIsOwner(false);
-          return;
-        }
+      // Check if user is the owner of this bounty
+      const isOwnerValue = bounty.owner === user?.walletInfo?.publicKey;
+      setIsOwner(isOwnerValue);
 
-        setUserId(user.uid);
+      const hasSubmissionsAlready = await bountyHasSubmissions(bounty.id);
 
-        // Check if user is the owner of this bounty
-        const isOwnerValue = bounty.owner === publicKey;
-        setIsOwner(isOwnerValue);
-
-        const hasSubmissionsAlready = await bountyHasSubmissions(bounty.id);
-
-        // User can edit if they're the owner AND there are no submissions
-        setCanEdit(isOwnerValue && !hasSubmissionsAlready);
-        setHasNoSubmissions(!hasSubmissionsAlready);
-      });
+      // User can edit if they're the owner AND there are no submissions
+      setCanEdit(isOwnerValue && !hasSubmissionsAlready);
+      setHasNoSubmissions(!hasSubmissionsAlready);
     };
 
     checkEditPermission();
@@ -330,60 +319,10 @@ export default function BountyDetailPage() {
     updateExpiredBountyStatus();
   }, [bounty, params.id, userId]);
 
-  // Handle accept submission
-  const handleAcceptSubmission = async (submissionId: string) => {
-    if (!bounty || !publicKey) return;
-
-    try {
-      const response = await fetch(
-        `/api/bounties/${params.id}/submissions/${submissionId}`,
-        {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            action: 'accept',
-            senderPublicKey: publicKey, // Use wallet public key
-          }),
-        }
-      );
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to accept submission');
-      }
-
-      // Update the local submissions list
-      setSubmissions((prev) =>
-        prev.map((sub) =>
-          sub.id === submissionId
-            ? { ...sub, status: 'ACCEPTED' as unknown as BountyStatus }
-            : sub
-        )
-      );
-
-      toast.success(
-        'Submission accepted! The bounty reward will be transferred to the winner.'
-      );
-
-      // Update bounty status to completed
-      if (bounty) {
-        setBounty({
-          ...bounty,
-          status: BountyStatus.COMPLETED,
-        });
-      }
-    } catch (err: any) {
-      console.error('Error accepting submission:', err);
-      toast.error(err.message || 'Failed to accept submission');
-    }
-  };
-
   // Handle ranking submission (1st, 2nd, 3rd place)
   const handleRankSubmission = async (
     submissionId: string,
-    ranking: 1 | 2 | 3 | null
+    ranking: number
   ) => {
     if (!bounty || !userId) return;
 
@@ -449,38 +388,6 @@ export default function BountyDetailPage() {
         return (
           <span className="px-3 py-1 bg-red-900/40 text-red-300 border border-red-700/30 rounded-full text-sm font-medium">
             Cancelled
-          </span>
-        );
-      default:
-        return null;
-    }
-  };
-
-  // Get submission status badge
-  const getSubmissionStatusBadge = (status: string) => {
-    switch (status) {
-      case 'PENDING':
-        return (
-          <span className="px-3 py-1 bg-yellow-900/40 text-yellow-300 border border-yellow-700/30 rounded-full text-sm font-medium">
-            Pending
-          </span>
-        );
-      case 'ACCEPTED':
-        return (
-          <span className="px-3 py-1 bg-green-900/40 text-green-300 border border-green-700/30 rounded-full text-sm font-medium">
-            Accepted
-          </span>
-        );
-      case 'REJECTED':
-        return (
-          <span className="px-3 py-1 bg-red-900/40 text-red-300 border border-red-700/30 rounded-full text-sm font-medium">
-            Rejected
-          </span>
-        );
-      case 'COMPLETED':
-        return (
-          <span className="px-3 py-1 bg-green-900/40 text-green-300 border border-green-700/30 rounded-full text-sm font-medium">
-            Completed
           </span>
         );
       default:
@@ -737,7 +644,9 @@ export default function BountyDetailPage() {
                   <button
                     onClick={() => {
                       if (!isConnected || !publicKey) {
-                        toast.error('Please connect your wallet to edit this bounty');
+                        toast.error(
+                          'Please connect your wallet to edit this bounty'
+                        );
                         connect();
                         return;
                       }
@@ -959,7 +868,7 @@ export default function BountyDetailPage() {
           ) : (
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-600">
-                <thead>
+                <thead className="w-full [&>tr]:w-full [&>tr>th]:w-full">
                   <tr>
                     <th className="px-4 py-3 bg-black/20 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
                       Applicant
@@ -967,42 +876,36 @@ export default function BountyDetailPage() {
                     <th className="px-4 py-3 bg-black/20 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
                       Submitted
                     </th>
-                    <th className="px-4 py-3 bg-black/20 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                      Status
-                    </th>
-                    <th className="px-4 py-3 bg-black/20 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                      {isOwner ? 'Ranking' : 'Position'}
-                    </th>
+                    {isOwner &&
+                      new Date(bounty.submissionDeadline) < new Date() && (
+                        <th className="px-4 py-3 bg-black/20 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                          Ranking
+                        </th>
+                      )}
+                    {isOwner && (
+                      <th className="px-4 py-3 bg-black/20 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                        Actions
+                      </th>
+                    )}
                   </tr>
                 </thead>
-                <tbody className="bg-black/10 divide-y divide-gray-600">
+                <tbody className="w-full [&>tr]:w-full [&>tr>td]:w-full bg-black/10 divide-y divide-gray-600">
                   {submissions.map((submission) => (
                     <tr key={submission.id}>
                       <td className="px-4 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <div className="ml-4">
-                            <div className="text-sm font-medium text-white">
-                              <AddressLink
-                                address={submission.applicant}
-                                truncateLength={8}
-                              />
-                            </div>
-                            <div className="text-sm text-gray-300">
-                              {formatDate(submission.created)}
-                            </div>
-                          </div>
-                        </div>
+                        <AddressLink
+                          address={submission.applicant}
+                          truncateLength={8}
+                        />
                       </td>
                       <td className="px-4 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-300">
                           {formatDate(submission.created)}
                         </div>
                       </td>
-                      <td className="px-4 py-4 whitespace-nowrap">
-                        {getSubmissionStatusBadge(submission.status)}
-                      </td>
-                      <td className="px-4 py-4 whitespace-nowrap">
-                        {isOwner ? (
+                      {isOwner &&
+                      new Date(bounty.submissionDeadline) < new Date() ? (
+                        <td className="px-4 py-4 whitespace-nowrap">
                           <div className="flex gap-2">
                             <button
                               onClick={() =>
@@ -1041,10 +944,8 @@ export default function BountyDetailPage() {
                               3rd
                             </button>
                           </div>
-                        ) : (
-                          <span className="text-gray-400">Not ranked</span>
-                        )}
-                      </td>
+                        </td>
+                      ) : null}
                       <td className="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <button
                           onClick={() => openSubmissionModal(submission)}
@@ -1052,33 +953,6 @@ export default function BountyDetailPage() {
                         >
                           View Details
                         </button>
-
-                        {isOwner &&
-                          submission.status.toString() === 'PENDING' && (
-                            <button
-                              onClick={() =>
-                                handleAcceptSubmission(submission.id)
-                              }
-                              className="text-green-300 hover:text-green-200 mr-4"
-                              disabled={
-                                bounty.status === BountyStatus.COMPLETED
-                              }
-                            >
-                              Accept
-                            </button>
-                          )}
-
-                        {isOwner && submission.ranking && !rankingsApproved && (
-                          <button
-                            onClick={() =>
-                              handleRankSubmission(submission.id, null)
-                            }
-                            className="text-red-300 hover:text-red-200 ml-4"
-                            title="Remove ranking"
-                          >
-                            Clear Rank
-                          </button>
-                        )}
                       </td>
                     </tr>
                   ))}
@@ -1094,8 +968,6 @@ export default function BountyDetailPage() {
         onClose={() => setIsModalOpen(false)}
         submission={selectedSubmission}
         isOwner={isOwner}
-        isSponsor={isSponsor}
-        onAccept={(submissionId) => handleAcceptSubmission(submissionId)}
         onRank={(submissionId, ranking) =>
           handleRankSubmission(submissionId, ranking)
         }

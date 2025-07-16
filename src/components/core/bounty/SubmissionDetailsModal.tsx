@@ -1,5 +1,5 @@
-import { BountyStatus, Submission } from '@/types/bounty';
-import { useState } from 'react';
+import { Dialog } from '@/components/ui';
+import { Submission } from '@/types/bounty';
 import { FiX } from 'react-icons/fi';
 
 interface SubmissionDetailsModalProps {
@@ -7,9 +7,7 @@ interface SubmissionDetailsModalProps {
   onClose: () => void;
   submission: Submission | null;
   isOwner: boolean;
-  isSponsor?: boolean;
-  onAccept?: (submissionId: string) => void;
-  onRank?: (submissionId: string, ranking: 1 | 2 | 3 | null) => void;
+  onRank?: (submissionId: string, ranking: number) => void;
   rankingsApproved?: boolean;
   otherSubmissions?: Submission[];
 }
@@ -19,14 +17,10 @@ export default function SubmissionDetailsModal({
   onClose,
   submission,
   isOwner,
-  isSponsor = false,
-  onAccept,
   onRank,
   rankingsApproved = false,
   otherSubmissions = [],
 }: SubmissionDetailsModalProps) {
-  const [tab, setTab] = useState<'details' | 'link'>('details');
-
   if (!isOpen) return null;
   if (!submission) return null;
 
@@ -41,71 +35,24 @@ export default function SubmissionDetailsModal({
     });
   };
 
-  // Check if a specific ranking is already taken by another submission
-  const isRankingTaken = (rank: number) => {
-    return otherSubmissions.some(
-      (sub) => sub.id !== submission.id && sub.ranking === rank
-    );
-  };
-
-  // Get status badge
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case BountyStatus.IN_PROGRESS:
-        return (
-          <span className="px-3 py-1 bg-yellow-900/40 text-yellow-300 border border-yellow-700/30 rounded-full text-sm font-medium">
-            In Progress
-          </span>
-        );
-      case BountyStatus.REVIEW:
-        return (
-          <span className="px-3 py-1 bg-green-900/40 text-green-300 border border-green-700/30 rounded-full text-sm font-medium">
-            Under Review
-          </span>
-        );
-      case BountyStatus.COMPLETED:
-        return (
-          <span className="px-3 py-1 bg-red-900/40 text-red-300 border border-red-700/30 rounded-full text-sm font-medium">
-            Completed
-          </span>
-        );
-      default:
-        return null;
-    }
-  };
-
   // Determine content to show
   const getContentToShow = () => {
     if (submission.content) return submission.content;
     return 'No content provided.';
   };
 
-  // Get the applicant address to display
-  const getApplicantAddress = () => {
-    // Use walletAddress first if available, then applicant
-    const address = submission.walletAddress || submission.applicant;
-    if (!address) {
-      console.error(
-        'ERROR: No applicant address found in submission:',
-        submission.id
-      );
-      return 'Unknown applicant';
-    }
-    return `${address.slice(0, 8)}...${address.slice(-8)}`;
-  };
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      {/* Overlay */}
-      <div className="fixed inset-0 bg-black bg-opacity-70 transition-opacity" />
-      {/* Modal */}
-      <div className="relative z-10 bg-[#262626] text-white rounded-xl shadow-2xl w-full max-w-2xl p-6">
-        <div className="flex justify-between items-center border-b border-gray-700 pb-4 mb-4">
-          <h2 className="text-xl font-semibold">Submission Details</h2>
-          <button onClick={onClose} className="text-gray-300 hover:text-white">
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <Dialog.Content>
+        <Dialog.Header className="flex justify-between items-center border-b border-gray-700 pb-4 mb-4">
+          <Dialog.Title className="text-white">Submission Details</Dialog.Title>
+          <button
+            onClick={onClose}
+            className="absolute top-2 right-2 text-gray-300 hover:text-white"
+          >
             <FiX className="w-6 h-6" />
           </button>
-        </div>
+        </Dialog.Header>
 
         <div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
@@ -134,13 +81,6 @@ export default function SubmissionDetailsModal({
             </div>
 
             <div>
-              <p className="text-gray-400 text-sm mb-1">Status</p>
-              <span className="text-white">
-                {getStatusBadge(submission.status)}
-              </span>
-            </div>
-
-            <div>
               <p className="text-gray-400 text-sm mb-1">Ranking</p>
               <span className="text-white">
                 {submission.ranking ? `${submission.ranking}st` : 'Not ranked'}
@@ -148,14 +88,16 @@ export default function SubmissionDetailsModal({
             </div>
           </div>
 
-          <div className="bg-[#262626] p-4 rounded-lg mb-4">
-            <h3 className="text-lg font-semibold mb-2">Submission Content</h3>
-            <div className="prose prose-invert max-w-none">
+          <div className="mb-4">
+            <h3 className="text-lg font-semibold mb-2 text-white">
+              Submission Content
+            </h3>
+            <div className="prose prose-invert max-w-none text-white">
               {getContentToShow()}
             </div>
             {submission.link && (
-              <div>
-                <h3 className="text-blue-300 font-medium mb-2">Link</h3>
+              <div className="mt-4">
+                <h3 className="text-white font-medium mb-2">Link</h3>
                 <a
                   href={submission.link}
                   target="_blank"
@@ -168,19 +110,10 @@ export default function SubmissionDetailsModal({
             )}
           </div>
 
-          <div className="mt-4 flex justify-end gap-2">
-            {isOwner && submission.status === BountyStatus.REVIEW && (
-              <button
-                onClick={() => onAccept?.(submission.id)}
-                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors"
-              >
-                Accept
-              </button>
-            )}
-
+          <Dialog.Footer className="flex justify-end gap-2">
             {isOwner && submission.ranking && !rankingsApproved && (
               <button
-                onClick={() => onRank?.(submission.id, null)}
+                onClick={() => onRank?.(submission.id, 0)}
                 className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors"
               >
                 Clear Rank
@@ -193,9 +126,9 @@ export default function SubmissionDetailsModal({
             >
               Close
             </button>
-          </div>
+          </Dialog.Footer>
         </div>
-      </div>
-    </div>
+      </Dialog.Content>
+    </Dialog>
   );
 }

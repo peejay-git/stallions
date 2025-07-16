@@ -50,8 +50,8 @@ export function useWalletConnection({
     if (!auth.currentUser || !user) return;
 
     setUserRole(user.role);
-    setUserHasWallet(!!user.walletConnected);
-    setStoredWalletAddress(user.walletInfo?.address || null);
+    setUserHasWallet(!!user.wallet);
+    setStoredWalletAddress(user.wallet?.address || null);
   }, [user, auth.currentUser]);
 
   const handleConnectWallet = async () => {

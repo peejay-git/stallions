@@ -16,14 +16,14 @@ export default function ProfileCompletionModal({
 }: ProfileCompletionModalProps) {
   const { user, updateUserProfile } = useAuthStore((state) => state);
   const [formData, setFormData] = useState({
-    firstName: user?.firstName || '',
-    username: user?.username || '',
+    firstName: user?.profileData?.firstName || '',
+    username: user?.profileData?.username || '',
     // Add more fields based on user role
     ...(user?.role === 'sponsor'
       ? {
-          companyName: user?.companyName || '',
-          industry: user?.industry || '',
-          shortBio: user?.shortBio || '',
+          companyName: user?.profileData?.companyName || '',
+          industry: user?.profileData?.industry || '',
+          shortBio: user?.profileData?.shortBio || '',
         }
       : {}),
   });
@@ -33,13 +33,13 @@ export default function ProfileCompletionModal({
   useEffect(() => {
     if (user) {
       setFormData({
-        firstName: user.firstName || '',
-        username: user.username || '',
+        firstName: user.profileData?.firstName || '',
+        username: user.profileData?.username || '',
         ...(user.role === 'sponsor'
           ? {
-              companyName: user.companyName || '',
-              industry: user.industry || '',
-              shortBio: user.shortBio || '',
+              companyName: user.profileData?.companyName || '',
+              industry: user.profileData?.industry || '',
+              shortBio: user.profileData?.shortBio || '',
             }
           : {}),
       });
@@ -127,7 +127,10 @@ export default function ProfileCompletionModal({
           {user.role === 'sponsor' && (
             <>
               <div>
-                <label htmlFor="companyName" className="block text-gray-300 mb-1">
+                <label
+                  htmlFor="companyName"
+                  className="block text-gray-300 mb-1"
+                >
                   Company Name
                 </label>
                 <input

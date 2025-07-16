@@ -1,10 +1,11 @@
 'use client';
 
+import { getCurrentNetwork } from '@/config/networks';
 import { useWallet } from '@/hooks/useWallet';
 import { registerSponsor, registerTalent } from '@/lib/authService';
 import { auth } from '@/lib/firebase';
 import useAuthStore from '@/lib/stores/auth.store';
-import { UserRole } from '@/types/auth.types';
+import { UserProfile } from '@/types/auth.types';
 import clsx from 'clsx';
 import { FirebaseError } from 'firebase/app';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
@@ -344,20 +345,35 @@ export default function RegisterModal({
 
       const userProfile = {
         uid: auth.currentUser?.uid || '',
-        username:
-          role === 'talent'
-            ? talentFormData.username
-            : sponsorFormData.username,
-        firstName:
-          role === 'talent'
-            ? talentFormData.firstName
-            : sponsorFormData.firstName,
-        lastName:
-          role === 'talent'
-            ? talentFormData.lastName
-            : sponsorFormData.lastName,
         email: auth.currentUser?.email || '',
-        role: role as UserRole,
+        role: role,
+        profileData: {
+          username:
+            role === 'talent'
+              ? talentFormData.username
+              : sponsorFormData.username,
+          firstName:
+            role === 'talent'
+              ? talentFormData.firstName
+              : sponsorFormData.firstName,
+          lastName:
+            role === 'talent'
+              ? talentFormData.lastName
+              : sponsorFormData.lastName,
+          location: role === 'talent' ? talentFormData.location : '',
+        },
+        wallet:
+          role === 'talent'
+            ? {
+                address: talentFormData.walletAddress,
+                publicKey: talentFormData.walletAddress,
+                network: getCurrentNetwork().name,
+              }
+            : {
+                address: sponsorFormData.walletAddress,
+                publicKey: sponsorFormData.walletAddress,
+                network: getCurrentNetwork().name,
+              },
         walletConnected:
           role === 'talent'
             ? !!talentFormData.walletAddress || isConnected
@@ -366,7 +382,7 @@ export default function RegisterModal({
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
-      useAuthStore.getState().setUser(userProfile);
+      useAuthStore.getState().setUser(userProfile as UserProfile);
       toast.success('Profile created successfully!');
 
       // Close the modal first, then redirect

@@ -245,7 +245,7 @@ export default function BountyDetailPage() {
       if (!bounty) return;
 
       // Check if user is the owner of this bounty
-      const isOwnerValue = bounty.owner === user?.walletInfo?.publicKey;
+      const isOwnerValue = bounty.owner === user?.wallet?.publicKey;
       setIsOwner(isOwnerValue);
 
       const hasSubmissionsAlready = await bountyHasSubmissions(bounty.id);

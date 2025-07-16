@@ -14,7 +14,6 @@ export interface WalletInfo {
   address: string;
   publicKey: string;
   network: string;
-  connectedAt?: string;
 }
 
 /**
@@ -23,16 +22,20 @@ export interface WalletInfo {
 export interface BaseUserProfile {
   uid: string;
   email?: string;
-  username?: string;
-  firstName?: string;
   role: UserRole;
-  isProfileComplete: boolean;
-  walletConnected: boolean;
-  walletInfo?: WalletInfo;
-  profileImage?: string;
+  authProvider?: string;
+  isProfileComplete?: boolean;
+  wallet: WalletInfo | null;
   createdAt?: string;
-  updatedAt?: string;
   lastLogin?: string;
+  profileData?: {
+    firstName: string;
+    lastName: string;
+    username: string;
+    socials?: { platform: string; username: string }[];
+    location: string;
+    lastLogin?: string;
+  };
 }
 
 /**
@@ -40,12 +43,15 @@ export interface BaseUserProfile {
  */
 export interface TalentProfile extends BaseUserProfile {
   role: 'talent';
-  skills?: string[];
-  experience?: string;
-  portfolioUrl?: string;
-  linkedinUrl?: string;
-  githubUrl?: string;
-  twitterUrl?: string;
+  profileData?: {
+    firstName: string;
+    lastName: string;
+    username: string;
+    skills?: string[];
+    socials?: { platform: string; username: string }[];
+    location: string;
+    lastLogin?: string;
+  };
 }
 
 /**
@@ -53,14 +59,23 @@ export interface TalentProfile extends BaseUserProfile {
  */
 export interface SponsorProfile extends BaseUserProfile {
   role: 'sponsor';
-  companyName?: string;
-  companyUsername?: string;
-  companyUrl?: string;
-  companyTwitter?: string;
-  entityName?: string;
-  companyLogo?: string;
-  industry?: string;
-  shortBio?: string;
+  profileData?: {
+    firstName: string;
+    lastName: string;
+    username: string;
+    location: string;
+    companyName: string;
+    companyUsername: string;
+    companyUrl: string;
+    companyTwitter: string;
+    entityName: string;
+    companyLogo: string;
+    industry: string;
+    shortBio: string;
+    lastLogin?: string;
+    socials?: { platform: string; username: string }[];
+    telegram?: string;
+  };
 }
 
 /**
@@ -68,7 +83,14 @@ export interface SponsorProfile extends BaseUserProfile {
  */
 export interface AdminProfile extends BaseUserProfile {
   role: 'admin';
-  permissions?: string[];
+  profileData?: {
+    firstName: string;
+    lastName: string;
+    username: string;
+    location: string;
+    lastLogin?: string;
+    socials?: { platform: string; username: string }[];
+  };
 }
 
 /**
@@ -98,7 +120,10 @@ export interface AuthState {
     walletAddress: string
   ) => Promise<UserProfile | null>;
   initializeAuthListener: () => () => void;
-  updateUserProfile: (profileData: Partial<UserProfile>) => Promise<void>;
+  updateUserRole: (role: UserRole) => Promise<void>;
+  updateUserProfile: (
+    profileData: Partial<UserProfile['profileData']>
+  ) => Promise<void>;
   connectWalletToUser: (walletInfo: WalletInfo) => Promise<void>;
   disconnectWallet: () => Promise<void>;
   logout: () => Promise<boolean>;

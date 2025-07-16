@@ -1,4 +1,5 @@
 import { TalentFormDataType } from '@/components/core/auth/register';
+import { getCurrentNetwork } from '@/config/networks';
 import type { UserProfile, UserRole } from '@/types/auth.types';
 import {
   onAuthStateChanged,
@@ -18,7 +19,6 @@ import {
 } from 'firebase/firestore';
 import { auth, db, googleProvider } from './firebase';
 import useAuthStore from './stores/auth.store';
-import { getCurrentNetwork } from '@/config/networks';
 
 type TalentRegistrationData = Omit<
   TalentFormDataType,
@@ -76,14 +76,6 @@ export async function registerSponsor(data: any) {
     email,
     ...rest,
     walletConnected: !!walletAddress,
-    walletInfo: walletAddress
-      ? {
-          address: walletAddress,
-          publicKey: walletAddress,
-          network: getCurrentNetwork().name,
-          connectedAt: new Date().toISOString(),
-        }
-      : undefined,
     isProfileComplete: true,
   };
 
@@ -95,7 +87,18 @@ export async function registerSponsor(data: any) {
 
 // #region Talent Register Controller
 export async function registerTalent(data: TalentRegistrationData) {
-  const { email, password, profileImageFile, walletAddress, ...rest } = data;
+  const {
+    email,
+    password,
+    profileImageFile,
+    walletAddress,
+    firstName,
+    lastName,
+    username,
+    location,
+    skills,
+    socials,
+  } = data;
 
   // Use existing Firebase auth user (created in RegisterModal)
   const uid = auth.currentUser?.uid;
@@ -109,7 +112,12 @@ export async function registerTalent(data: TalentRegistrationData) {
     role: 'talent',
     email,
     profileData: {
-      ...rest,
+      firstName,
+      lastName,
+      username,
+      location,
+      skills,
+      socials,
     },
     wallet: walletAddress
       ? {
@@ -126,19 +134,24 @@ export async function registerTalent(data: TalentRegistrationData) {
   const setUser = useAuthStore.getState().setUser;
   const userProfile: UserProfile = {
     uid,
-    username: rest.username,
-    firstName: rest.firstName,
-    role: 'talent' as UserRole,
-    walletConnected: !!walletAddress,
-    walletInfo: walletAddress
-      ? {
-          address: walletAddress,
-          publicKey: walletAddress,
-          network: getCurrentNetwork().name,
-          connectedAt: new Date().toISOString(),
-        }
-      : undefined,
-    isProfileComplete: !!rest.username && !!rest.firstName,
+    role: 'talent',
+    email,
+    profileData: {
+      firstName,
+      lastName,
+      username,
+      location,
+      skills,
+      socials,
+    },
+    wallet: {
+      address: walletAddress,
+      publicKey: walletAddress, // Use the actual Stellar public key
+      network: getCurrentNetwork().name, // Use the actual network
+    },
+    createdAt: new Date().toISOString(),
+    lastLogin: new Date().toISOString(),
+    isProfileComplete: !!username && !!firstName,
   };
 
   setUser(userProfile);
@@ -237,12 +250,12 @@ export async function signInWithGoogle() {
       const userData = {
         uid: user.uid,
         email: user.email,
-        role: 'talent' as UserRole, // Default role
+        role: 'talent',
         profileData: {
           firstName: user.displayName?.split(' ')[0] || '',
           lastName: user.displayName?.split(' ').slice(1).join(' ') || '',
           username: user.email?.split('@')[0] || '',
-          profileImage: user.photoURL || '',
+          location: '',
         },
         wallet: null,
         createdAt: new Date().toISOString(),
@@ -254,11 +267,18 @@ export async function signInWithGoogle() {
 
       const userProfile: UserProfile = {
         uid: user.uid,
-        username: userData.profileData.username,
-        firstName: userData.profileData.firstName,
-        role: userData.role,
-        walletConnected: false,
-        profileImage: user.photoURL || '',
+        email: user.email!,
+        role: 'talent',
+        profileData: {
+          firstName: user.displayName?.split(' ')[0] || '',
+          lastName: user.displayName?.split(' ').slice(1).join(' ') || '',
+          username: user.email?.split('@')[0] || '',
+          location: '',
+        },
+        wallet: null,
+        createdAt: new Date().toISOString(),
+        lastLogin: new Date().toISOString(),
+        authProvider: 'google',
         isProfileComplete: false, // New Google sign-up needs profile completion
       };
 
@@ -324,7 +344,7 @@ export async function connectWallet(walletData: WalletData) {
   }
 
   // Prevent talents from overriding their stored wallet address
-  if (authStoreUser.role === 'talent' && authStoreUser.walletConnected) {
+  if (authStoreUser.role === 'talent' && authStoreUser.wallet) {
     throw new Error(
       'Talents cannot change their wallet address after signup. Please use your original wallet address.'
     );

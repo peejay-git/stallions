@@ -1,4 +1,3 @@
-import { useWallet } from '@/hooks/useWallet';
 import { db } from '@/lib/firebase';
 import useAuthStore from '@/lib/stores/auth.store';
 import type { SubmissionData } from '@/types/submission';
@@ -13,7 +12,6 @@ import {
   where,
 } from 'firebase/firestore';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 
@@ -35,7 +33,6 @@ export default function SubmitWorkForm({
     | 'already-submitted'
     | 'expired'
   >('checking');
-  const router = useRouter();
   const [submissionId, setSubmissionId] = useState<string | null>(null);
   const [userWalletAddress, setUserWalletAddress] = useState<string | null>(
     null
@@ -45,8 +42,7 @@ export default function SubmitWorkForm({
   );
   const [hasSubmitted, setHasSubmitted] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const { publicKey } = useWallet();
-  const user = useAuthStore((state: { user: any }) => state.user);
+  const user = useAuthStore((state) => state.user);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -60,8 +56,8 @@ export default function SubmitWorkForm({
     if (!user) return;
 
     // Get wallet address from auth store user data
-    if (user.walletConnected && user.walletInfo?.address) {
-      setUserWalletAddress(user.walletInfo.address);
+    if (user && user.wallet?.address) {
+      setUserWalletAddress(user.wallet.address);
     }
   }, [user]);
 

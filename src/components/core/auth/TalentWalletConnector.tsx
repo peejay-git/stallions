@@ -13,7 +13,7 @@ interface Props {
 export default function TalentWalletConnector({ onSuccess }: Props) {
   const { connect, networkPassphrase } = useWallet();
   const [isConnecting, setIsConnecting] = useState(false);
-  const user = useAuthStore((state: { user: any }) => state.user);
+  const { user } = useAuthStore();
   const fetchUser = useAuthStore(
     (state: { fetchUserFromFirestore: any }) => state.fetchUserFromFirestore
   );
@@ -29,8 +29,8 @@ export default function TalentWalletConnector({ onSuccess }: Props) {
       if (user?.uid && networkPassphrase) {
         // Save the wallet to the user's account
         await connectWallet({
-          address: user.walletInfo?.address || '',
-          publicKey: user.walletInfo?.publicKey || '',
+          address: user.wallet?.address || '',
+          publicKey: user.wallet?.publicKey || '',
           network: networkPassphrase,
         });
 

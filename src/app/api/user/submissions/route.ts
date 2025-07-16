@@ -1,5 +1,6 @@
 import { adminDb } from '@/lib/firebaseAdmin';
 import { SubmissionData } from '@/types/submission';
+import { FirebaseBounty } from '@/lib/bounties';
 import { CollectionReference, Query } from 'firebase-admin/firestore';
 import { NextRequest, NextResponse } from 'next/server';
 
@@ -47,8 +48,55 @@ export async function GET(request: NextRequest) {
       };
     });
 
+    // Fetch bounty details for each submission
+    const submissionsWithBounties = await Promise.all(
+      submissions.map(async (submission) => {
+        try {
+          // Skip if no bountyId
+          if (!submission.bountyId) {
+            return {
+              ...submission,
+              bounty: null,
+            };
+          }
+
+          // Get the bounty document
+          const bountyDoc = await adminDb
+            .collection('bounties')
+            .doc(submission.bountyId)
+            .get();
+
+          if (!bountyDoc.exists) {
+            console.log(`Bounty not found for submission ${submission.id}`);
+            return {
+              ...submission,
+              bounty: null,
+            };
+          }
+
+          const bountyData = bountyDoc.data() as FirebaseBounty;
+          return {
+            ...submission,
+            bounty: {
+              ...bountyData,
+              id: bountyDoc.id,
+            },
+          };
+        } catch (error) {
+          console.error(
+            `Error fetching bounty for submission ${submission.id}:`,
+            error
+          );
+          return {
+            ...submission,
+            bounty: null,
+          };
+        }
+      })
+    );
+
     // Sort submissions by createdAt date
-    const sortedSubmissions = submissions.sort((a, b) => {
+    const sortedSubmissions = submissionsWithBounties.sort((a, b) => {
       const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
       const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
       return dateB - dateA; // Descending order

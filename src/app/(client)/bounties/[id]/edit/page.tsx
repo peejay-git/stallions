@@ -48,7 +48,7 @@ export default function EditBountyPage() {
       if (authLoading) return;
 
       // TODO: If no wallet, allow user to connect their wallet
-      if (user && user.walletInfo?.publicKey) {
+      if (user && user.wallet?.publicKey) {
         try {
           // Fetch bounty data
           const id = params.id;
@@ -66,7 +66,7 @@ export default function EditBountyPage() {
           }
 
           // Check if user is the owner
-          if (data.owner !== user.walletInfo?.publicKey) {
+          if (data.owner !== user.wallet?.publicKey) {
             console.log(data, user);
             toast.error('You do not have permission to edit this bounty');
             router.push(`/bounties/${id}`);

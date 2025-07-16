@@ -1,6 +1,7 @@
 'use client';
 
 import { PasswordInput } from '@/components/ui';
+import { getCurrentNetwork } from '@/config/networks';
 import { registerTalent } from '@/lib/authService';
 import { auth } from '@/lib/firebase';
 import useAuthStore from '@/lib/stores/auth.store';
@@ -89,11 +90,19 @@ export default function SignUpWithWallet({ onSuccess, walletAddress }: Props) {
       // Set user in store
       const userProfile = {
         uid: auth.currentUser?.uid || '',
-        username: formData.username,
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        email: formData.email,
         role: 'talent',
+        email: formData.email,
+        profileData: {
+          username: formData.username,
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          location: '',
+        },
+        wallet: {
+          address: walletAddress,
+          publicKey: walletAddress,
+          network: getCurrentNetwork().name,
+        },
         walletConnected: true,
         isProfileComplete: true,
         createdAt: new Date().toISOString(),

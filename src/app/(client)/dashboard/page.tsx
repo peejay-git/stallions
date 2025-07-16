@@ -6,22 +6,24 @@ import { useProtectedRoute } from '@/hooks/useProtectedRoute';
 import { useWallet } from '@/hooks/useWallet';
 import { FirebaseBounty, getBountiesByOwner } from '@/lib/bounties';
 import useAuthStore from '@/lib/stores/auth.store';
-import { AuthState } from '@/types/auth.types';
-import { BountyStatus } from '@/types/bounty';
+import { AuthState, SponsorProfile, TalentProfile } from '@/types/auth.types';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+
+import { BountyList } from '@/components/dashboard/BountyList';
+import { SubmissionsList } from '@/components/dashboard/SubmissionsList';
 
 export default function DashboardPage() {
   useProtectedRoute();
   const router = useRouter();
   const { isConnected, publicKey } = useWallet();
-  const [activeTab, setActiveTab] = useState<'created' | 'submissions'>(
-    'created'
-  );
   const [bounty, setBounty] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const user = useAuthStore((state: AuthState) => state.user);
+  const user = useAuthStore((state) => state.user);
+  const [activeTab, setActiveTab] = useState<'created' | 'submissions'>(
+    user?.role === 'sponsor' ? 'created' : 'submissions'
+  );
   const fetchUser = useAuthStore(
     (state: AuthState) => state.fetchUserFromFirestore
   );
@@ -127,7 +129,7 @@ export default function DashboardPage() {
   useEffect(() => {
     const fetchUserSubmissions = async () => {
       try {
-        if (!user?.uid && !user?.walletInfo?.address) return;
+        if (!user?.uid && !user?.wallet?.address) return;
 
         setLoadingSubmissions(true);
 
@@ -136,8 +138,8 @@ export default function DashboardPage() {
         if (user?.uid) {
           queryParams.append('userId', user.uid);
         }
-        if (user?.walletInfo?.address) {
-          queryParams.append('walletAddress', user.walletInfo.address);
+        if (user?.wallet?.address) {
+          queryParams.append('walletAddress', user.wallet.address);
         }
 
         // Fetch submissions from API
@@ -162,7 +164,7 @@ export default function DashboardPage() {
     if (isConnected) {
       fetchUserSubmissions();
     }
-  }, [user?.uid, user?.walletInfo?.address, isConnected]);
+  }, [user?.uid, user?.wallet?.address, isConnected]);
 
   // Format date to be more readable
   const formatDate = (dateString: string) => {
@@ -198,13 +200,16 @@ export default function DashboardPage() {
   }
 
   // Show wallet connection prompt for sponsors
-  if (isSponsor && !isConnected && !user?.walletConnected) {
+  if (isSponsor && !isConnected && !user?.wallet) {
     return (
       <div className="min-h-screen py-12 px-4 sm:px-6">
         <div className="max-w-5xl mx-auto">
           <h1 className="text-3xl font-bold mb-8 text-white">Dashboard</h1>
           <h1 className="text-2xl font-semibold text-white mb-8">
-            Welcome {user?.username || user?.firstName || '...'}
+            Welcome{' '}
+            {(user as SponsorProfile).profileData?.companyName ||
+              (user as SponsorProfile).profileData?.firstName ||
+              '...'}
           </h1>
 
           <SponsorWalletPrompt
@@ -219,13 +224,16 @@ export default function DashboardPage() {
   }
 
   // Show talent wallet connector for talents
-  if (isTalent && !isConnected && (!user || !user.walletConnected)) {
+  if (isTalent && !isConnected && (!user || !user.wallet)) {
     return (
       <div className="min-h-screen py-12 px-4 sm:px-6">
         <div className="max-w-5xl mx-auto">
           <h1 className="text-3xl font-bold mb-8 text-white">Dashboard</h1>
           <h1 className="text-2xl font-semibold text-white">
-            Welcome {user?.username || user?.firstName || '...'}
+            Welcome{' '}
+            {(user as TalentProfile).profileData?.username ||
+              (user as TalentProfile).profileData?.firstName ||
+              '...'}
           </h1>
 
           <TalentWalletConnector
@@ -242,30 +250,30 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen py-12 px-4 sm:px-6">
       <div className="max-w-5xl mx-auto">
-        {/* <h1 className="text-3xl font-bold mb-8">Your Dashboard</h1> */}
+        {/* Welcome message and profile section */}
         <div className="mb-8 flex items-center gap-4">
           <div className="relative">
             <div className="w-16 h-16 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center text-2xl font-bold text-white overflow-hidden">
-              {user?.profileImage ? (
-                <img
-                  src={user.profileImage}
-                  alt={user?.firstName}
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                user?.firstName?.charAt(0) || '...'
-              )}
+              {(
+                user as TalentProfile | SponsorProfile
+              ).profileData?.firstName?.charAt(0) || '...'}
             </div>
             <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-green-400 rounded-full border-2 border-[#070708]"></div>
           </div>
           <div>
             <h1 className="text-2xl font-semibold text-white">
-              Welcome {user?.firstName || '...'}
+              Welcome{' '}
+              {(user as TalentProfile | SponsorProfile).profileData
+                ?.firstName || '...'}
             </h1>
-            <p className="text-gray-400">{user?.username || '...'}</p>
+            <p className="text-gray-400">
+              {(user as TalentProfile | SponsorProfile).profileData?.username ||
+                '...'}
+            </p>
           </div>
         </div>
 
+        {/* Dashboard card */}
         <div className="backdrop-blur-xl bg-white/10 border border-white/20 rounded-xl overflow-hidden mb-8">
           <div className="p-6 border-b border-gray-600">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -274,15 +282,15 @@ export default function DashboardPage() {
                   Account Overview
                 </h2>
                 <p className="text-gray-300 truncate">
-                  {user?.walletInfo?.address?.slice(0, 8)}...
-                  {user?.walletInfo?.address?.slice(-8)}
+                  {user?.wallet?.address?.slice(0, 8)}...
+                  {user?.wallet?.address?.slice(-8)}
                 </p>
               </div>
               <div className="flex gap-3">
                 {/* Only show Create Bounty button for sponsors */}
                 {isSponsor && (
                   <Link
-                    href="/create"
+                    href="/bounties/create"
                     className="bg-white text-black font-medium py-2 px-4 rounded-lg hover:bg-white/90 transition-colors"
                   >
                     Create Bounty
@@ -386,7 +394,6 @@ export default function DashboardPage() {
                 {Object.keys(totalSpentOrEarned).length > 0 ? (
                   Object.entries(totalSpentOrEarned).map(
                     ([asset, amount], index) => {
-                      // Determine if token has a special symbol
                       const symbol = assetSymbols[asset] || '';
                       return (
                         <div key={asset} className={index > 0 ? 'mt-2' : ''}>
@@ -404,7 +411,9 @@ export default function DashboardPage() {
           </div>
         </div>
 
+        {/* Content area with tabs and data tables */}
         <div className="backdrop-blur-xl bg-white/10 border border-white/20 rounded-xl overflow-hidden">
+          {/* Tab navigation for bounties vs submissions */}
           <div className="flex border-b border-gray-600">
             {/* Only show Your Bounties tab for sponsors */}
             {isSponsor ? (
@@ -432,172 +441,28 @@ export default function DashboardPage() {
             )}
           </div>
 
+          {/* Tab content */}
           <div className="p-6">
-            {activeTab === 'created' && isSponsor && (
+            {activeTab === 'created' && (
               <div>
                 <h3 className="text-lg font-semibold mb-4 text-white">
-                  Bounties You've Created
+                  Your Bounties
                 </h3>
-                {loading ? (
-                  // Skeleton loader (repeat 3 rows for visual feedback)
-                  <div className="space-y-4">
-                    {[...Array(3)].map((_, i) => (
-                      <div key={i} className="animate-pulse flex space-x-4">
-                        <div className="w-1/5 h-5 bg-white/10 rounded" />
-                        <div className="w-1/5 h-5 bg-white/10 rounded" />
-                        <div className="w-1/5 h-5 bg-white/10 rounded" />
-                        <div className="w-1/5 h-5 bg-white/10 rounded" />
-                        <div className="w-1/5 h-5 bg-white/10 rounded" />
-                      </div>
-                    ))}
-                  </div>
-                ) : bounty.length === 0 ? (
-                  <p className="text-gray-300">
-                    You haven't created any bounties yet.
-                  </p>
-                ) : (
-                  <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-gray-600">
-                      <thead>
-                        <tr>
-                          <th className="px-4 py-3 bg-black/20 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                            Title
-                          </th>
-                          <th className="px-4 py-3 bg-black/20 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                            Status
-                          </th>
-                          <th className="px-4 py-3 bg-black/20 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                            Reward
-                          </th>
-                          <th className="px-4 py-3 bg-black/20 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                            Deadline
-                          </th>
-                          <th className="px-4 py-3 bg-black/20"></th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-gray-600">
-                        {bounty.map((bounty) => (
-                          <tr key={bounty.id}>
-                            <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-white">
-                              {bounty.title}
-                            </td>
-                            <td className="px-4 py-4 whitespace-nowrap text-sm">
-                              <span
-                                className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                  bounty.status.toUpperCase() ===
-                                  BountyStatus.OPEN
-                                    ? 'bg-green-900/40 text-green-300 border border-green-700/30'
-                                    : bounty.status.toUpperCase() ===
-                                      BountyStatus.IN_PROGRESS
-                                    ? 'bg-blue-900/40 text-blue-300 border border-blue-700/30'
-                                    : bounty.status.toUpperCase() ===
-                                      BountyStatus.COMPLETED
-                                    ? 'bg-gray-700/40 text-gray-300 border border-gray-600/30'
-                                    : 'bg-red-900/40 text-red-300 border border-red-700/30'
-                                }`}
-                              >
-                                {bounty.status.toUpperCase()}
-                              </span>
-                            </td>
-                            <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-300">
-                              {assetSymbols[bounty.reward.asset] || ''}
-                              {bounty.reward.amount} {bounty.reward.asset}
-                            </td>
-                            <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-300">
-                              {formatDate(bounty.deadline)}
-                            </td>
-                            <td className="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
-                              <Link
-                                href={`/bounties/${bounty.id}`}
-                                className="text-white hover:text-gray-300 transition-colors"
-                              >
-                                View
-                              </Link>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
+
+                <BountyList bounties={bounty} loading={loading} />
               </div>
             )}
 
-            {(activeTab === 'submissions' || isTalent) && (
+            {activeTab === 'submissions' && (
               <div>
                 <h3 className="text-lg font-semibold mb-4 text-white">
                   Your Submissions
                 </h3>
 
-                {loadingSubmissions ? (
-                  // Skeleton loader for submissions
-                  <div className="space-y-4">
-                    {[...Array(3)].map((_, i) => (
-                      <div key={i} className="animate-pulse flex space-x-4">
-                        <div className="w-1/4 h-5 bg-white/10 rounded" />
-                        <div className="w-1/4 h-5 bg-white/10 rounded" />
-                        <div className="w-1/4 h-5 bg-white/10 rounded" />
-                        <div className="w-1/4 h-5 bg-white/10 rounded" />
-                      </div>
-                    ))}
-                  </div>
-                ) : userSubmissions.length === 0 ? (
-                  <p className="text-gray-300">
-                    You haven't submitted any work yet.
-                  </p>
-                ) : (
-                  <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-gray-600">
-                      <thead>
-                        <tr>
-                          <th className="px-4 py-3 bg-black/20 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                            Bounty
-                          </th>
-                          <th className="px-4 py-3 bg-black/20 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                            Status
-                          </th>
-                          <th className="px-4 py-3 bg-black/20 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                            Submitted
-                          </th>
-                          <th className="px-4 py-3 bg-black/20"></th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-gray-600">
-                        {userSubmissions.map((submission) => (
-                          <tr key={submission.id}>
-                            <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-white">
-                              {submission.bountyTitle}
-                            </td>
-                            <td className="px-4 py-4 whitespace-nowrap text-sm">
-                              <span
-                                className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                  submission.status === 'PENDING'
-                                    ? 'bg-yellow-900/40 text-yellow-300 border border-yellow-700/30'
-                                    : submission.status === 'ACCEPTED'
-                                    ? 'bg-green-900/40 text-green-300 border border-green-700/30'
-                                    : 'bg-red-900/40 text-red-300 border border-red-700/30'
-                                }`}
-                              >
-                                {submission.status}
-                              </span>
-                            </td>
-                            <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-300">
-                              {formatDate(submission.submitted)}
-                            </td>
-                            <td className="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
-                              <Link
-                                href={`/bounties/${submission.bountyId}`}
-                                className="text-white hover:text-gray-300 transition-colors"
-                              >
-                                View Bounty
-                              </Link>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
+                <SubmissionsList
+                  submissions={userSubmissions}
+                  loading={loadingSubmissions}
+                />
               </div>
             )}
           </div>

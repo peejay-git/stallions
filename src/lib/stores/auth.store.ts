@@ -36,11 +36,11 @@ function isProfileComplete(user: UserProfile): boolean {
   if (!user) return false;
 
   if (user.role === 'talent') {
-    return !!(user.username && user.firstName);
+    return !!(user.profileData?.username && user.profileData?.firstName);
   }
 
   if (user.role === 'sponsor') {
-    return !!(user.companyName && user.industry);
+    return !!(user.profileData?.companyName && user.profileData?.industry);
   }
 
   return true;
@@ -82,7 +82,7 @@ const useAuthStore = create<AuthStoreState>()(
           loading: false,
           isAuthenticated: true,
           isEmailAuthenticated: !!user.email,
-          isWalletAuthenticated: user.walletConnected,
+          isWalletAuthenticated: !!user.wallet,
         });
       },
 
@@ -200,10 +200,8 @@ const useAuthStore = create<AuthStoreState>()(
         const docRef = doc(db, 'users', user.uid);
 
         await updateDoc(docRef, {
-          profileData: {
-            ...user,
-            ...profileData,
-          },
+          ...user,
+          profileData: profileData,
           updatedAt: new Date().toISOString(),
         });
 
@@ -211,13 +209,33 @@ const useAuthStore = create<AuthStoreState>()(
         set({
           user: {
             ...user,
-            ...profileData,
-            updatedAt: new Date().toISOString(),
-            isProfileComplete: isProfileComplete({
-              ...user,
-              ...profileData,
-            }),
-          },
+            profileData,
+            isProfileComplete: true,
+          } as UserProfile,
+        });
+      },
+
+      updateUserRole: async (role: UserRole) => {
+        const { user } = get();
+
+        if (!user || !user.uid) {
+          throw new Error('No authenticated user found');
+        }
+
+        // Update role in Firestore
+        const docRef = doc(db, 'users', user.uid);
+
+        await updateDoc(docRef, {
+          role,
+          updatedAt: new Date().toISOString(),
+        });
+
+        // Update local state
+        set({
+          user: {
+            ...user,
+            role,
+          } as UserProfile,
         });
       },
 
@@ -243,12 +261,7 @@ const useAuthStore = create<AuthStoreState>()(
         set({
           user: {
             ...user,
-            walletConnected: true,
-            walletInfo: {
-              ...walletInfo,
-              connectedAt: new Date().toISOString(),
-            },
-            updatedAt: new Date().toISOString(),
+            wallet: walletInfo,
           },
           isWalletAuthenticated: true,
         });
@@ -263,12 +276,6 @@ const useAuthStore = create<AuthStoreState>()(
 
         // Update local state
         set({
-          user: {
-            ...user,
-            walletConnected: false,
-            walletInfo: undefined,
-            updatedAt: new Date().toISOString(),
-          },
           isWalletAuthenticated: false,
         });
       },
@@ -325,7 +332,7 @@ const useAuthStore = create<AuthStoreState>()(
           const userProfile = {
             uid: userDoc.id,
             email: userData.email,
-            displayName: userData.displayName || '',
+            profileData: userData.profileData,
             photoURL: userData.photoURL || '',
             role: userData.role || '',
             walletConnected: true,
@@ -334,7 +341,7 @@ const useAuthStore = create<AuthStoreState>()(
             createdAt: userData.createdAt || '',
             updatedAt: userData.updatedAt || '',
             lastLoginAt: new Date().toISOString(),
-            walletInfo: userData.wallet || {},
+            wallet: userData.wallet || {},
             ...userData,
           };
 

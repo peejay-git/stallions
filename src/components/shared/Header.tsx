@@ -33,7 +33,7 @@ const Header = () => {
   const [chooseRoleOpen, setChooseRoleOpen] = useState(false);
   const router = useRouter();
   const { user, AuthModals, isAuthenticated } = useAuth();
-  const { updateUserProfile } = useAuthStore((state) => state);
+  const { updateUserProfile, updateUserRole } = useAuthStore((state) => state);
   const logout = useAuthStore((state) => state.logout);
 
   // Close menu when route changes
@@ -72,7 +72,7 @@ const Header = () => {
       } else {
         // For existing user profile update
         try {
-          await updateUserProfile({ role });
+          await updateUserRole(role);
           setChooseRoleOpen(false);
           toast.success(
             `Profile updated as ${role === 'talent' ? 'Talent' : 'Sponsor'}`

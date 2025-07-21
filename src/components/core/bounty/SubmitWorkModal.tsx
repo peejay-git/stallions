@@ -3,7 +3,6 @@
 import { RichTextEditor } from '@/components';
 import { useWallet } from '@/hooks/useWallet';
 import useAuthStore from '@/lib/stores/auth.store';
-import { submitWorkOnChain } from '@/utils/blockchain';
 import { doc, getFirestore, setDoc, Timestamp } from 'firebase/firestore';
 import { nanoid } from 'nanoid';
 import { FormEvent, useEffect, useRef, useState } from 'react';
@@ -63,34 +62,11 @@ export default function SubmitWorkModal({
 
     try {
       setSubmitting(true);
-
-      // Create submission content including work description and link
-      const content = JSON.stringify({
-        description: workContent,
-        link: linkUrl,
-        timestamp: Date.now(),
-      });
-
-      // Generate blockchain submission ID when wallet is connected
-      let submissionId;
-      if (publicKey) {
-        // If wallet is connected, use blockchain ID as primary ID
-        submissionId = await submitWorkOnChain({
-          userPublicKey: publicKey,
-          bountyId: parseInt(bountyId),
-          content,
-        });
-        // Convert number to string if needed
-        submissionId = String(submissionId);
-      } else {
-        // If no wallet connected, generate local ID
-        submissionId = nanoid();
-      }
+      const submissionId = nanoid();
 
       // Save submission to Firestore
       const db = getFirestore();
       await setDoc(doc(db, 'submissions', submissionId), {
-        id: submissionId, // Single ID field used for both on-chain and off-chain
         userId: user.uid,
         bountyId,
         content: workContent,

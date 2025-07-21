@@ -79,39 +79,6 @@ export class SorobanService {
   }
 
   /**
-   * Get a specific submission for a bounty
-   */
-  async getSubmission(bountyId: number, user: string): Promise<string> {
-    try {
-      const tx = await this.sorobanClient.get_submission({
-        bounty_id: bountyId,
-        user,
-      });
-
-      const result = await tx.simulate();
-      const sentTx = await result.signAndSend({
-        signTransaction: async (transaction) => {
-          const walletKit = await getWalletKit();
-          if (!walletKit) {
-            throw new Error('Wallet not connected');
-          }
-          return await walletKit.signTransaction(transaction);
-        },
-      });
-
-      // await confirmation
-      if (sentTx.result.isOk()) {
-        return sentTx.result.unwrap();
-      }
-
-      throw new BlockchainError('Failed to get submission', 'CONTRACT_ERROR');
-    } catch (error) {
-      console.error('Error getting submission:', error);
-      throw error;
-    }
-  }
-
-  /**
    * Create a new bounty
    */
   async createBounty({
@@ -133,11 +100,6 @@ export class SorobanService {
       if (!this.publicKey) {
         throw new Error('Wallet not connected');
       }
-
-      // Set judging deadline to 365 days after submission deadline
-      // This effectively means "no deadline" as owners can select winners anytime
-      const calculatedJudgingDeadline =
-        submissionDeadline + 365 * 24 * 60 * 60 * 1000;
 
       // Validate parameters before sending to the blockchain
       if (!owner || owner.trim() === '') {
@@ -164,10 +126,6 @@ export class SorobanService {
         throw new Error('Submission deadline must be in the future');
       }
 
-      if (calculatedJudgingDeadline <= submissionDeadline) {
-        throw new Error('Judging deadline must be after submission deadline');
-      }
-
       try {
         // Prepare transaction
         const tx = await this.sorobanClient.create_bounty({
@@ -179,7 +137,6 @@ export class SorobanService {
             dist.percentage,
           ]),
           submission_deadline: BigInt(submissionDeadline),
-          judging_deadline: BigInt(calculatedJudgingDeadline),
           title: title,
         });
 
@@ -267,31 +224,6 @@ export class SorobanService {
       return bounties;
     } catch (error) {
       console.error('Error getting bounties:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Get bounties for a specific user
-   */
-  async getUserBounties(user: string): Promise<ContractBounty[]> {
-    try {
-      const tx = await this.sorobanClient.get_user_bounties({
-        user,
-      });
-
-      const result = await tx.simulate();
-
-      // Get the individual bounties
-      const bountyIds = result.result;
-      const bounties = await Promise.all(
-        bountyIds.map(async (id) => {
-          return await this.getBounty(Number(id.toString()));
-        })
-      );
-      return bounties;
-    } catch (error) {
-      console.error('Error getting user bounties:', error);
       throw error;
     }
   }
@@ -413,85 +345,6 @@ export class SorobanService {
       throw new BlockchainError('Failed to get bounty', 'CONTRACT_ERROR');
     } catch (error) {
       console.error('Error getting bounty:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Get submissions for a bounty
-   */
-  async getBountySubmissions(
-    bountyId: number
-  ): Promise<{ applicant: string; submission: string }[]> {
-    try {
-      const tx = await this.sorobanClient.get_bounty_submissions({
-        bounty_id: bountyId,
-      });
-      const result = await tx.simulate();
-      const submissions = result.result;
-
-      // Convert the Map to an array of objects
-      if (submissions && typeof submissions === 'object') {
-        const submissionsList: { applicant: string; submission: string }[] = [];
-
-        // Handle the case where submissions might be a Map-like object
-        for (const [applicant, submission] of Object.entries(submissions)) {
-          submissionsList.push({
-            applicant,
-            submission: String(submission),
-          });
-        }
-
-        return submissionsList;
-      }
-
-      return [];
-    } catch (error) {
-      console.error('Error getting bounty submissions:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Apply to a bounty
-   */
-  async applyToBounty(
-    senderPublicKey: string,
-    bountyId: number,
-    content: string
-  ): Promise<void> {
-    try {
-      if (!this.publicKey) {
-        throw new Error('Wallet not connected');
-      }
-
-      const tx = await this.sorobanClient.apply_to_bounty({
-        applicant: senderPublicKey,
-        bounty_id: bountyId,
-        submission_link: content,
-      });
-
-      const result = await tx.simulate();
-
-      // Sign and send the transaction to the blockchain
-      const walletKit = await getWalletKit();
-      if (!walletKit) {
-        throw new Error('Wallet not initialized');
-      }
-      const sentTx = await result.signAndSend({
-        signTransaction: async (transaction) => {
-          return await walletKit.signTransaction(transaction);
-        },
-      });
-
-      // await confirmation
-      if (sentTx.result.isOk()) {
-        return;
-      }
-
-      throw new BlockchainError('Failed to submit work', 'CONTRACT_ERROR');
-    } catch (error) {
-      console.error('Error submitting work:', error);
       throw error;
     }
   }

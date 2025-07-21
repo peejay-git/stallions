@@ -23,7 +23,6 @@ export interface FirebaseBounty {
   description: string;
   distribution: Distribution[];
   submissionDeadline: string;
-  judgingDeadline: string;
   category: string;
   skills: string[];
   reward: { amount: string; asset: string };
@@ -75,7 +74,6 @@ export async function getFeaturedBounties(limit = 3) {
       description: data.description || '',
       distribution: data.distribution || [],
       submissionDeadline: data.submissionDeadline || new Date().toISOString(),
-      judgingDeadline: data.judgingDeadline || new Date().toISOString(),
       category: data.category || 'OTHER',
       skills: data.skills || [],
       reward: data.reward || { amount: '0', asset: 'USDC' },
@@ -133,7 +131,6 @@ export async function getBountyById(
     reward: data.reward || { amount: '0', asset: 'XLM' },
     distribution: data.distribution || [],
     submissionDeadline: data.submissionDeadline || 0,
-    judgingDeadline: data.judgingDeadline || 0,
     status: data.status || BountyStatus.OPEN,
     category: data.category || BountyCategory.OTHER,
     skills: data.skills || [],
@@ -161,7 +158,6 @@ export async function getBountiesByOwner(
       reward: data.reward || { amount: '0', asset: 'XLM' },
       distribution: data.distribution || [],
       submissionDeadline: data.submissionDeadline || new Date().toISOString(),
-      judgingDeadline: data.judgingDeadline || new Date().toISOString(),
       status: data.status || BountyStatus.OPEN,
       category: data.category || BountyCategory.OTHER,
       skills: data.skills || [],

@@ -7,11 +7,13 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "build-stallion": "cd packages/stallion && npm install && npm run build",
     "lint": "next lint",
     "lint:css": "stylelint \"src/**/*.css\"",
     "test": "jest",
     "init-firebase": "node scripts/init-firebase.js",
-    "init-firebase-auth": "node scripts/init-firebase-auth.js"
+    "init-firebase-auth": "node scripts/init-firebase-auth.js",
+    "postinstall": "npm run build-stallion"
   },
   "keywords": [
     "stellar",

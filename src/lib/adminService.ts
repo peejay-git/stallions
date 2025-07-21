@@ -30,7 +30,6 @@ export async function getAllBounties() {
         reward: data.reward || { amount: '0', asset: 'XLM' },
         distribution: data.distribution || [],
         submissionDeadline: data.submissionDeadline || 0,
-        judgingDeadline: data.judgingDeadline || 0,
         status: data.status || BountyStatus.OPEN,
         category: data.category || BountyCategory.OTHER,
         skills: data.skills || [],

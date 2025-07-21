@@ -72,7 +72,6 @@ export class BountyService {
         reward: data.reward || { amount: '0', asset: 'USDC' },
         distribution: data.distribution || [],
         submissionDeadline: data.submissionDeadline || new Date().toISOString(),
-        judgingDeadline: data.judgingDeadline || new Date().toISOString(),
         status: data.status || BountyStatus.OPEN,
         category: data.category || BountyCategory.OTHER,
         skills: data.skills || [],
@@ -108,7 +107,6 @@ export class BountyService {
           distribution: data.distribution || [],
           submissionDeadline:
             data.submissionDeadline || new Date().toISOString(),
-          judgingDeadline: data.judgingDeadline || new Date().toISOString(),
           status: data.status || BountyStatus.OPEN,
           category: data.category || BountyCategory.OTHER,
           skills: data.skills || [],
@@ -272,7 +270,6 @@ export class BountyService {
       distribution: { position: number; percentage: number }[];
       deadline: string;
       submissionDeadline: string;
-      judgingDeadline: string;
       status: string;
       updatedAt: string;
       sponsorName?: string;
@@ -303,7 +300,6 @@ export class BountyService {
         reward: parsedReward,
         deadline: data.deadline,
         submissionDeadline: data.submissionDeadline,
-        judgingDeadline: data.judgingDeadline,
         status: data.status as BountyStatus,
         createdAt: new Date().toISOString(),
         updatedAt: data.updatedAt,

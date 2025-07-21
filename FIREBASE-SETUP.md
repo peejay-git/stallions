@@ -107,7 +107,6 @@ bounties (collection)
       │   └── position: number
       ├── owner: string
       ├── submissionDeadline: number
-      ├── judgingDeadline: number
       ├── createdAt: timestamp
       └── updatedAt: timestamp
 ```

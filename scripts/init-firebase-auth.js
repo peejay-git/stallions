@@ -111,16 +111,13 @@ Build a reusable component that allows users to connect their Stellar wallets to
     status: 'OPEN',
     reward: {
       amount: '1000',
-      asset: 'USDC'
+      asset: 'USDC',
     },
-    distribution: [
-      { percentage: 100, position: 1 }
-    ],
+    distribution: [{ percentage: 100, position: 1 }],
     owner: 'GDEMO000000000000000000000000000000000SPONSOR',
     submissionDeadline: Date.now() + 1000 * 60 * 60 * 24 * 14, // 14 days from now
-    judgingDeadline: Date.now() + 1000 * 60 * 60 * 24 * 21, // 21 days from now
     createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
+    updatedAt: new Date().toISOString(),
   },
   {
     id: '1002', // This would be the document ID
@@ -146,17 +143,14 @@ Create a comprehensive UI kit for blockchain applications.
     status: 'OPEN',
     reward: {
       amount: '1500',
-      asset: 'USDC'
+      asset: 'USDC',
     },
-    distribution: [
-      { percentage: 100, position: 1 }
-    ],
+    distribution: [{ percentage: 100, position: 1 }],
     owner: 'GDEMO000000000000000000000000000000000SPONSOR',
     submissionDeadline: Date.now() + 1000 * 60 * 60 * 24 * 21, // 21 days from now
-    judgingDeadline: Date.now() + 1000 * 60 * 60 * 24 * 28, // 28 days from now
     createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
-  }
+    updatedAt: new Date().toISOString(),
+  },
 ];
 
 // Sample submissions

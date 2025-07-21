@@ -18,7 +18,7 @@ This approach minimizes blockchain storage costs (which can be expensive) while 
 - Title
 - Reward amount and token
 - Owner address
-- Deadlines (submission, judging)
+- Submission Deadline
 - Distribution percentages
 - Status
 
@@ -127,7 +127,6 @@ const bountyId = await createBountyOnChain({
   reward,
   distribution,
   submissionDeadline,
-  judgingDeadline,
 });
 
 // 3. Then save additional data to the backend
@@ -142,29 +141,6 @@ await fetch('/api/bounties', {
 });
 ```
 
-#### Submitting Work
-
-```jsx
-// 1. Import the blockchain utility
-import { submitWorkOnChain } from '@/utils/blockchain';
-
-// 2. Call the blockchain function first
-const submissionId = await submitWorkOnChain({
-  userPublicKey,  // from wallet
-  bountyId,
-  content: shortDescription,
-});
-
-// 3. Then save detailed submission to the backend
-await fetch(`/api/bounties/${bountyId}/submissions`, {
-  method: 'POST',
-  body: JSON.stringify({
-    blockchainSubmissionId: submissionId,
-    applicantAddress: userPublicKey,
-    content: detailedDescription,
-  }),
-});
-```
 
 ## Benefits
 

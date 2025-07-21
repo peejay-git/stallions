@@ -131,7 +131,6 @@ export async function POST(request: NextRequest) {
       reward,
       deadline,
       submissionDeadline,
-      judgingDeadline,
       status,
       distribution,
       sponsorName,
@@ -197,9 +196,6 @@ export async function POST(request: NextRequest) {
         deadline: deadline || new Date().toISOString(),
         submissionDeadline:
           submissionDeadline || deadline || new Date().toISOString(),
-        judgingDeadline:
-          judgingDeadline ||
-          new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
         status: status || 'OPEN',
         updatedAt: new Date().toISOString(),
       });

@@ -75,7 +75,6 @@ export async function PUT(
       reward,
       deadline,
       submissionDeadline,
-      judgingDeadline,
       distribution,
       status,
     } = await request.json();
@@ -139,7 +138,6 @@ export async function PUT(
       reward: reward || '',
       deadline: deadline || '',
       submissionDeadline: submissionDeadline || '',
-      judgingDeadline: judgingDeadline || '',
       status: status || 'OPEN',
       updatedAt: new Date().toISOString(),
       distribution: distribution || [],

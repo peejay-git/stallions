@@ -1,7 +1,6 @@
 import { db } from '@/lib/firebase';
 import useAuthStore from '@/lib/stores/auth.store';
 import type { SubmissionData } from '@/types/submission';
-import { submitWorkOnChain } from '@/utils/blockchain';
 import {
   collection,
   doc,
@@ -11,6 +10,7 @@ import {
   updateDoc,
   where,
 } from 'firebase/firestore';
+import { nanoid } from 'nanoid';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
@@ -191,28 +191,8 @@ export default function SubmitWorkForm({
       setStep('submitting');
       toast.loading('Submitting your work...', { id: 'submit-work' });
 
-      // Submit to blockchain (Soroban contract)
-      let blockchainSubmissionId;
-      try {
-        blockchainSubmissionId = await submitWorkOnChain({
-          userPublicKey: userWalletAddress,
-          bountyId,
-          content: formData.link, // Use link as the on-chain content
-        });
-      } catch (blockchainError) {
-        console.error('Error submitting to blockchain:', blockchainError);
-        toast.remove('submit-work');
-        setIsLoading(false);
-        setStep('form');
-        // We don't display a toast here because submitWorkOnChain already shows an error toast
-        return;
-      }
-
-      if (!blockchainSubmissionId) {
-        throw new Error('Failed to generate submission ID');
-      }
-
-      setSubmissionId(blockchainSubmissionId);
+      const submissionId = nanoid();
+      setSubmissionId(submissionId);
 
       // Save submission data to the database
       const response = await fetch(`/api/bounties/${bountyId}/submissions`, {
@@ -223,7 +203,7 @@ export default function SubmitWorkForm({
           'x-user-role': user.role || 'user',
         },
         body: JSON.stringify({
-          submissionId: blockchainSubmissionId,
+          submissionId,
           applicantAddress: userWalletAddress,
           userId: user.uid,
           content: formData.detailedDescription,

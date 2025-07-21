@@ -36,7 +36,6 @@ export interface Bounty {
   };
   distribution: Distribution[];
   submissionDeadline: number;
-  judgingDeadline?: number;
   status: BountyStatus;
   category: BountyCategory;
   skills: string[];

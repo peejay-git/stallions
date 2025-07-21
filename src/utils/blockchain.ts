@@ -13,7 +13,11 @@ import toast from 'react-hot-toast';
  * @param context Context of where the error occurred (e.g., 'creating bounty', 'updating bounty')
  * @param toastId Toast ID for deduplication
  */
-export function handleBlockchainError(error: any, context: string = 'blockchain operation', toastId: string = 'wallet-transaction'): never {
+export function handleBlockchainError(
+  error: any,
+  context: string = 'blockchain operation',
+  toastId: string = 'wallet-transaction'
+): never {
   console.error(`Error in ${context}:`, error);
 
   // Parse JSON error messages if they exist
@@ -65,7 +69,10 @@ export function handleBlockchainError(error: any, context: string = 'blockchain 
         id: toastId,
       }
     );
-  } else if (error.message?.includes('insufficient balance')) {
+  } else if (
+    error.message?.includes('insufficient balance') ||
+    error.message?.includes('resulting balance is not within the allowed range')
+  ) {
     toast.error('Insufficient balance in your wallet.', {
       id: toastId,
     });

@@ -43,6 +43,7 @@ export interface Bounty {
   updatedAt: string;
   deadline: string;
   sponsorName?: string;
+  sponsorLogo?: string;
 }
 
 export interface Submission {

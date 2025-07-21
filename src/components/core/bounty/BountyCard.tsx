@@ -258,6 +258,21 @@ export default function BountyCard({ bounty }: BountyCardProps) {
   return (
     <div className="backdrop-blur-xl bg-white/10 border border-white/20 rounded-xl overflow-hidden hover:shadow-lg transition-all duration-200">
       <div className="p-6">
+        {/* Sponsor logo and name */}
+        {(safeBounty.sponsorLogo || (safeBounty.sponsorName && safeBounty.sponsorName !== 'Anonymous')) && (
+          <div className="flex items-center gap-3 mb-3">
+            {safeBounty.sponsorLogo && (
+              <img
+                src={safeBounty.sponsorLogo}
+                alt={safeBounty.sponsorName || 'Sponsor Logo'}
+                className="w-8 h-8 rounded-full object-cover border border-white/20 bg-white/10"
+              />
+            )}
+            {safeBounty.sponsorName && safeBounty.sponsorName !== 'Anonymous' && (
+              <span className="text-sm font-medium text-white/80">{safeBounty.sponsorName}</span>
+            )}
+          </div>
+        )}
         <div className="flex justify-between items-start mb-4">
           {getStatusBadge()}
           <span className="font-medium text-green-300 bg-green-900/30 px-3 py-1 rounded-full border border-green-700/30">

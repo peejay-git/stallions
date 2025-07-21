@@ -98,10 +98,18 @@ const TalentRegistrationForm: React.FC<TalentRegistrationFormProps> = ({
       </div>
 
       <div>
-        <WalletConnectButton
-          onAddressChange={(address) => onFieldChange('walletAddress', address)}
-          currentAddress={formData.walletAddress}
+        <input
+          type="text"
+          name="walletAddress"
+          value={formData.walletAddress}
+          onChange={handleChange}
+          placeholder="Wallet Address"
+          className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20"
+          required
         />
+        {fieldErrors.walletAddress && (
+          <p className="text-sm text-red-500 mt-1">{fieldErrors.walletAddress}</p>
+        )}
       </div>
 
       <div>

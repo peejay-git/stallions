@@ -9,34 +9,24 @@ export const dynamic = 'force-dynamic';
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const userId = searchParams.get('userId');
+    // const userId = searchParams.get('userId');
     const walletAddress = searchParams.get('walletAddress');
 
-    if (!userId && !walletAddress) {
+    if (!walletAddress) {
       return NextResponse.json(
-        { error: 'User ID or wallet address required as query parameter' },
+        { error: 'Wallet address required as query parameter' },
         { status: 400 }
       );
     }
 
-    console.log('Fetching submissions for:', { userId, walletAddress });
+    console.log('Fetching submissions for:', { walletAddress });
 
     // Get submissions from database and build query
     let submissionsQuery: CollectionReference | Query =
       adminDb.collection('submissions');
 
-    // Add query conditions
-    if (userId) {
-      submissionsQuery = submissionsQuery.where('userId', '==', userId);
-    }
-
-    if (walletAddress) {
-      submissionsQuery = submissionsQuery.where(
-        'applicantAddress',
-        '==',
-        walletAddress
-      );
-    }
+    // Only use walletAddress for query
+    submissionsQuery = submissionsQuery.where('applicantAddress', '==', walletAddress);
 
     // Execute the query
     const querySnapshot = await submissionsQuery.get();

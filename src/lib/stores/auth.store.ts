@@ -120,27 +120,16 @@ const useAuthStore = create<AuthStoreState>()(
           if (docSnap.exists()) {
             const userData = docSnap.data();
 
-            // Extract wallet information
-            const walletInfo = userData.wallet
-              ? {
-                  address: userData.wallet.address,
-                  publicKey: userData.wallet.publicKey,
-                  network: userData.wallet.network,
-                  connectedAt: userData.wallet.connectedAt,
-                }
-              : undefined;
-
             // Create user profile
             const userProfile: UserProfile = {
               uid: currentUser.uid,
               email: currentUser.email || undefined,
-              ...userData.profileData,
-              role: userData.role as UserRole,
-              walletConnected: !!userData.wallet,
-              walletInfo,
+              role: userData.role,
+              wallet: userData.wallet || null,
+              profileData: userData.profileData || {},
               createdAt: userData.createdAt,
-              updatedAt: userData.updatedAt,
               lastLogin: userData.lastLogin,
+              ...userData, // This will include any additional fields
               isProfileComplete: false, // Will be calculated in setUser
             };
 

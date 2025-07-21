@@ -215,23 +215,23 @@ const Header = () => {
                       </svg>
                     </button>
                   ) : null}
-                  {!isConnected &&
-                    (!publicKey ? (
-                      <>
-                        <button
-                          onClick={handleWalletConnect}
-                          className="bg-white text-black font-medium py-1.5 px-4 rounded-lg hover:bg-white/90"
-                        >
-                          Connect Wallet
-                        </button>
-                        <button
-                          onClick={handleLogout}
-                          className="bg-white text-black font-medium py-1.5 px-4 rounded-lg hover:bg-white/90"
-                        >
-                          Logout
-                        </button>
-                      </>
-                    ) : null)}
+                  {/* Only show Connect Wallet for non-talent users */}
+                  {!isConnected && !publicKey && user?.role !== 'talent' ? (
+                    <>
+                      <button
+                        onClick={handleWalletConnect}
+                        className="bg-white text-black font-medium py-1.5 px-4 rounded-lg hover:bg-white/90"
+                      >
+                        Connect Wallet
+                      </button>
+                      <button
+                        onClick={handleLogout}
+                        className="bg-white text-black font-medium py-1.5 px-4 rounded-lg hover:bg-white/90"
+                      >
+                        Logout
+                      </button>
+                    </>
+                  ) : null}
                 </div>
               ) : (
                 <button

@@ -254,15 +254,15 @@ export default function SubmitWorkForm({
 
   if (step === 'already-submitted') {
     return (
-      <div className="p-8">
+      <div className="backdrop-blur-xl bg-white/10 border border-white/20 rounded-xl p-8 text-white mb-8">
         <h2 className="text-xl font-semibold mb-4 text-white">
           Your Submission
         </h2>
-        <div className="bg-blue-900/30 text-white border border-blue-700/30 p-6 rounded-lg">
+        <div className="bg-white/5 border border-white/10 p-6 rounded-lg">
           <div className="flex flex-col gap-4">
             {userSubmission?.createdAt && (
               <div>
-                <h3 className="text-blue-300 font-medium mb-1">Submitted on</h3>
+                <h3 className="text-gray-300 font-medium mb-1">Submitted on</h3>
                 <p className="text-white">
                   {new Date(userSubmission.createdAt).toLocaleString()}
                 </p>
@@ -271,7 +271,7 @@ export default function SubmitWorkForm({
 
             {userSubmission?.link && (
               <div>
-                <h3 className="text-blue-300 font-medium mb-1">Link</h3>
+                <h3 className="text-gray-300 font-medium mb-1">Link</h3>
                 <p className="text-white">
                   <a
                     href={userSubmission.link}
@@ -287,7 +287,7 @@ export default function SubmitWorkForm({
 
             {userSubmission?.content && (
               <div>
-                <h3 className="text-blue-300 font-medium mb-1">Description</h3>
+                <h3 className="text-gray-300 font-medium mb-1">Description</h3>
                 <p className="text-white whitespace-pre-wrap">
                   {userSubmission.content}
                 </p>
@@ -337,10 +337,8 @@ export default function SubmitWorkForm({
   }
 
   return (
-    <>
-      <h2 className="text-2xl font-bold text-white p-6 pb-0 mb-4">
-        Submit Work
-      </h2>
+    <div className="backdrop-blur-xl bg-white/10 border border-white/20 rounded-xl p-8 text-white mb-8">
+      <h2 className="text-2xl font-bold mb-6">Submit Work</h2>
 
       {step === 'form' && (
         <form onSubmit={handleSubmit} className="space-y-6 p-6 pt-0">
@@ -435,6 +433,6 @@ export default function SubmitWorkForm({
           </Link>
         </div>
       )}
-    </>
+    </div>
   );
 }

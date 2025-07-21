@@ -19,6 +19,8 @@ import {
 } from 'firebase/firestore';
 import { auth, db, googleProvider } from './firebase';
 import useAuthStore from './stores/auth.store';
+import { storage } from './firebase';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 type TalentRegistrationData = Omit<
   TalentFormDataType,
@@ -51,12 +53,26 @@ export async function registerSponsor(data: any) {
     throw new Error('No authenticated user found');
   }
 
+  let companyLogoUrl = '';
+  if (companyLogoFile) {
+    try {
+      // Upload logo to Firebase Storage
+      const logoRef = ref(storage, `sponsor-logos/${uid}/${companyLogoFile.name}`);
+      await uploadBytes(logoRef, companyLogoFile);
+      companyLogoUrl = await getDownloadURL(logoRef);
+    } catch (uploadError) {
+      console.error('Error uploading company logo:', uploadError);
+      // Optionally, you could notify the user here
+    }
+  }
+
   await setDoc(doc(db, 'users', uid), {
     uid,
     role: 'sponsor',
     email,
     profileData: {
       ...rest,
+      companyLogo: companyLogoUrl || '',
     },
     wallet: walletAddress
       ? {
@@ -75,6 +91,7 @@ export async function registerSponsor(data: any) {
     role: 'sponsor',
     email,
     ...rest,
+    companyLogo: companyLogoUrl || '',
     walletConnected: !!walletAddress,
     isProfileComplete: true,
   };

@@ -233,7 +233,7 @@ export default function CreateBountyForm() {
             ? formData.skills
             : ['General'],
         extraRequirements: '',
-        owner: publicKey,
+        owner: user?.uid || publicKey, // Prefer UID if available
         title: formData.title,
         reward: {
           amount: formData.rewardAmount,
@@ -242,7 +242,8 @@ export default function CreateBountyForm() {
         submissionDeadline: new Date(formData.submissionDeadline).toISOString(),
         deadline: new Date(formData.submissionDeadline).toISOString(),
         status: 'OPEN',
-        sponsorName: user?.companyUsername || '',
+        sponsorName: user?.profileData?.companyName || user?.companyUsername || '',
+        sponsorLogo: user?.profileData?.companyLogo || '',
       };
 
       const response = await fetch('/api/bounties', {

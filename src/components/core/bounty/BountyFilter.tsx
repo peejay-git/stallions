@@ -149,10 +149,10 @@ export default function BountyFilter({
   // Only display selected status filters for UI simplicity
   const mainStatusFilters = [
     BountyStatus.OPEN,
-    BountyStatus.IN_PROGRESS,
     BountyStatus.REVIEW,
     BountyStatus.COMPLETED,
-    BountyStatus.CANCELLED,
+
+
   ];
 
   return (

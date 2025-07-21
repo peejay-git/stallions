@@ -37,7 +37,7 @@ const adaptBounty = (apiBounty: FirebaseBounty): Bounty => {
 export default function BountiesPage() {
   const [bounties, setBounties] = useState<FirebaseBounty[]>([]);
   const [loading, setLoading] = useState(true);
-  const [statusFilters, setStatusFilters] = useState<BountyStatus[]>([]);
+  const [statusFilters, setStatusFilters] = useState<BountyStatus[]>([BountyStatus.OPEN]);
   const [categoryFilters, setCategoryFilters] = useState<BountyCategory[]>([]);
   const [assetFilters, setAssetFilters] = useState<string[]>([]);
   const [skills, setSkills] = useState<string[]>([]);
@@ -133,7 +133,12 @@ export default function BountiesPage() {
       filtered = filtered.filter((bounty) => isCompleted(bounty));
     }
 
-    return filtered;
+    // Sort: open bounties first, then by createdAt descending
+    return [...filtered].sort((a, b) => {
+      if (a.status === BountyStatus.OPEN && b.status !== BountyStatus.OPEN) return -1;
+      if (a.status !== BountyStatus.OPEN && b.status === BountyStatus.OPEN) return 1;
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    });
   }, [bounties, filter, statusFilters]);
 
   // Calculate pagination

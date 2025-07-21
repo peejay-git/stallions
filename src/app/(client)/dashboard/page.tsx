@@ -129,15 +129,12 @@ export default function DashboardPage() {
   useEffect(() => {
     const fetchUserSubmissions = async () => {
       try {
-        if (!user?.uid && !user?.wallet?.address) return;
+        if (!user?.wallet?.address) return;
 
         setLoadingSubmissions(true);
 
         // Build query parameters
         const queryParams = new URLSearchParams();
-        if (user?.uid) {
-          queryParams.append('userId', user.uid);
-        }
         if (user?.wallet?.address) {
           queryParams.append('walletAddress', user.wallet.address);
         }
@@ -161,10 +158,15 @@ export default function DashboardPage() {
       }
     };
 
-    if (isConnected) {
+    if (user?.wallet?.address) {
       fetchUserSubmissions();
     }
-  }, [user?.uid, user?.wallet?.address, isConnected]);
+  }, [user?.wallet?.address]);
+
+  // Debug: Log user object after login
+  useEffect(() => {
+    console.log('Dashboard user:', user);
+  }, [user]);
 
   // Format date to be more readable
   const formatDate = (dateString: string) => {
@@ -207,36 +209,10 @@ export default function DashboardPage() {
           <h1 className="text-3xl font-bold mb-8 text-white">Dashboard</h1>
           <h1 className="text-2xl font-semibold text-white mb-8">
             Welcome{' '}
-            {(user as SponsorProfile).profileData?.companyName ||
-              (user as SponsorProfile).profileData?.firstName ||
-              '...'}
+            {(user as SponsorProfile).profileData?.companyName || (user as SponsorProfile).profileData?.firstName || '...'}
           </h1>
 
           <SponsorWalletPrompt
-            onSuccess={() => {
-              // This will trigger a re-render and fetch bounties
-              fetchUser();
-            }}
-          />
-        </div>
-      </div>
-    );
-  }
-
-  // Show talent wallet connector for talents
-  if (isTalent && !isConnected && (!user || !user.wallet)) {
-    return (
-      <div className="min-h-screen py-12 px-4 sm:px-6">
-        <div className="max-w-5xl mx-auto">
-          <h1 className="text-3xl font-bold mb-8 text-white">Dashboard</h1>
-          <h1 className="text-2xl font-semibold text-white">
-            Welcome{' '}
-            {(user as TalentProfile).profileData?.username ||
-              (user as TalentProfile).profileData?.firstName ||
-              '...'}
-          </h1>
-
-          <TalentWalletConnector
             onSuccess={() => {
               // This will trigger a re-render and fetch bounties
               fetchUser();
@@ -282,8 +258,9 @@ export default function DashboardPage() {
                   Account Overview
                 </h2>
                 <p className="text-gray-300 truncate">
-                  {user?.wallet?.address?.slice(0, 8)}...
-                  {user?.wallet?.address?.slice(-8)}
+                  {user?.wallet?.address
+                    ? `${user.wallet.address.slice(0, 8)}...${user.wallet.address.slice(-8)}`
+                    : "N/A"}
                 </p>
               </div>
               <div className="flex gap-3">

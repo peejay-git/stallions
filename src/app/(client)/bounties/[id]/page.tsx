@@ -223,8 +223,8 @@ export default function BountyDetailPage() {
 
               // Get the user role from auth store
               const currentUser = useAuthStore.getState().user;
-              if (currentUser) {
-                const role = currentUser.role;
+              if (currentUser && currentUser.role) {
+                const role = currentUser.role!;
                 setUserRole(role);
                 setIsSponsor(role === "sponsor");
               }
@@ -728,7 +728,10 @@ export default function BountyDetailPage() {
                 <h3 className="text-sm text-gray-300 mb-1">Posted By</h3>
                 <p className="font-medium text-white truncate">
                   {sponsor?.walletAddress
-                    ? `${sponsor.walletAddress.slice(0, 6)}...${sponsor.walletAddress.slice(-4)}`
+                    ? `${sponsor.walletAddress.slice(
+                        0,
+                        6
+                      )}...${sponsor.walletAddress.slice(-4)}`
                     : "N/A"}
                 </p>
               </div>

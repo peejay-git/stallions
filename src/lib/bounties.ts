@@ -146,9 +146,9 @@ export async function getAllBountiesWithSponsors() {
 
   // Step 1: Get unique owner IDs
   // @ts-ignore
-  const uniqueOwnerIds = [
-    ...new Set(bounties.map((b) => b.owner).filter(Boolean)),
-  ];
+  const uniqueOwnerIds = Array.from(
+    new Set(bounties.map((b) => b.owner).filter(Boolean))
+  );
 
   // Step 2: Fetch sponsor data in batches (10 per Firestore limitation)
   const sponsorDataMap = new Map();

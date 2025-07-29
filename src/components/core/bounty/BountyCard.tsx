@@ -1,7 +1,7 @@
-import { Bounty, BountyStatus } from '@/types/bounty';
-import Link from 'next/link';
-import { useEffect, useState } from 'react';
-import { FiAward, FiUser, FiUsers } from 'react-icons/fi';
+import { Bounty, BountyStatus } from "@/types/bounty";
+import Link from "next/link";
+import { useEffect, useState } from "react";
+import { FiAward, FiUser, FiUsers } from "react-icons/fi";
 
 interface BountyCardProps {
   bounty: Bounty;
@@ -25,13 +25,13 @@ type CountdownTime = {
 };
 
 export const assetSymbols: Record<string, string> = {
-  USDC: '$',
-  XLM: '★',
-  EURC: '€',
-  NGNC: 'N',
-  KALE: 'K',
+  USDC: "$",
+  XLM: "★",
+  EURC: "€",
+  NGNC: "N",
+  KALE: "K",
   // Add a default symbol for unknown assets
-  DEFAULT: '●',
+  DEFAULT: "●",
 };
 
 export default function BountyCard({ bounty }: BountyCardProps) {
@@ -50,20 +50,22 @@ export default function BountyCard({ bounty }: BountyCardProps) {
   // Ensure bounty has all required fields with defaults
   const safeBounty = {
     ...bounty,
-    title: bounty.title || 'Untitled Bounty',
-    description: bounty.description || 'No description provided',
+    title: bounty.title || "Untitled Bounty",
+    description: bounty.description || "No description provided",
     status: bounty.status || BountyStatus.OPEN,
-    reward: bounty.reward || { amount: '0', asset: 'USDC' },
+    reward: bounty.reward || { amount: "0", asset: "USDC" },
     skills: Array.isArray(bounty.skills) ? bounty.skills : [],
     deadline: bounty.deadline || new Date().toISOString(),
-    sponsorName: bounty.sponsorName || 'Anonymous',
+    sponsorName: bounty.sponsorName || "Anonymous",
   };
+
+  console.log(bounty);
 
   // Ensure reward asset is a string
   const rewardAsset =
-    typeof safeBounty.reward.asset === 'string'
+    typeof safeBounty.reward.asset === "string"
       ? safeBounty.reward.asset
-      : 'USDC';
+      : "USDC";
 
   // Get the asset symbol, with fallback
   const assetSymbol = assetSymbols[rewardAsset] || assetSymbols.DEFAULT;
@@ -136,19 +138,19 @@ export default function BountyCard({ bounty }: BountyCardProps) {
         setSubmissionCount(data.count);
       }
     } catch (error) {
-      console.error('Error fetching submission count:', error);
+      console.error("Error fetching submission count:", error);
     }
   };
 
   // Function to format the deadline
   const formatDeadline = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
+    return date.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
     });
   };
 
@@ -202,11 +204,11 @@ export default function BountyCard({ bounty }: BountyCardProps) {
   const positionToMedal = (position: number) => {
     switch (position) {
       case 1:
-        return '🥇';
+        return "🥇";
       case 2:
-        return '🥈';
+        return "🥈";
       case 3:
-        return '🥉';
+        return "🥉";
       default:
         return `${position}th`;
     }
@@ -233,9 +235,9 @@ export default function BountyCard({ bounty }: BountyCardProps) {
 
     return (
       <span>
-        {countdown.hours.toString().padStart(2, '0')}:
-        {countdown.minutes.toString().padStart(2, '0')}:
-        {countdown.seconds.toString().padStart(2, '0')}
+        {countdown.hours.toString().padStart(2, "0")}:
+        {countdown.minutes.toString().padStart(2, "0")}:
+        {countdown.seconds.toString().padStart(2, "0")}
       </span>
     );
   };
@@ -249,31 +251,50 @@ export default function BountyCard({ bounty }: BountyCardProps) {
         setWinners(data);
       }
     } catch (error) {
-      console.error('Error fetching winners:', error);
+      console.error("Error fetching winners:", error);
     } finally {
       setLoadingWinners(false);
     }
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
   };
 
   return (
     <div className="backdrop-blur-xl bg-white/10 border border-white/20 rounded-xl overflow-hidden hover:shadow-lg transition-all duration-200">
       <div className="p-6">
         {/* Sponsor logo and name */}
-        {(safeBounty.sponsorLogo || (safeBounty.sponsorName && safeBounty.sponsorName !== 'Anonymous')) && (
+        {(safeBounty.sponsorLogo ||
+          (safeBounty.sponsorName &&
+            safeBounty.sponsorName !== "Anonymous")) && (
           <div className="flex items-center gap-3 mb-3">
             {safeBounty.sponsorLogo && (
               <img
                 src={safeBounty.sponsorLogo}
-                alt={safeBounty.sponsorName || 'Sponsor Logo'}
+                alt={safeBounty.sponsorName || "Sponsor Logo"}
                 className="w-8 h-8 rounded-full object-cover border border-white/20 bg-white/10"
               />
             )}
-            {safeBounty.sponsorName && safeBounty.sponsorName !== 'Anonymous' && (
-              <span className="text-sm font-medium text-white/80">{safeBounty.sponsorName}</span>
-            )}
+            <div className={"flex flex-col justify-center gap-0.5"}>
+              {safeBounty.sponsorName &&
+                safeBounty.sponsorName !== "Anonymous" && (
+                  <span className="text-sm font-medium text-white/80">
+                    Sponsored by {safeBounty.sponsorName}
+                  </span>
+                )}
+              <div className={"text-gray-400 text-xs"}>
+                Posted on {formatDate(bounty.createdAt)}
+              </div>
+            </div>
           </div>
         )}
-        <div className="flex justify-between items-start mb-4">
+        {/*<div className={"text-gray-300 text-xs mb-4"}>Posted on {formatDate(bounty.createdAt)}</div>*/}
+        <div className="flex justify-between items-center mb-4 ">
           {getStatusBadge()}
           <span className="font-medium text-green-300 bg-green-900/30 px-3 py-1 rounded-full border border-green-700/30">
             {assetSymbol}
@@ -305,8 +326,8 @@ export default function BountyCard({ bounty }: BountyCardProps) {
         <div className="flex items-center gap-2 mb-4 text-sm text-gray-300 bg-white/5 px-3 py-2 rounded-lg border border-white/10">
           <FiUsers className="text-gray-400" />
           <span>
-            {submissionCount}{' '}
-            {submissionCount === 1 ? 'submission' : 'submissions'}
+            {submissionCount}{" "}
+            {submissionCount === 1 ? "submission" : "submissions"}
           </span>
         </div>
 
@@ -318,7 +339,7 @@ export default function BountyCard({ bounty }: BountyCardProps) {
               className="flex items-center gap-2 text-white hover:text-blue-300 transition-colors font-medium mb-2"
             >
               <FiAward className="text-yellow-400" />
-              <span>{showWinners ? 'Hide Winners' : 'Show Winners'}</span>
+              <span>{showWinners ? "Hide Winners" : "Show Winners"}</span>
             </button>
 
             {showWinners && (
@@ -341,11 +362,11 @@ export default function BountyCard({ bounty }: BountyCardProps) {
                           <div className="flex justify-between items-center">
                             <span className="text-white text-sm">
                               {winner.position === 1
-                                ? '1st Place'
+                                ? "1st Place"
                                 : winner.position === 2
-                                ? '2nd Place'
+                                ? "2nd Place"
                                 : winner.position === 3
-                                ? '3rd Place'
+                                ? "3rd Place"
                                 : `${winner.position}th Place`}
                             </span>
                             <span className="text-gray-400 text-xs">
@@ -355,8 +376,8 @@ export default function BountyCard({ bounty }: BountyCardProps) {
                           <div className="text-gray-400 text-xs flex items-center gap-1">
                             <FiUser className="flex-shrink-0" />
                             <span className="truncate">
-                              {winner.applicantAddress === 'No winner selected'
-                                ? 'No winner selected'
+                              {winner.applicantAddress === "No winner selected"
+                                ? "No winner selected"
                                 : `${winner.applicantAddress.substring(
                                     0,
                                     6

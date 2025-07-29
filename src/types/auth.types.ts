@@ -113,7 +113,7 @@ export interface AuthState {
   loading: boolean;
 
   // Actions
-  setUser: (user: Omit<UserProfile, "role">) => void;
+  setUser: (user: UserProfile) => void;
   clearUser: () => void;
   setLoading: (value: boolean) => void;
   fetchUserFromFirestore: () => Promise<void>;

@@ -125,6 +125,7 @@ const useAuthStore = create<AuthStoreState>()(
             // Create user profile
             const userProfile: UserProfile = {
               uid: currentUser.uid,
+              authProvider: userData?.authProvider,
               email: currentUser.email || undefined,
               role: userData.role,
               wallet: userData.wallet || null,
@@ -323,6 +324,7 @@ const useAuthStore = create<AuthStoreState>()(
           const userProfile = {
             uid: userDoc.id,
             email: userData.email,
+            authProvider: userData?.authProvider,
             profileData: userData.profileData,
             photoURL: userData.photoURL || "",
             role: userData.role || "",

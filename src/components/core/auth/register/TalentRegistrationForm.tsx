@@ -1,12 +1,12 @@
-'use client';
+"use client";
 
-import { PasswordInput } from '@/components/ui';
-import { SKILLS_OPTIONS } from '@/utils/constants/bounty';
-import { AnimatePresence, motion } from 'framer-motion';
-import React from 'react';
-import { CheckmarkIcon } from 'react-hot-toast';
-import { FaGithub, FaLinkedin, FaXTwitter } from 'react-icons/fa6';
-import WalletConnectButton from '../WalletConnectButton';
+import { PasswordInput } from "@/components/ui";
+import { SKILLS_OPTIONS } from "@/utils/constants/bounty";
+import { AnimatePresence, motion } from "framer-motion";
+import React from "react";
+import { CheckmarkIcon } from "react-hot-toast";
+import { FaGithub, FaLinkedin, FaXTwitter } from "react-icons/fa6";
+import WalletConnectButton from "../WalletConnectButton";
 
 export type TalentFormDataType = {
   firstName: string;
@@ -103,12 +103,14 @@ const TalentRegistrationForm: React.FC<TalentRegistrationFormProps> = ({
           name="walletAddress"
           value={formData.walletAddress}
           onChange={handleChange}
-          placeholder="Wallet Address"
+          placeholder="Stellar wallet address"
           className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20"
           required
         />
         {fieldErrors.walletAddress && (
-          <p className="text-sm text-red-500 mt-1">{fieldErrors.walletAddress}</p>
+          <p className="text-sm text-red-500 mt-1">
+            {fieldErrors.walletAddress}
+          </p>
         )}
       </div>
 
@@ -133,7 +135,7 @@ const TalentRegistrationForm: React.FC<TalentRegistrationFormProps> = ({
               onClick={() => onSkillToggle(skill)}
               className={`flex items-center gap-2 px-3 py-1 text-sm rounded-full bg-primary text-white`}
             >
-              {skill}{' '}
+              {skill}{" "}
               {formData.skills.includes(skill) ? (
                 <AnimatePresence>
                   <motion.div
@@ -157,20 +159,20 @@ const TalentRegistrationForm: React.FC<TalentRegistrationFormProps> = ({
         <p className="text-sm text-white font-medium">Social Media</p>
         {formData.socials.map((social, index) => (
           <div key={index} className="flex items-center gap-2">
-            {social.platform === 'twitter' && (
+            {social.platform === "twitter" && (
               <FaXTwitter className="text-gray-500" />
             )}
-            {social.platform === 'linkedin' && (
+            {social.platform === "linkedin" && (
               <FaLinkedin className="text-gray-500" />
             )}
-            {social.platform === 'github' && (
+            {social.platform === "github" && (
               <FaGithub className="text-gray-500" />
             )}
             <input
               type="text"
               value={social.username}
               onChange={(e) =>
-                onSocialChange(index, 'username', e.target.value)
+                onSocialChange(index, "username", e.target.value)
               }
               placeholder={`${
                 social.platform.charAt(0).toUpperCase() +
@@ -195,7 +197,7 @@ const TalentRegistrationForm: React.FC<TalentRegistrationFormProps> = ({
             onClick={onAddSocial}
             className="text-sm text-white hover:underline"
           >
-            + Add {formData.socials.length === 0 ? 'Social Media' : 'Another'}
+            + Add {formData.socials.length === 0 ? "Social Media" : "Another"}
           </button>
         )}
       </div>

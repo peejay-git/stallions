@@ -1,19 +1,19 @@
-'use client';
+"use client";
 
-import { getCurrentNetwork } from '@/config/networks';
-import { useWallet } from '@/hooks/useWallet';
-import { registerSponsor, registerTalent } from '@/lib/authService';
-import { auth } from '@/lib/firebase';
-import useAuthStore from '@/lib/stores/auth.store';
-import { UserProfile } from '@/types/auth.types';
-import clsx from 'clsx';
-import { FirebaseError } from 'firebase/app';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { motion } from 'framer-motion';
-import { usePathname, useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
-import toast from 'react-hot-toast';
-import { IoClose } from 'react-icons/io5';
+import { getCurrentNetwork } from "@/config/networks";
+import { useWallet } from "@/hooks/useWallet";
+import { registerSponsor, registerTalent } from "@/lib/authService";
+import { auth } from "@/lib/firebase";
+import useAuthStore from "@/lib/stores/auth.store";
+import { UserProfile } from "@/types/auth.types";
+import clsx from "clsx";
+import { FirebaseError } from "firebase/app";
+import { createUserWithEmailAndPassword } from "firebase/auth";
+import { motion } from "framer-motion";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
+import { IoClose } from "react-icons/io5";
 import {
   SponsorFieldErrors,
   SponsorFormDataType,
@@ -21,12 +21,13 @@ import {
   TalentFieldErrors,
   TalentFormDataType,
   TalentRegistrationForm,
-} from './register';
+} from "./register";
+import { StrKey } from "@stellar/stellar-base";
 
 type Props = {
   isOpen: boolean;
   onClose: () => void;
-  selectedRole?: 'talent' | 'sponsor' | null;
+  selectedRole?: "talent" | "sponsor" | null;
 };
 
 type SocialLink = {
@@ -45,17 +46,17 @@ export default function RegisterModal({
 
   // For talent form
   const [talentFormData, setTalentFormData] = useState<TalentFormDataType>({
-    firstName: '',
-    lastName: '',
-    username: '',
-    walletAddress: '',
-    location: '',
+    firstName: "",
+    lastName: "",
+    username: "",
+    walletAddress: "",
+    location: "",
     skills: [],
-    socials: [{ platform: 'twitter', username: '' }],
+    socials: [{ platform: "twitter", username: "" }],
     profileImage: null,
-    email: '',
-    password: '',
-    confirmPassword: '',
+    email: "",
+    password: "",
+    confirmPassword: "",
   });
   const [talentFieldErrors, setTalentFieldErrors] = useState<TalentFieldErrors>(
     {}
@@ -63,44 +64,44 @@ export default function RegisterModal({
 
   // For sponsor form
   const [sponsorFormData, setSponsorFormData] = useState<SponsorFormDataType>({
-    firstName: '',
-    lastName: '',
-    username: '',
-    email: '',
-    password: '',
-    confirmPassword: '',
-    telegram: '',
+    firstName: "",
+    lastName: "",
+    username: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+    telegram: "",
     profileImage: null,
-    companyName: '',
-    companyUsername: '',
-    companyUrl: '',
-    companyTwitter: '',
-    entityName: '',
+    companyName: "",
+    companyUsername: "",
+    companyUrl: "",
+    companyTwitter: "",
+    entityName: "",
     companyLogo: null,
-    industry: '',
-    shortBio: '',
-    walletAddress: '',
+    industry: "",
+    shortBio: "",
+    walletAddress: "",
   });
   const [sponsorFieldErrors, setSponsorFieldErrors] =
     useState<SponsorFieldErrors>({});
 
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [step, setStep] = useState<'form' | 'wallet'>('form');
+  const [step, setStep] = useState<"form" | "wallet">("form");
 
   // Determine which role to use
-  const role = selectedRole || 'talent';
+  const role = selectedRole || "talent";
 
   // Prevent background scrolling when modal is open
   useEffect(() => {
     if (isOpen) {
-      document.body.classList.add('overflow-hidden');
+      document.body.classList.add("overflow-hidden");
     } else {
-      document.body.classList.remove('overflow-hidden');
+      document.body.classList.remove("overflow-hidden");
     }
 
     // Cleanup on unmount
     return () => {
-      document.body.classList.remove('overflow-hidden');
+      document.body.classList.remove("overflow-hidden");
     };
   }, [isOpen]);
 
@@ -112,15 +113,15 @@ export default function RegisterModal({
     }));
 
     // Basic validation
-    let error = '';
+    let error = "";
     if (
-      ['firstName', 'lastName', 'username', 'email'].includes(name) &&
+      ["firstName", "lastName", "username", "email"].includes(name) &&
       !value.trim()
     ) {
       error = `${name.charAt(0).toUpperCase() + name.slice(1)} is required.`;
     }
-    if (name === 'skills' && value.length === 0) {
-      error = 'Please select at least one skill.';
+    if (name === "skills" && value.length === 0) {
+      error = "Please select at least one skill.";
     }
 
     setTalentFieldErrors((prev: TalentFieldErrors) => ({
@@ -142,7 +143,7 @@ export default function RegisterModal({
     if (talentFieldErrors.skills && talentFormData.skills.length > 0) {
       setTalentFieldErrors((prev: TalentFieldErrors) => ({
         ...prev,
-        skills: '',
+        skills: "",
       }));
     }
   };
@@ -159,7 +160,7 @@ export default function RegisterModal({
   };
 
   const handleAddSocial = () => {
-    const platforms = ['twitter', 'linkedin', 'github'];
+    const platforms = ["twitter", "linkedin", "github"];
     const usedPlatforms = talentFormData.socials.map(
       (s: SocialLink) => s.platform
     );
@@ -172,7 +173,7 @@ export default function RegisterModal({
         ...prev,
         socials: [
           ...prev.socials,
-          { platform: availablePlatforms[0], username: '' },
+          { platform: availablePlatforms[0], username: "" },
         ],
       }));
     }
@@ -194,9 +195,9 @@ export default function RegisterModal({
     }));
 
     // Basic validation
-    let error = '';
+    let error = "";
     if (
-      ['firstName', 'lastName', 'username', 'email', 'companyName'].includes(
+      ["firstName", "lastName", "username", "email", "companyName"].includes(
         name
       ) &&
       !value.trim()
@@ -205,11 +206,11 @@ export default function RegisterModal({
     }
 
     if (
-      name === 'companyUrl' &&
+      name === "companyUrl" &&
       value.trim() &&
-      !value.startsWith('https://')
+      !value.startsWith("https://")
     ) {
-      error = 'Company URL must start with https://.';
+      error = "Company URL must start with https://.";
     }
 
     setSponsorFieldErrors((prev: SponsorFieldErrors) => ({
@@ -228,21 +229,24 @@ export default function RegisterModal({
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    if (role === 'talent') {
+    if (role === "talent") {
       // Talent form validation
       const errors: TalentFieldErrors = {};
       if (!talentFormData.firstName.trim())
-        errors.firstName = 'First Name is required.';
+        errors.firstName = "First Name is required.";
       if (!talentFormData.lastName.trim())
-        errors.lastName = 'Last Name is required.';
+        errors.lastName = "Last Name is required.";
       if (!talentFormData.username.trim())
-        errors.username = 'Username is required.';
+        errors.username = "Username is required.";
       if (talentFormData.skills.length === 0)
-        errors.skills = 'Please select at least one skill.';
-      if (!talentFormData.email.trim()) errors.email = 'Email is required.';
-      if (!talentFormData.password) errors.password = 'Password is required.';
+        errors.skills = "Please select at least one skill.";
+      if (!talentFormData.email.trim()) errors.email = "Email is required.";
+      if (!talentFormData.password) errors.password = "Password is required.";
       if (talentFormData.password !== talentFormData.confirmPassword) {
-        errors.confirmPassword = 'Passwords do not match.';
+        errors.confirmPassword = "Passwords do not match.";
+      }
+      if (!StrKey.isValidEd25519PublicKey(talentFormData.walletAddress)) {
+        errors.walletAddress = "Please enter a valid wallet address.";
       }
 
       if (Object.keys(errors).length) {
@@ -253,27 +257,27 @@ export default function RegisterModal({
       // Sponsor form validation
       const errors: SponsorFieldErrors = {};
       if (!sponsorFormData.firstName.trim())
-        errors.firstName = 'First Name is required.';
+        errors.firstName = "First Name is required.";
       if (!sponsorFormData.lastName.trim())
-        errors.lastName = 'Last Name is required.';
+        errors.lastName = "Last Name is required.";
       if (!sponsorFormData.username.trim())
-        errors.username = 'Username is required.';
-      if (!sponsorFormData.email.trim()) errors.email = 'Email is required.';
-      if (!sponsorFormData.password) errors.password = 'Password is required.';
+        errors.username = "Username is required.";
+      if (!sponsorFormData.email.trim()) errors.email = "Email is required.";
+      if (!sponsorFormData.password) errors.password = "Password is required.";
       if (sponsorFormData.password !== sponsorFormData.confirmPassword) {
-        errors.confirmPassword = 'Passwords do not match.';
+        errors.confirmPassword = "Passwords do not match.";
       }
       if (!sponsorFormData.companyName.trim())
-        errors.companyName = 'Company Name is required.';
+        errors.companyName = "Company Name is required.";
       if (!sponsorFormData.companyUsername.trim())
-        errors.companyUsername = 'Company Username is required.';
+        errors.companyUsername = "Company Username is required.";
       if (
         sponsorFormData.companyUrl &&
-        !sponsorFormData.companyUrl.startsWith('https://')
+        !sponsorFormData.companyUrl.startsWith("https://")
       )
-        errors.companyUrl = 'Company URL must start with https://.';
+        errors.companyUrl = "Company URL must start with https://.";
       if (!sponsorFormData.industry)
-        errors.industry = 'Please select an industry.';
+        errors.industry = "Please select an industry.";
 
       if (Object.keys(errors).length) {
         setSponsorFieldErrors(errors);
@@ -287,13 +291,13 @@ export default function RegisterModal({
       // Create new user with Firebase auth
       const userCredential = await createUserWithEmailAndPassword(
         auth,
-        role === 'talent' ? talentFormData.email : sponsorFormData.email,
-        role === 'talent' ? talentFormData.password : sponsorFormData.password
+        role === "talent" ? talentFormData.email : sponsorFormData.email,
+        role === "talent" ? talentFormData.password : sponsorFormData.password
       );
       const user = userCredential.user;
 
       // Now store additional data in Firestore via our service functions
-      if (role === 'sponsor') {
+      if (role === "sponsor") {
         // Register as sponsor
         await registerSponsor({
           email: sponsorFormData.email,
@@ -301,8 +305,8 @@ export default function RegisterModal({
           firstName: sponsorFormData.firstName,
           lastName: sponsorFormData.lastName,
           username: sponsorFormData.username,
-          location: '',
-          walletAddress: sponsorFormData.walletAddress || '',
+          location: "",
+          walletAddress: sponsorFormData.walletAddress || "",
           profileImageFile: sponsorFormData.profileImage,
           companyLogoFile: sponsorFormData.companyLogo,
           companyName: sponsorFormData.companyName,
@@ -314,7 +318,7 @@ export default function RegisterModal({
           shortBio: sponsorFormData.shortBio,
           socials: [
             {
-              platform: 'twitter',
+              platform: "twitter",
               username: sponsorFormData.companyTwitter,
             },
           ],
@@ -332,7 +336,7 @@ export default function RegisterModal({
           lastName: talentFormData.lastName,
           username: talentFormData.username,
           location: talentFormData.location,
-          walletAddress: talentFormData.walletAddress || '',
+          walletAddress: talentFormData.walletAddress || "",
           skills: talentFormData.skills,
           password: talentFormData.password,
           socials: talentFormData.socials,
@@ -344,26 +348,26 @@ export default function RegisterModal({
       }
 
       const userProfile = {
-        uid: auth.currentUser?.uid || '',
-        email: auth.currentUser?.email || '',
+        uid: auth.currentUser?.uid || "",
+        email: auth.currentUser?.email || "",
         role: role,
         profileData: {
           username:
-            role === 'talent'
+            role === "talent"
               ? talentFormData.username
               : sponsorFormData.username,
           firstName:
-            role === 'talent'
+            role === "talent"
               ? talentFormData.firstName
               : sponsorFormData.firstName,
           lastName:
-            role === 'talent'
+            role === "talent"
               ? talentFormData.lastName
               : sponsorFormData.lastName,
-          location: role === 'talent' ? talentFormData.location : '',
+          location: role === "talent" ? talentFormData.location : "",
         },
         wallet:
-          role === 'talent'
+          role === "talent"
             ? {
                 address: talentFormData.walletAddress,
                 publicKey: talentFormData.walletAddress,
@@ -375,7 +379,7 @@ export default function RegisterModal({
                 network: getCurrentNetwork().name,
               },
         walletConnected:
-          role === 'talent'
+          role === "talent"
             ? !!talentFormData.walletAddress || isConnected
             : !!sponsorFormData.walletAddress || isConnected,
         isProfileComplete: true,
@@ -383,7 +387,7 @@ export default function RegisterModal({
         updatedAt: new Date().toISOString(),
       };
       useAuthStore.getState().setUser(userProfile as UserProfile);
-      toast.success('Profile created successfully!');
+      toast.success("Profile created successfully!");
 
       // Close the modal first, then redirect
       onClose();
@@ -394,21 +398,21 @@ export default function RegisterModal({
     } catch (error: any) {
       if (error instanceof FirebaseError) {
         switch (error.code) {
-          case 'auth/email-already-in-use':
-            console.log('THERE IS AN ERROR', error);
-            toast.error('Email already in use. Please use another.');
+          case "auth/email-already-in-use":
+            console.log("THERE IS AN ERROR", error);
+            toast.error("Email already in use. Please use another.");
             break;
-          case 'auth/invalid-email':
-            toast.error('Invalid email address.');
+          case "auth/invalid-email":
+            toast.error("Invalid email address.");
             break;
-          case 'auth/weak-password':
-            toast.error('Password should be at least 6 characters.');
+          case "auth/weak-password":
+            toast.error("Password should be at least 6 characters.");
             break;
           default:
-            toast.error(error.message || 'An unexpected error occurred.');
+            toast.error(error.message || "An unexpected error occurred.");
         }
       } else {
-        toast.error('Something went wrong. Please try again.');
+        toast.error("Something went wrong. Please try again.");
       }
     } finally {
       setIsSubmitting(false);
@@ -416,14 +420,14 @@ export default function RegisterModal({
   };
 
   // Wallet Connection Screen
-  if (step === 'wallet') {
+  if (step === "wallet") {
     return (
       <div
         className={clsx(
-          'fixed inset-0 z-[9999] flex items-start justify-center pt-20 transition-all duration-300',
+          "fixed inset-0 z-[9999] flex items-start justify-center pt-20 transition-all duration-300",
           isOpen
-            ? 'visible opacity-100'
-            : 'invisible opacity-0 pointer-events-none'
+            ? "visible opacity-100"
+            : "invisible opacity-0 pointer-events-none"
         )}
       >
         <div className="absolute inset-0 bg-black/40" onClick={onClose}></div>
@@ -449,10 +453,10 @@ export default function RegisterModal({
               onClick={async () => {
                 try {
                   await connect();
-                  toast.success('Wallet connected successfully!');
-                  setStep('form');
+                  toast.success("Wallet connected successfully!");
+                  setStep("form");
                 } catch (error) {
-                  toast.error('Failed to connect wallet. Please try again.');
+                  toast.error("Failed to connect wallet. Please try again.");
                 }
               }}
               className="flex w-full items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white p-3 text-center font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
@@ -461,7 +465,7 @@ export default function RegisterModal({
             </button>
 
             <button
-              onClick={() => setStep('form')}
+              onClick={() => setStep("form")}
               className="text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
             >
               Skip for now
@@ -484,7 +488,7 @@ export default function RegisterModal({
         initial={{ scale: 0.9, opacity: 0, y: 20 }}
         animate={{ scale: 1, opacity: 1, y: 0 }}
         exit={{ scale: 0.9, opacity: 0, y: 20 }}
-        transition={{ type: 'spring', duration: 0.5 }}
+        transition={{ type: "spring", duration: 0.5 }}
         className="backdrop-blur-xl bg-white/10 w-[min(90%, 400px)] max-w-lg mx-auto max-h-[90vh] border border-white/20 rounded-xl overflow-hidden shadow-2xl"
       >
         <div className="relative p-8 overflow-y-auto max-h-[80vh]">
@@ -496,11 +500,11 @@ export default function RegisterModal({
           </button>
 
           <h2 className="mb-6 text-2xl font-bold dark:text-white">
-            {role === 'sponsor' ? 'Create Sponsor Account' : 'Create Account'}
+            {role === "sponsor" ? "Create Sponsor Account" : "Create Account"}
           </h2>
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            {role === 'talent' ? (
+            {role === "talent" ? (
               <TalentRegistrationForm
                 formData={talentFormData}
                 fieldErrors={talentFieldErrors}
@@ -526,7 +530,7 @@ export default function RegisterModal({
               className="btn-primary w-full py-2"
               disabled={isSubmitting}
             >
-              {isSubmitting ? 'Creating Account...' : 'Create Account'}
+              {isSubmitting ? "Creating Account..." : "Create Account"}
             </button>
           </form>
         </div>

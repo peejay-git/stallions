@@ -1,6 +1,6 @@
-@import url('https://fonts.cdnfonts.com/css/druk-wide-trial');
-@import url('https://fonts.googleapis.com/css2?family=Itim&display=swap');
-@import url('./optimize.css');
+@import url("https://fonts.cdnfonts.com/css/druk-wide-trial");
+@import url("https://fonts.googleapis.com/css2?family=Itim&display=swap");
+@import url("./optimize.css");
 
 @tailwind base;
 @tailwind components;
@@ -72,13 +72,17 @@
 }
 
 .hero-text {
-  font-family: Itim, cursive !important;
-  line-height: 100px;
+  /* font-family: Itim, cursive !important; */
+  font-family: inter, cursive !important;
+  line-height: 1.2;
+
+  /* line-height: 100px; */
   font-weight: 400px;
 }
 
 .small-hero-text {
-  font-family: Itim, cursive;
+  /* font-family: Itim, cursive; */
+  font-family: inter, cursive;
 }
 
 @media (width <= 1250px) {

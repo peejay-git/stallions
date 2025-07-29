@@ -1,103 +1,119 @@
-'use client';
+"use client";
 
-import { AnimatePresence, motion } from 'framer-motion';
-import { FaUserGraduate, FaUserTie } from 'react-icons/fa';
-import { IoClose } from 'react-icons/io5';
+import { AnimatePresence, motion } from "framer-motion";
+import { FaUserGraduate, FaUserTie } from "react-icons/fa";
+import { IoClose } from "react-icons/io5";
 
 type Props = {
   isOpen: boolean;
   onClose: () => void;
-  onChooseRole: (role: 'talent' | 'sponsor') => void;
+  onChooseRole: (role: "talent" | "sponsor") => void;
+  canCloseModal: boolean;
 };
 
 export default function ChooseRoleModal({
   isOpen,
   onClose,
   onChooseRole,
+  canCloseModal,
 }: Props) {
   return (
     <AnimatePresence>
       {isOpen && (
-        <dialog className="h-fit w-fit bg-transparent flex items-start justify-center pt-20 backdrop:bg-black/60">
+        <>
+          {/* Fixed overlay */}
+
           <motion.div
-            initial={{ scale: 0.9, opacity: 0, y: 20 }}
-            animate={{ scale: 1, opacity: 1, y: 0 }}
-            exit={{ scale: 0.9, opacity: 0, y: 20 }}
-            transition={{ type: 'spring', duration: 0.5 }}
-            className="backdrop-blur-xl bg-white/10 w-full max-w-lg mx-auto max-h-[90vh] border border-white/20 rounded-xl overflow-hidden shadow-2xl"
-          >
-            <div className="relative p-8 overflow-y-auto max-h-[80vh]">
-              <motion.button
-                whileHover={{ rotate: 90 }}
-                transition={{ duration: 0.2 }}
-                className="absolute top-4 right-4 text-white/80 hover:text-white transition-colors"
-                onClick={onClose}
-              >
-                <IoClose className="w-6 h-6" />
-              </motion.button>
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9998] h-dvh w-dvw"
+            onClick={canCloseModal ? onClose : undefined}
+          />
 
-              <motion.div
-                initial={{ y: -20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.2 }}
-              >
-                <h2 className="text-3xl font-bold mb-6 text-white text-center">
-                  Choose Your Role
-                </h2>
-              </motion.div>
+          <dialog className="h-fit w-fit bg-transparent flex items-start justify-center pt-20 backdrop:bg-black/60 z-[9999]">
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              transition={{ type: "spring", duration: 0.5 }}
+              className="backdrop-blur-xl bg-white/10 w-full max-w-lg mx-auto max-h-[90vh] border border-white/20 rounded-xl overflow-hidden shadow-2xl"
+            >
+              <div className="relative p-8 overflow-y-auto max-h-[80vh]">
+                {canCloseModal && (
+                  <motion.button
+                    whileHover={{ rotate: 90 }}
+                    transition={{ duration: 0.2 }}
+                    className="absolute top-4 right-4 text-white/80 hover:text-white transition-colors"
+                    onClick={onClose}
+                  >
+                    <IoClose className="w-6 h-6" />
+                  </motion.button>
+                )}
 
-              <div className="flex flex-col sm:flex-row gap-6 justify-between">
-                <motion.button
-                  onClick={() => onChooseRole('talent')}
-                  className="flex-1 backdrop-blur-xl bg-blue-500/20 border border-blue-500/30 rounded-xl p-6 flex flex-col items-center text-center transition shadow-lg hover:shadow-blue-500/20"
-                  initial={{ x: -20, opacity: 0 }}
-                  animate={{ x: 0, opacity: 1 }}
-                  transition={{ delay: 0.3 }}
-                  whileHover={{
-                    scale: 1.03,
-                    boxShadow: '0 10px 25px -5px rgba(59, 130, 246, 0.5)',
-                  }}
-                  whileTap={{ scale: 0.98 }}
+                <motion.div
+                  initial={{ y: -20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.2 }}
                 >
-                  <div className="w-16 h-16 bg-blue-500/30 rounded-full flex items-center justify-center mb-4">
-                    <FaUserGraduate className="text-blue-300 text-3xl" />
-                  </div>
-                  <h3 className="text-xl font-semibold mb-2 text-blue-300">
-                    I'm a Talent
-                  </h3>
-                  <p className="text-sm text-blue-200">
-                    Looking to grow your skills, earn crypto, and work on Web3
-                    projects.
-                  </p>
-                </motion.button>
+                  <h2 className="text-3xl font-bold mb-6 text-white text-center">
+                    Choose Your Role
+                  </h2>
+                </motion.div>
 
-                <motion.button
-                  onClick={() => onChooseRole('sponsor')}
-                  className="flex-1 backdrop-blur-xl bg-purple-500/20 border border-purple-500/30 rounded-xl p-6 flex flex-col items-center text-center transition shadow-lg hover:shadow-purple-500/20"
-                  initial={{ x: 20, opacity: 0 }}
-                  animate={{ x: 0, opacity: 1 }}
-                  transition={{ delay: 0.4 }}
-                  whileHover={{
-                    scale: 1.03,
-                    boxShadow: '0 10px 25px -5px rgba(168, 85, 247, 0.5)',
-                  }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  <div className="w-16 h-16 bg-purple-500/30 rounded-full flex items-center justify-center mb-4">
-                    <FaUserTie className="text-purple-300 text-3xl" />
-                  </div>
-                  <h3 className="text-xl font-semibold mb-2 text-purple-300">
-                    I'm a Sponsor
-                  </h3>
-                  <p className="text-sm text-purple-200">
-                    Want to fund bounties, grow communities, and discover talent
-                    in Web3.
-                  </p>
-                </motion.button>
+                <div className="flex flex-col sm:flex-row gap-6 justify-between">
+                  <motion.button
+                    onClick={() => onChooseRole("talent")}
+                    className="flex-1 backdrop-blur-xl bg-blue-500/20 border border-blue-500/30 rounded-xl p-6 flex flex-col items-center text-center transition shadow-lg hover:shadow-blue-500/20"
+                    initial={{ x: -20, opacity: 0 }}
+                    animate={{ x: 0, opacity: 1 }}
+                    transition={{ delay: 0.3 }}
+                    whileHover={{
+                      scale: 1.03,
+                      boxShadow: "0 10px 25px -5px rgba(59, 130, 246, 0.5)",
+                    }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    <div className="w-16 h-16 bg-blue-500/30 rounded-full flex items-center justify-center mb-4">
+                      <FaUserGraduate className="text-blue-300 text-3xl" />
+                    </div>
+                    <h3 className="text-xl font-semibold mb-2 text-blue-300">
+                      I'm a Talent
+                    </h3>
+                    <p className="text-sm text-blue-200">
+                      Looking to grow your skills, earn crypto, and work on Web3
+                      projects.
+                    </p>
+                  </motion.button>
+
+                  <motion.button
+                    onClick={() => onChooseRole("sponsor")}
+                    className="flex-1 backdrop-blur-xl bg-purple-500/20 border border-purple-500/30 rounded-xl p-6 flex flex-col items-center text-center transition shadow-lg hover:shadow-purple-500/20"
+                    initial={{ x: 20, opacity: 0 }}
+                    animate={{ x: 0, opacity: 1 }}
+                    transition={{ delay: 0.4 }}
+                    whileHover={{
+                      scale: 1.03,
+                      boxShadow: "0 10px 25px -5px rgba(168, 85, 247, 0.5)",
+                    }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    <div className="w-16 h-16 bg-purple-500/30 rounded-full flex items-center justify-center mb-4">
+                      <FaUserTie className="text-purple-300 text-3xl" />
+                    </div>
+                    <h3 className="text-xl font-semibold mb-2 text-purple-300">
+                      I'm a Sponsor
+                    </h3>
+                    <p className="text-sm text-purple-200">
+                      Want to fund bounties, grow communities, and discover
+                      talent in Web3.
+                    </p>
+                  </motion.button>
+                </div>
               </div>
-            </div>
-          </motion.div>
-        </dialog>
+            </motion.div>
+          </dialog>
+        </>
       )}
     </AnimatePresence>
   );

@@ -1,12 +1,12 @@
-import { useWallet } from '@/hooks/useWallet';
-import { connectWallet, walletToAccount } from '@/lib/authService';
-import { auth } from '@/lib/firebase';
-import useAuthStore from '@/lib/stores/auth.store';
-import { AuthState } from '@/types/auth.types';
-import { useEffect, useState } from 'react';
-import toast from 'react-hot-toast';
+import { useWallet } from "@/hooks/useWallet";
+import { connectWallet, walletToAccount } from "@/lib/authService";
+import { auth } from "@/lib/firebase";
+import useAuthStore from "@/lib/stores/auth.store";
+import { AuthState } from "@/types/auth.types";
+import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
 
-export type WalletConnectionMode = 'connect' | 'link';
+export type WalletConnectionMode = "connect" | "link";
 
 export interface UseWalletConnectionOptions {
   mode?: WalletConnectionMode;
@@ -30,8 +30,8 @@ export interface UseWalletConnectionResult {
 }
 
 export function useWalletConnection({
-  mode = 'connect',
-  email = '',
+  mode = "connect",
+  email = "",
 }: UseWalletConnectionOptions = {}): UseWalletConnectionResult {
   const { connect, isConnected, publicKey, networkPassphrase, isConnecting } =
     useWallet();
@@ -49,7 +49,7 @@ export function useWalletConnection({
   useEffect(() => {
     if (!auth.currentUser || !user) return;
 
-    setUserRole(user.role);
+    setUserRole(user.role!);
     setUserHasWallet(!!user.wallet);
     setStoredWalletAddress(user.wallet?.address || null);
   }, [user, auth.currentUser]);
@@ -57,10 +57,10 @@ export function useWalletConnection({
   const handleConnectWallet = async () => {
     try {
       const publicKey = await connect();
-      console.log('publicKey', publicKey);
+      console.log("publicKey", publicKey);
 
       if (!publicKey) {
-        throw new Error('Failed to get wallet public key');
+        throw new Error("Failed to get wallet public key");
       }
 
       // Store wallet info in user account
@@ -70,21 +70,21 @@ export function useWalletConnection({
         network: networkPassphrase!,
       });
 
-      if (mode === 'link' && email) {
+      if (mode === "link" && email) {
         await walletToAccount(publicKey, email);
       }
 
-      toast.success('Wallet connected successfully!');
+      toast.success("Wallet connected successfully!");
     } catch (error: any) {
-      console.error('Error connecting wallet:', error);
+      console.error("Error connecting wallet:", error);
       if (
-        error.message?.includes('Talents cannot change their wallet address')
+        error.message?.includes("Talents cannot change their wallet address")
       ) {
         toast.error(
-          'You already have a wallet address linked to your account.'
+          "You already have a wallet address linked to your account."
         );
       } else {
-        toast.error('Failed to connect wallet. Please try again.');
+        toast.error("Failed to connect wallet. Please try again.");
       }
     }
   };

@@ -5,7 +5,7 @@
 /**
  * User roles within the application
  */
-export type UserRole = 'talent' | 'sponsor' | 'admin';
+export type UserRole = "talent" | "sponsor" | "admin";
 
 /**
  * Wallet information structure
@@ -22,7 +22,7 @@ export interface WalletInfo {
 export interface BaseUserProfile {
   uid: string;
   email?: string;
-  role: UserRole;
+  role?: UserRole;
   authProvider?: string;
   isProfileComplete?: boolean;
   wallet: WalletInfo | null;
@@ -36,13 +36,15 @@ export interface BaseUserProfile {
     location: string;
     lastLogin?: string;
   };
+  isOnboarded?: boolean;
+  walletConnected?: boolean;
 }
 
 /**
  * Talent-specific profile fields
  */
 export interface TalentProfile extends BaseUserProfile {
-  role: 'talent';
+  role?: "talent";
   profileData?: {
     firstName: string;
     lastName: string;
@@ -57,13 +59,12 @@ export interface TalentProfile extends BaseUserProfile {
 /**
  * Sponsor-specific profile fields
  */
-export interface SponsorProfile extends BaseUserProfile {
-  role: 'sponsor';
+export interface SponsorProfile extends Omit<BaseUserProfile, "profileData"> {
+  role?: "sponsor";
   profileData?: {
     firstName: string;
     lastName: string;
     username: string;
-    location: string;
     companyName: string;
     companyUsername: string;
     companyUrl: string;
@@ -82,7 +83,7 @@ export interface SponsorProfile extends BaseUserProfile {
  * Admin-specific profile fields
  */
 export interface AdminProfile extends BaseUserProfile {
-  role: 'admin';
+  role?: "admin";
   profileData?: {
     firstName: string;
     lastName: string;
@@ -112,7 +113,7 @@ export interface AuthState {
   loading: boolean;
 
   // Actions
-  setUser: (user: UserProfile) => void;
+  setUser: (user: Omit<UserProfile, "role">) => void;
   clearUser: () => void;
   setLoading: (value: boolean) => void;
   fetchUserFromFirestore: () => Promise<void>;
@@ -122,7 +123,7 @@ export interface AuthState {
   initializeAuthListener: () => () => void;
   updateUserRole: (role: UserRole) => Promise<void>;
   updateUserProfile: (
-    profileData: Partial<UserProfile['profileData']>
+    profileData: Partial<UserProfile["profileData"]>
   ) => Promise<void>;
   connectWalletToUser: (walletInfo: WalletInfo) => Promise<void>;
   disconnectWallet: () => Promise<void>;

@@ -1,48 +1,66 @@
-'use client';
+"use client";
 
-import { BountyCard, BountyCardSkeleton, BountyFilter } from '@/components';
+import { BountyCard, BountyCardSkeleton, BountyFilter } from "@/components";
 import {
   FirebaseBounty,
   getAllBounties,
+  getAllBountiesWithSponsors,
   getFilteredBounties,
-} from '@/lib/bounties';
-import { Bounty, BountyCategory, BountyStatus } from '@/types/bounty';
-import { useEffect, useMemo, useState } from 'react';
+} from "@/lib/bounties";
+import { Bounty, BountyCategory, BountyStatus } from "@/types/bounty";
+import { useEffect, useMemo, useState } from "react";
 
 // Convert API bounty to the format expected by BountyCard
-const adaptBounty = (apiBounty: FirebaseBounty): Bounty => {
+const adaptBounty = (
+  apiBounty: FirebaseBounty & {
+    sponsor: { companyLogo: string; companyName: string } | null | undefined;
+  }
+): Bounty => {
   return {
     id: parseInt(apiBounty.id) || 0,
-    owner: apiBounty.owner || '',
-    title: apiBounty.title || '',
-    description: apiBounty.description || '',
-    reward: apiBounty.reward || { amount: '0', asset: 'USDC' },
+    owner: apiBounty.owner || "",
+    title: apiBounty.title || "",
+    description: apiBounty.description || "",
+    reward: apiBounty.reward || { amount: "0", asset: "USDC" },
     distribution: [],
     submissionDeadline: 0,
     status: (apiBounty.status as BountyStatus) || BountyStatus.OPEN,
     category: (apiBounty.category as BountyCategory) || BountyCategory.OTHER,
     skills: apiBounty.skills || [],
     createdAt:
-      typeof apiBounty.createdAt === 'string'
+      typeof apiBounty.createdAt === "string"
         ? apiBounty.createdAt
         : new Date().toISOString(),
     updatedAt:
-      typeof apiBounty.updatedAt === 'string'
+      typeof apiBounty.updatedAt === "string"
         ? apiBounty.updatedAt
         : new Date().toISOString(),
     deadline: apiBounty.deadline || new Date().toISOString(),
+    sponsorName: apiBounty.sponsor?.companyName || "Anonymous",
+    sponsorLogo: apiBounty.sponsor?.companyLogo || "",
   };
 };
 
 export default function BountiesPage() {
   const [bounties, setBounties] = useState<FirebaseBounty[]>([]);
+  const [bountiesWithSponsor, setBountiesWithSponsor] = useState<
+    (FirebaseBounty & {
+      sponsor: {
+        companyLogo: string;
+        companyName: string;
+        walletAddress: string;
+      };
+    })[]
+  >([]);
   const [loading, setLoading] = useState(true);
-  const [statusFilters, setStatusFilters] = useState<BountyStatus[]>([BountyStatus.OPEN]);
+  const [statusFilters, setStatusFilters] = useState<BountyStatus[]>([
+    BountyStatus.OPEN,
+  ]);
   const [categoryFilters, setCategoryFilters] = useState<BountyCategory[]>([]);
   const [assetFilters, setAssetFilters] = useState<string[]>([]);
   const [skills, setSkills] = useState<string[]>([]);
-  const [sortBy, setSortBy] = useState('newest');
-  const [searchTerm, setSearchTerm] = useState('');
+  const [sortBy, setSortBy] = useState("newest");
+  const [searchTerm, setSearchTerm] = useState("");
   const [showFilters, setShowFilters] = useState(false);
   const [windowWidth, setWindowWidth] = useState(0);
   const [isMounted, setIsMounted] = useState(false);
@@ -59,8 +77,8 @@ export default function BountiesPage() {
       setWindowWidth(window.innerWidth);
     };
 
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   const applyFilters = async () => {
@@ -69,7 +87,7 @@ export default function BountiesPage() {
     try {
       const filtered = await getFilteredBounties({
         statusFilters: statusFilters.map(
-          (status) => status as 'OPEN' | 'CLOSE'
+          (status) => status as "OPEN" | "CLOSE"
         ),
         categoryFilters,
         assetFilters,
@@ -77,7 +95,7 @@ export default function BountiesPage() {
       });
       setBounties(filtered as FirebaseBounty[]);
     } catch (error) {
-      console.error('Error applying filters:', error);
+      console.error("Error applying filters:", error);
     } finally {
       setLoading(false);
     }
@@ -90,15 +108,24 @@ export default function BountiesPage() {
       .finally(() => setLoading(false));
   };
 
+  // useEffect(() => {
+  //     getAllBounties()
+  //         .then((bounties) => setBounties(bounties as FirebaseBounty[]))
+  //         .finally(() => setLoading(false));
+  // }, []);
+
   useEffect(() => {
-    getAllBounties()
-      .then((bounties) => setBounties(bounties as FirebaseBounty[]))
+    getAllBountiesWithSponsors()
+      .then((bountiesWithSponsor: any) =>
+        setBountiesWithSponsor(bountiesWithSponsor)
+      )
       .finally(() => setLoading(false));
   }, []);
 
   // Filter bounties based on selected filter and completed status
   const filteredBounties = useMemo(() => {
-    let filtered = bounties;
+    console.log("Calling memo again");
+    let filtered = bountiesWithSponsor;
 
     // Apply category filter if selected
     if (filter) {
@@ -111,7 +138,7 @@ export default function BountiesPage() {
       if (bounty.status?.toUpperCase() === BountyStatus.COMPLETED) return true;
 
       // Completed by passed deadline
-      if (bounty.deadline && typeof bounty.deadline === 'string') {
+      if (bounty.deadline && typeof bounty.deadline === "string") {
         const deadline = new Date(bounty.deadline).getTime();
         const now = Date.now();
         return now > deadline;
@@ -135,11 +162,14 @@ export default function BountiesPage() {
 
     // Sort: open bounties first, then by createdAt descending
     return [...filtered].sort((a, b) => {
-      if (a.status === BountyStatus.OPEN && b.status !== BountyStatus.OPEN) return -1;
-      if (a.status !== BountyStatus.OPEN && b.status === BountyStatus.OPEN) return 1;
+      if (a.status === BountyStatus.OPEN && b.status !== BountyStatus.OPEN)
+        return -1;
+      if (a.status !== BountyStatus.OPEN && b.status === BountyStatus.OPEN)
+        return 1;
       return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
     });
-  }, [bounties, filter, statusFilters]);
+    // }, [bounties, filter, statusFilters]);
+  }, [bountiesWithSponsor, filter, statusFilters]);
 
   // Calculate pagination
   const totalPages = Math.ceil(filteredBounties.length / itemsPerPage);
@@ -151,7 +181,7 @@ export default function BountiesPage() {
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
     // Scroll to top of bounty list
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   return (
@@ -187,7 +217,7 @@ export default function BountiesPage() {
                 d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4h12m-12 0V8m30 0v8"
               />
             </svg>
-            {showFilters ? 'Hide Filters' : 'Show Filters'}
+            {showFilters ? "Hide Filters" : "Show Filters"}
           </button>
 
           <div className="flex items-center gap-2">
@@ -213,8 +243,8 @@ export default function BountiesPage() {
           <div
             className={`lg:w-1/4 ${
               showFilters || (isMounted && windowWidth >= 1024)
-                ? 'block'
-                : 'hidden'
+                ? "block"
+                : "hidden"
             }`}
           >
             <div className="lg:sticky lg:top-8">
@@ -284,10 +314,10 @@ export default function BountiesPage() {
             {/* Bounty count */}
             <div className="mb-6">
               <p className="text-gray-300">
-                Showing{' '}
+                Showing{" "}
                 <span className="font-medium text-white">
                   {filteredBounties.length}
-                </span>{' '}
+                </span>{" "}
                 bounties
               </p>
             </div>
@@ -327,8 +357,8 @@ export default function BountiesPage() {
                         onClick={() => handlePageChange(page)}
                         className={`px-3 py-1 border border-white/20 ${
                           currentPage === page
-                            ? 'bg-white text-black'
-                            : 'bg-white/10 text-white'
+                            ? "bg-white text-black"
+                            : "bg-white/10 text-white"
                         }`}
                       >
                         {page}

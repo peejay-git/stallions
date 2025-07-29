@@ -1,12 +1,12 @@
-'use client';
+"use client";
 
-import { FeaturedBountyCard, ParticlesBackground } from '@/components';
-import { FirebaseBounty, getFeaturedBounties } from '@/lib/bounties';
-import { motion } from 'framer-motion';
-import Image from 'next/image';
-import Link from 'next/link';
-import { useEffect, useState } from 'react';
-import { FaAngleRight } from 'react-icons/fa6';
+import { FeaturedBountyCard, ParticlesBackground } from "@/components";
+import { FirebaseBounty, getFeaturedBounties } from "@/lib/bounties";
+import { motion } from "framer-motion";
+import Image from "next/image";
+import Link from "next/link";
+import { useEffect, useState } from "react";
+import { FaAngleRight } from "react-icons/fa6";
 
 export default function Home() {
   const [featuredBounties, setFeaturedBounties] = useState<FirebaseBounty[]>(
@@ -20,7 +20,7 @@ export default function Home() {
         const bounties = await getFeaturedBounties(3);
         setFeaturedBounties(bounties);
       } catch (error) {
-        console.error('Error loading featured bounties:', error);
+        console.error("Error loading featured bounties:", error);
       } finally {
         setIsLoading(false);
       }
@@ -37,7 +37,7 @@ export default function Home() {
         <motion.div
           className="absolute left-[0%] top-[15%] z-0 pointer-events-none sm:left-[24%] sm:top-[10%]"
           animate={{ x: [0, 5, 0], y: [0, -8, 0] }}
-          transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
+          transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
         >
           <Image
             src="/images/moon.svg"
@@ -58,7 +58,7 @@ export default function Home() {
           transition={{
             duration: 12,
             repeat: Infinity,
-            ease: 'easeInOut',
+            ease: "easeInOut",
           }}
         >
           <Image
@@ -75,7 +75,7 @@ export default function Home() {
             className="p-10 text-center mb-2 relative z-10"
             initial={{ opacity: 0, y: 50 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, ease: 'easeOut' }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
           >
             <h1 className="relative text-4xl md:text-6xl font-bold mb-6">
               <span className="text-white hero-text">
@@ -86,8 +86,10 @@ export default function Home() {
                   <Image
                     src="/images/stellar.svg"
                     alt="Stellar Logo"
-                    width={40}
-                    height={40}
+                    // width={40}
+                    width={50}
+                    // height={40}
+                    height={50}
                     className="ml-0.5"
                   />
                 </span>
@@ -150,19 +152,19 @@ export default function Home() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               {[
                 {
-                  title: 'Browse Bounties',
+                  title: "Browse Bounties",
                   description:
-                    'Explore open opportunities across various projects and skill sets.',
+                    "Explore open opportunities across various projects and skill sets.",
                 },
                 {
-                  title: 'Submit Work',
+                  title: "Submit Work",
                   description:
-                    'Complete tasks and submit your work for review.',
+                    "Complete tasks and submit your work for review.",
                 },
                 {
-                  title: 'Get Rewarded',
+                  title: "Get Rewarded",
                   description:
-                    'Receive payment directly to your Stellar wallet upon approval.',
+                    "Receive payment directly to your Stellar wallet upon approval.",
                 },
               ].map((step, index) => (
                 <motion.div
@@ -172,10 +174,10 @@ export default function Home() {
                   whileHover={{
                     scale: 1.05,
                     y: -4,
-                    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                    backgroundColor: "rgba(255, 255, 255, 0.2)",
                   }}
                   transition={{
-                    type: 'spring',
+                    type: "spring",
                     stiffness: 120,
                     damping: 14,
                     delay: index * 0.15,

@@ -1,18 +1,18 @@
-'use client';
+"use client";
 
-import { SponsorWalletPrompt, TalentWalletConnector } from '@/components';
-import { assetSymbols } from '@/components/core/bounty/BountyCard';
-import { useProtectedRoute } from '@/hooks/useProtectedRoute';
-import { useWallet } from '@/hooks/useWallet';
-import { FirebaseBounty, getBountiesByOwner } from '@/lib/bounties';
-import useAuthStore from '@/lib/stores/auth.store';
-import { AuthState, SponsorProfile, TalentProfile } from '@/types/auth.types';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { SponsorWalletPrompt } from "@/components";
+import { assetSymbols } from "@/components/core/bounty/BountyCard";
+import { useProtectedRoute } from "@/hooks/useProtectedRoute";
+import { useWallet } from "@/hooks/useWallet";
+import { FirebaseBounty, getBountiesByOwner } from "@/lib/bounties";
+import useAuthStore from "@/lib/stores/auth.store";
+import { AuthState, SponsorProfile, TalentProfile } from "@/types/auth.types";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
-import { BountyList } from '@/components/dashboard/BountyList';
-import { SubmissionsList } from '@/components/dashboard/SubmissionsList';
+import { BountyList } from "@/components/dashboard/BountyList";
+import { SubmissionsList } from "@/components/dashboard/SubmissionsList";
 
 export default function DashboardPage() {
   useProtectedRoute();
@@ -21,8 +21,8 @@ export default function DashboardPage() {
   const [bounty, setBounty] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const user = useAuthStore((state) => state.user);
-  const [activeTab, setActiveTab] = useState<'created' | 'submissions'>(
-    user?.role === 'sponsor' ? 'created' : 'submissions'
+  const [activeTab, setActiveTab] = useState<"created" | "submissions">(
+    user?.role === "sponsor" ? "created" : "submissions"
   );
   const fetchUser = useAuthStore(
     (state: AuthState) => state.fetchUserFromFirestore
@@ -35,8 +35,8 @@ export default function DashboardPage() {
   >({});
 
   // Determine if user is a sponsor or talent
-  const isSponsor = user?.role === 'sponsor';
-  const isTalent = user?.role === 'talent';
+  const isSponsor = user?.role === "sponsor";
+  const isTalent = user?.role === "talent";
 
   // Fetch bounties
   useEffect(() => {
@@ -68,7 +68,7 @@ export default function DashboardPage() {
 
           // Calculate total spent or earned per token
           const totalByToken = data.reduce((acc, bounty) => {
-            const asset = bounty.reward?.asset || 'USDC';
+            const asset = bounty.reward?.asset || "USDC";
             const bountyAmount = Number(bounty.reward?.amount || 0);
 
             // Initialize if the token doesn't exist yet in our accumulator
@@ -89,7 +89,7 @@ export default function DashboardPage() {
 
           // Calculate total spent or earned per token
           const totalByToken = data.reduce((acc, bounty) => {
-            const asset = bounty.reward?.asset || 'USDC';
+            const asset = bounty.reward?.asset || "USDC";
             const bountyAmount = Number(bounty.reward?.amount || 0);
 
             // Initialize if the token doesn't exist yet in our accumulator
@@ -108,15 +108,15 @@ export default function DashboardPage() {
         // Ensure each bounty has required fields
         const processedBounties = data.map((bounty) => ({
           ...bounty,
-          title: bounty.title || 'Untitled Bounty',
-          reward: bounty.reward || { amount: '0', asset: 'USDC' },
-          status: bounty.status || 'OPEN',
+          title: bounty.title || "Untitled Bounty",
+          reward: bounty.reward || { amount: "0", asset: "USDC" },
+          status: bounty.status || "OPEN",
           deadline: bounty.deadline || new Date().toISOString(),
         }));
 
         setBounty(processedBounties);
       } catch (err: any) {
-        console.error('Error fetching bounties:', err);
+        console.error("Error fetching bounties:", err);
       } finally {
         setLoading(false);
       }
@@ -136,7 +136,7 @@ export default function DashboardPage() {
         // Build query parameters
         const queryParams = new URLSearchParams();
         if (user?.wallet?.address) {
-          queryParams.append('walletAddress', user.wallet.address);
+          queryParams.append("walletAddress", user.wallet.address);
         }
 
         // Fetch submissions from API
@@ -145,13 +145,13 @@ export default function DashboardPage() {
         );
 
         if (!response.ok) {
-          throw new Error('Failed to fetch submissions');
+          throw new Error("Failed to fetch submissions");
         }
 
         const data = await response.json();
         setUserSubmissions(data);
       } catch (err: any) {
-        console.error('Error fetching user submissions:', err);
+        console.error("Error fetching user submissions:", err);
         setUserSubmissions([]);
       } finally {
         setLoadingSubmissions(false);
@@ -164,31 +164,31 @@ export default function DashboardPage() {
   }, [user?.wallet?.address]);
 
   // Debug: Log user object after login
-  useEffect(() => {
-    console.log('Dashboard user:', user);
-  }, [user]);
+  // useEffect(() => {
+  //   console.log('Dashboard user:', user);
+  // }, [user]);
 
   // Format date to be more readable
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
     });
   };
 
   const handleLogout = async () => {
     try {
       // Show a confirmation dialog
-      const confirmLogout = window.confirm('Are you sure you want to log out?');
+      const confirmLogout = window.confirm("Are you sure you want to log out?");
 
       // Only proceed with logout if user confirms
       if (confirmLogout) {
         useAuthStore.getState().logout();
-        router.push('/');
+        router.push("/");
       }
     } catch (error) {
-      console.error('Error signing out:', error);
+      console.error("Error signing out:", error);
     }
   };
 
@@ -208,8 +208,10 @@ export default function DashboardPage() {
         <div className="max-w-5xl mx-auto">
           <h1 className="text-3xl font-bold mb-8 text-white">Dashboard</h1>
           <h1 className="text-2xl font-semibold text-white mb-8">
-            Welcome{' '}
-            {(user as SponsorProfile).profileData?.companyName || (user as SponsorProfile).profileData?.firstName || '...'}
+            Welcome{" "}
+            {(user as SponsorProfile).profileData?.companyName ||
+              (user as SponsorProfile).profileData?.firstName ||
+              "..."}
           </h1>
 
           <SponsorWalletPrompt
@@ -232,19 +234,19 @@ export default function DashboardPage() {
             <div className="w-16 h-16 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center text-2xl font-bold text-white overflow-hidden">
               {(
                 user as TalentProfile | SponsorProfile
-              ).profileData?.firstName?.charAt(0) || '...'}
+              ).profileData?.firstName?.charAt(0) || "..."}
             </div>
             <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-green-400 rounded-full border-2 border-[#070708]"></div>
           </div>
           <div>
             <h1 className="text-2xl font-semibold text-white">
-              Welcome{' '}
+              Welcome{" "}
               {(user as TalentProfile | SponsorProfile).profileData
-                ?.firstName || '...'}
+                ?.firstName || "..."}
             </h1>
             <p className="text-gray-400">
               {(user as TalentProfile | SponsorProfile).profileData?.username ||
-                '...'}
+                "..."}
             </p>
           </div>
         </div>
@@ -259,7 +261,10 @@ export default function DashboardPage() {
                 </h2>
                 <p className="text-gray-300 truncate">
                   {user?.wallet?.address
-                    ? `${user.wallet.address.slice(0, 8)}...${user.wallet.address.slice(-8)}`
+                    ? `${user.wallet.address.slice(
+                        0,
+                        8
+                      )}...${user.wallet.address.slice(-8)}`
                     : "N/A"}
                 </p>
               </div>
@@ -365,15 +370,15 @@ export default function DashboardPage() {
               </div>
               {/* Show different text based on user role */}
               <p className="text-gray-300 text-sm mb-1">
-                {isSponsor ? 'Total Spent' : 'Total Earned'}
+                {isSponsor ? "Total Spent" : "Total Earned"}
               </p>
               <div className="flex flex-col gap-2 text-2xl font-semibold text-white">
                 {Object.keys(totalSpentOrEarned).length > 0 ? (
                   Object.entries(totalSpentOrEarned).map(
                     ([asset, amount], index) => {
-                      const symbol = assetSymbols[asset] || '';
+                      const symbol = assetSymbols[asset] || "";
                       return (
-                        <div key={asset} className={index > 0 ? 'mt-2' : ''}>
+                        <div key={asset} className={index > 0 ? "mt-2" : ""}>
                           {symbol}
                           {amount.toFixed(2)} {asset}
                         </div>
@@ -396,22 +401,22 @@ export default function DashboardPage() {
             {isSponsor ? (
               <button
                 className={`px-6 py-4 font-medium text-sm focus:outline-none transition-all duration-300 ${
-                  activeTab === 'created'
-                    ? 'text-white border-b-2 border-white'
-                    : 'text-gray-400 hover:text-white'
+                  activeTab === "created"
+                    ? "text-white border-b-2 border-white"
+                    : "text-gray-400 hover:text-white"
                 }`}
-                onClick={() => setActiveTab('created')}
+                onClick={() => setActiveTab("created")}
               >
                 Your Bounties
               </button>
             ) : (
               <button
                 className={`px-6 py-4 font-medium text-sm focus:outline-none transition-all duration-300 ${
-                  activeTab === 'submissions'
-                    ? 'text-white border-b-2 border-white'
-                    : 'text-gray-400 hover:text-white'
+                  activeTab === "submissions"
+                    ? "text-white border-b-2 border-white"
+                    : "text-gray-400 hover:text-white"
                 }`}
-                onClick={() => setActiveTab('submissions')}
+                onClick={() => setActiveTab("submissions")}
               >
                 Your Submissions
               </button>
@@ -420,7 +425,7 @@ export default function DashboardPage() {
 
           {/* Tab content */}
           <div className="p-6">
-            {activeTab === 'created' && (
+            {activeTab === "created" && (
               <div>
                 <h3 className="text-lg font-semibold mb-4 text-white">
                   Your Bounties
@@ -430,7 +435,7 @@ export default function DashboardPage() {
               </div>
             )}
 
-            {activeTab === 'submissions' && (
+            {activeTab === "submissions" && (
               <div>
                 <h3 className="text-lg font-semibold mb-4 text-white">
                   Your Submissions

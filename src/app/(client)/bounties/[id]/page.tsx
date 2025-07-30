@@ -673,11 +673,11 @@ export default function BountyDetailPage() {
                 <div className="text-sm opacity-90">Reward</div>
                 <div className="text-xl font-bold">
                   {assetSymbols[bounty.reward.asset] || ""}
-                  {/* Show adjusted reward amount (after fee) for talents */}
+                  {/* Show adjusted reward amount (after fee) for talents
                   {isSponsor
                     ? bounty.reward.amount
-                    : (parseFloat(bounty.reward.amount) * 0.95).toFixed(2)}{" "}
-                  {bounty.reward.asset}
+                    : (parseFloat(bounty.reward.amount) * 0.95).toFixed(2)}{" "} */}
+                  {bounty.reward.amount} {bounty.reward.asset}
                 </div>
               </div>
 
@@ -769,12 +769,12 @@ export default function BountyDetailPage() {
                   <span className="text-white">Total Reward:</span>
                   <span className="text-white font-medium">
                     {assetSymbols[bounty.reward.asset] || ""}
-                    {isSponsor
+                    {/* {isSponsor
                       ? bounty.reward.amount
                       : (parseFloat(bounty.reward.amount) * 0.95).toFixed(
                           2
-                        )}{" "}
-                    {bounty.reward.asset}
+                        )}{" "} */}
+                    {bounty.reward.amount} {bounty.reward.asset}
                   </span>
                 </div>
 

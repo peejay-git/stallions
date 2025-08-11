@@ -38,3 +38,6 @@ firebase-service-account.json
 
 # idea
 *.idea
+
+#cursor
+.cursor_rules.md

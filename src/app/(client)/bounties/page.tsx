@@ -330,7 +330,7 @@ export default function BountiesPage() {
                 ))
               ) : filteredBounties.length === 0 ? (
                 <p className="text-center text-white col-span-2">
-                  No bounties found
+                  No active bounties found
                 </p>
               ) : (
                 paginatedBounties.map((bounty) => (

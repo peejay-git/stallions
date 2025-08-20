@@ -326,7 +326,7 @@ export default function Home() {
             {/* Social Icons */}
             <div className="mt-8 flex justify-center md:justify-start space-x-6">
               <a
-                href="https://x.com/Stallionsassmbl"
+                href="https://x.com/stallionsearn"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-gray-200 hover:text-white transition-colors"

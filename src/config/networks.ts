@@ -14,19 +14,19 @@ export interface TokenConfig {
   address: string;
 }
 
-export interface NetworkConfig {
-  id: string; // Unique identifier for the network
-  name: string; // Human-readable name
-  passphrase: string; // Network passphrase
-  displayName: string; // Display name in UI
-  explorerBaseUrl: string; // Base URL for the network's explorer
-  sorobanRpcUrl: string; // Soroban RPC endpoint URL
-  tokens: TokenConfig[]; // Supported tokens on this network
-  isDefault?: boolean; // Whether this is the default network
-}
+// export interface NetworkConfig {
+//   id: string; // Unique identifier for the network
+//   name: string; // Human-readable name
+//   passphrase: string; // Network passphrase
+//   displayName: string; // Display name in UI
+//   explorerBaseUrl: string; // Base URL for the network's explorer
+//   sorobanRpcUrl: string; // Soroban RPC endpoint URL
+//   tokens: TokenConfig[]; // Supported tokens on this network
+//   isDefault?: boolean; // Whether this is the default network
+// }
 
 // Define all supported networks
-export const NETWORKS: NetworkConfig[] = [
+export const NETWORKS = [
   {
     id: 'testnet',
     name: 'TESTNET',
@@ -57,6 +57,7 @@ export const NETWORKS: NetworkConfig[] = [
     displayName: 'Public',
     explorerBaseUrl: 'https://stellar.expert',
     sorobanRpcUrl: 'https://mainnet.sorobanrpc.com',
+    isDefault: false,
     tokens: [
       {
         symbol: 'USDC',
@@ -90,7 +91,9 @@ export const NETWORKS: NetworkConfig[] = [
       },
     ],
   },
-];
+] as const;
+
+export type NetworkConfig = (typeof NETWORKS)[number];
 
 // Get the default network configuration
 export const getDefaultNetwork = (): NetworkConfig => {

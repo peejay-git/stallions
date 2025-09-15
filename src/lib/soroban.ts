@@ -8,7 +8,7 @@ import {
 } from '../../packages/stallion/src/index';
 import { getWalletKit } from './wallet';
 
-// Environment variables with defaults - now enhanced with network configuration
+// Environment variables with defaults
 const CONTRACT_ID = process.env.NEXT_PUBLIC_BOUNTY_CONTRACT_ID || '';
 const NETWORK = getCurrentNetwork().passphrase;
 

@@ -40,7 +40,7 @@ export const NETWORKS: NetworkConfig[] = [
         symbol: 'USDC',
         name: 'USD Coin',
         logo: '/images/tokens/usdc.svg',
-        address: 'CAZRY5GSFBFXD7H6GAFBA5YGYQTDXU4QKWKMYFWBAZFUCURN3WKX6LF5',
+        address: 'CBIELTK6YBZJU5UP2WWQEUCYKLPU6AUNZ2BQ4WWFEIE3USCIHMXQDAMA',
       },
       {
         symbol: 'XLM',

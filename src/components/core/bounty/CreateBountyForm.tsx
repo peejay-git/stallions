@@ -31,8 +31,8 @@ export default function CreateBountyForm() {
     description: DEFAULT_BOUNTY_DESCRIPTION,
     category: 'DEVELOPMENT',
     skills: [] as string[],
-    token: getCurrentNetwork().tokens[0].address, // Use first token by default
-    tokenSymbol: getCurrentNetwork().tokens[0].symbol, // Track the token symbol separately for display
+    token: getCurrentNetwork().tokens[0].address as string, // Use first token by default
+    tokenSymbol: getCurrentNetwork().tokens[0].symbol as string, // Track the token symbol separately for display
     rewardAmount: '',
     submissionDeadline: '',
     distribution: [] as Distribution[],

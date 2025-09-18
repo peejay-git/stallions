@@ -1,11 +1,13 @@
 "use client";
 
+import ModalPortal from '@/components/core/auth/ModalPortal';
 import { getCurrentNetwork } from "@/config/networks";
 import { useWallet } from "@/hooks/useWallet";
 import { registerSponsor, registerTalent } from "@/lib/authService";
 import { auth } from "@/lib/firebase";
 import useAuthStore from "@/lib/stores/auth.store";
 import { UserProfile } from "@/types/auth.types";
+import { StrKey } from '@stellar/stellar-base';
 import clsx from "clsx";
 import { FirebaseError } from "firebase/app";
 import { createUserWithEmailAndPassword } from "firebase/auth";
@@ -21,8 +23,7 @@ import {
   TalentFieldErrors,
   TalentFormDataType,
   TalentRegistrationForm,
-} from "./register";
-import { StrKey } from "@stellar/stellar-base";
+} from './register';
 
 type Props = {
   isOpen: boolean;
@@ -422,119 +423,128 @@ export default function RegisterModal({
   // Wallet Connection Screen
   if (step === "wallet") {
     return (
-      <div
-        className={clsx(
-          "fixed inset-0 z-[9999] flex items-start justify-center pt-20 transition-all duration-300",
-          isOpen
-            ? "visible opacity-100"
-            : "invisible opacity-0 pointer-events-none"
-        )}
-      >
-        <div className="absolute inset-0 bg-black/40" onClick={onClose}></div>
-        <motion.div
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ duration: 0.3 }}
-          className="relative w-full max-w-md rounded-lg bg-white p-8 shadow-lg dark:bg-gray-900"
+      <ModalPortal>
+        <div
+          className={clsx(
+            'fixed inset-0 z-[9999] flex items-start justify-center pt-20 transition-all duration-300',
+            isOpen
+              ? 'visible opacity-100'
+              : 'invisible opacity-0 pointer-events-none'
+          )}
         >
-          <button
+          <div
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
             onClick={onClose}
-            className="absolute right-4 top-4 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+          ></div>
+          <motion.div
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ duration: 0.3 }}
+            className="relative w-full max-w-md rounded-lg bg-white p-8 shadow-lg dark:bg-gray-900"
           >
-            <IoClose size={24} />
-          </button>
-
-          <h2 className="mb-6 text-2xl font-bold dark:text-white">
-            Connect Wallet
-          </h2>
-
-          <div className="space-y-4">
             <button
-              onClick={async () => {
-                try {
-                  await connect();
-                  toast.success("Wallet connected successfully!");
-                  setStep("form");
-                } catch (error) {
-                  toast.error("Failed to connect wallet. Please try again.");
-                }
-              }}
-              className="flex w-full items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white p-3 text-center font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
+              onClick={onClose}
+              className="absolute right-4 top-4 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
             >
+              <IoClose size={24} />
+            </button>
+
+            <h2 className="mb-6 text-2xl font-bold dark:text-white">
               Connect Wallet
-            </button>
+            </h2>
 
-            <button
-              onClick={() => setStep("form")}
-              className="text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
-            >
-              Skip for now
-            </button>
-          </div>
-        </motion.div>
-      </div>
+            <div className="space-y-4">
+              <button
+                onClick={async () => {
+                  try {
+                    await connect();
+                    toast.success('Wallet connected successfully!');
+                    setStep('form');
+                  } catch (error) {
+                    toast.error('Failed to connect wallet. Please try again.');
+                  }
+                }}
+                className="flex w-full items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white p-3 text-center font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
+              >
+                Connect Wallet
+              </button>
+
+              <button
+                onClick={() => setStep('form')}
+                className="text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+              >
+                Skip for now
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      </ModalPortal>
     );
   }
 
   return (
-    <dialog
-      open={isOpen}
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
-      className="h-fit w-fit bg-transparent flex items-start justify-center pt-20 backdrop:bg-black/60 overflow-auto"
-    >
-      <motion.div
-        initial={{ scale: 0.9, opacity: 0, y: 20 }}
-        animate={{ scale: 1, opacity: 1, y: 0 }}
-        exit={{ scale: 0.9, opacity: 0, y: 20 }}
-        transition={{ type: "spring", duration: 0.5 }}
-        className="backdrop-blur-xl bg-white/10 w-[min(90%, 400px)] max-w-lg mx-auto max-h-[90vh] border border-white/20 rounded-xl overflow-hidden shadow-2xl"
-      >
-        <div className="relative p-8 overflow-y-auto max-h-[80vh]">
-          <button
+    <ModalPortal>
+      {isOpen && (
+        <div className="fixed inset-0 z-[9999] flex items-start justify-center pt-20">
+          <div
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm"
             onClick={onClose}
-            className="absolute right-4 top-4 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+          />
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0, y: 20 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            exit={{ scale: 0.9, opacity: 0, y: 20 }}
+            transition={{ type: 'spring', duration: 0.5 }}
+            className="relative backdrop-blur-xl bg-white/10 w-[min(90%, 400px)] max-w-lg mx-auto max-h-[80vh] border border-white/20 rounded-xl overflow-hidden shadow-2xl z-[10000]"
           >
-            <IoClose size={24} />
-          </button>
+            <div className="relative p-8 overflow-y-auto max-h-[80vh]">
+              <button
+                onClick={onClose}
+                className="absolute right-4 top-4 text-gray-300 hover:text-white"
+              >
+                <IoClose size={24} />
+              </button>
 
-          <h2 className="mb-6 text-2xl font-bold dark:text-white">
-            {role === "sponsor" ? "Create Sponsor Account" : "Create Account"}
-          </h2>
+              <h2 className="mb-6 text-2xl font-bold text-white">
+                {role === 'sponsor'
+                  ? 'Create Sponsor Account'
+                  : 'Create Account'}
+              </h2>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {role === "talent" ? (
-              <TalentRegistrationForm
-                formData={talentFormData}
-                fieldErrors={talentFieldErrors}
-                isSubmitting={isSubmitting}
-                onFieldChange={handleTalentFieldChange}
-                onSkillToggle={handleSkillToggle}
-                onSocialChange={handleSocialChange}
-                onAddSocial={handleAddSocial}
-                onRemoveSocial={handleRemoveSocial}
-              />
-            ) : (
-              <SponsorRegistrationForm
-                formData={sponsorFormData}
-                fieldErrors={sponsorFieldErrors}
-                isSubmitting={isSubmitting}
-                onFieldChange={handleSponsorFieldChange}
-                onFileChange={handleSponsorFileChange}
-              />
-            )}
+              <form onSubmit={handleSubmit} className="space-y-6">
+                {role === 'talent' ? (
+                  <TalentRegistrationForm
+                    formData={talentFormData}
+                    fieldErrors={talentFieldErrors}
+                    isSubmitting={isSubmitting}
+                    onFieldChange={handleTalentFieldChange}
+                    onSkillToggle={handleSkillToggle}
+                    onSocialChange={handleSocialChange}
+                    onAddSocial={handleAddSocial}
+                    onRemoveSocial={handleRemoveSocial}
+                  />
+                ) : (
+                  <SponsorRegistrationForm
+                    formData={sponsorFormData}
+                    fieldErrors={sponsorFieldErrors}
+                    isSubmitting={isSubmitting}
+                    onFieldChange={handleSponsorFieldChange}
+                    onFileChange={handleSponsorFileChange}
+                  />
+                )}
 
-            <button
-              type="submit"
-              className="btn-primary w-full py-2"
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? "Creating Account..." : "Create Account"}
-            </button>
-          </form>
+                <button
+                  type="submit"
+                  className="btn-primary w-full py-2"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? 'Creating Account...' : 'Create Account'}
+                </button>
+              </form>
+            </div>
+          </motion.div>
         </div>
-      </motion.div>
-    </dialog>
+      )}
+    </ModalPortal>
   );
 }

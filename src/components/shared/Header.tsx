@@ -1,17 +1,13 @@
 "use client";
 
-import ChooseRoleModal from "@/components/core/auth/ChooseRoleModal";
-import LoginModal from "@/components/core/auth/LoginModal";
-import RegisterModal from "@/components/core/auth/RegisterModal";
-import OnboardModal from "@/components/core/auth/OnboardModal";
-import { useAuth } from "@/hooks/useAuth";
-import { useWallet } from "@/hooks/useWallet";
-import useAuthStore from "@/lib/stores/auth.store";
-import Image from "next/image";
-import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
-import toast from "react-hot-toast";
+import { useAuthFlow } from '@/components/core/auth/AuthFlowProvider';
+import { useAuth } from '@/hooks/useAuth';
+import { useWallet } from '@/hooks/useWallet';
+import useAuthStore from '@/lib/stores/auth.store';
+import Image from 'next/image';
+import Link from 'next/link';
+import { usePathname, useRouter } from 'next/navigation';
+import { useCallback, useEffect, useState } from 'react';
 
 // Pre-defined nav links to avoid recreation on render
 const navLinks = [
@@ -26,18 +22,10 @@ const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const pathname = usePathname();
   const { isConnected, disconnect, publicKey, connect } = useWallet();
-  const [showRegister, setShowRegister] = useState(false);
-  const [selectedRole, setSelectedRole] = useState<"talent" | "sponsor" | null>(
-    null
-  );
-  const [showLogin, setShowLogin] = useState(false);
-  const [chooseRoleOpen, setChooseRoleOpen] = useState(false);
-  const [onboardOpen, setOnboardOpen] = useState(false);
-  const [canCloseModal, setCanCloseModal] = useState(true);
   const router = useRouter();
   const { user, AuthModals, isAuthenticated } = useAuth();
-  const { updateUserProfile, updateUserRole } = useAuthStore((state) => state);
   const logout = useAuthStore((state) => state.logout);
+  const { startLogin, startOnboarding } = useAuthFlow();
 
   // Close menu when route changes
   useEffect(() => {
@@ -55,106 +43,33 @@ const Header = () => {
 
   const handleLogout = useCallback(() => {
     // Confirm logout
-    const confirmLogout = window.confirm("Are you sure you want to log out?");
+    const confirmLogout = window.confirm('Are you sure you want to log out?');
     if (!confirmLogout) return;
 
     logout();
     if (isConnected) {
       disconnect();
     }
-    router.push("/");
+    router.push('/');
   }, [logout, isConnected, disconnect, router]);
 
-  const handleRoleSelection = useCallback(
-    async (role: "talent" | "sponsor") => {
-      if (chooseRoleOpen && !isAuthenticated) {
-        // For registration flow
-        setSelectedRole(role);
-        setChooseRoleOpen(false);
-        setShowRegister(true);
-      } else {
-        // For existing user profile update
-        try {
-          await updateUserRole(role);
-
-          if (user && !user.isOnboarded) {
-            setChooseRoleOpen(false);
-            openOnboardModal();
-          }
-
-          toast.success(
-            `Profile updated as ${role === "talent" ? "Talent" : "Sponsor"}`
-          );
-        } catch (error) {
-          console.error("Error updating role:", error);
-          toast.error("Failed to update role. Please try again.");
-        }
-      }
-    },
-    [chooseRoleOpen, isAuthenticated, updateUserProfile]
-  );
-
-  const openRoleSelectionModal = () => setChooseRoleOpen(true);
-  const openOnboardModal = () => setOnboardOpen(true);
-
+  // When Google auth results in a new user without onboarding, open onboarding flow
   const switchToOnboarding = useCallback(() => {
-    setCanCloseModal(false);
     if (user && !user.isOnboarded) {
-      if (!user.role) {
-        openRoleSelectionModal();
-      } else {
-        openOnboardModal();
-      }
+      startOnboarding();
     }
-  }, []);
+  }, [user, startOnboarding]);
 
   useEffect(() => {
     // Reset role selection when closing the modal
-    if (user && !user?.isOnboarded && user?.authProvider === "google") {
-      setCanCloseModal(false);
-      if (!user?.role) {
-        openRoleSelectionModal();
-      } else {
-        openOnboardModal();
-      }
+    if (user && !user?.isOnboarded && user?.authProvider === 'google') {
+      startOnboarding();
     }
   }, [user]);
 
   return (
     <header className="sticky top-0 z-40 bg-[#070708] shadow-md">
-      {/* Role Selection Modal */}
-      <ChooseRoleModal
-        isOpen={chooseRoleOpen}
-        onClose={() => setChooseRoleOpen(false)}
-        onChooseRole={handleRoleSelection}
-        canCloseModal={canCloseModal}
-      />
-
-      {onboardOpen && (selectedRole || user) && (
-        <OnboardModal
-          isOpen={onboardOpen}
-          onClose={() => setOnboardOpen(false)}
-          selectedRole={selectedRole}
-          user={user}
-        />
-      )}
-
-      {showRegister && (
-        <RegisterModal
-          isOpen={showRegister}
-          onClose={() => setShowRegister(false)}
-          selectedRole={selectedRole}
-        />
-      )}
-
-      {showLogin && (
-        <LoginModal
-          isOpen={showLogin}
-          onClose={() => setShowLogin(false)}
-          onSwitchToRegister={openRoleSelectionModal}
-          switchToOnboarding={switchToOnboarding}
-        />
-      )}
+      {/* Centralized auth modals are rendered by AuthFlowProvider. */}
 
       {/* Render auth modals (Profile completion and Wallet prompt) */}
       <AuthModals />
@@ -186,8 +101,8 @@ const Header = () => {
                 href={link.href}
                 className={`font-medium whitespace-nowrap nav-txt p-3 rounded-[10px] ${
                   pathname === link.href
-                    ? "text-white bg-white/10"
-                    : "text-[#797C86] hover:bg-white/10 hover:text-white"
+                    ? 'text-white bg-white/10'
+                    : 'text-[#797C86] hover:bg-white/10 hover:text-white'
                 }`}
               >
                 {link.name}
@@ -195,13 +110,13 @@ const Header = () => {
             ))}
 
             {/* Only show Create link for sponsors */}
-            {user && user.role === "sponsor" && (
+            {user && user.role === 'sponsor' && (
               <Link
                 href={createBountyLink.href}
                 className={`font-medium whitespace-nowrap nav-txt p-3 rounded-[10px] ${
                   pathname === createBountyLink.href
-                    ? "text-white bg-white/10"
-                    : "text-[#797C86] hover:bg-white/10 hover:text-white"
+                    ? 'text-white bg-white/10'
+                    : 'text-[#797C86] hover:bg-white/10 hover:text-white'
                 }`}
               >
                 {createBountyLink.name}
@@ -212,9 +127,9 @@ const Header = () => {
               <Link
                 href="/dashboard"
                 className={`font-medium whitespace-nowrap nav-txt p-3 rounded-[10px] ${
-                  pathname === "/dashboard"
-                    ? "text-white bg-white/10"
-                    : "text-[#797C86] hover:bg-white/10 hover:text-white"
+                  pathname === '/dashboard'
+                    ? 'text-white bg-white/10'
+                    : 'text-[#797C86] hover:bg-white/10 hover:text-white'
                 }`}
               >
                 Dashboard
@@ -226,7 +141,7 @@ const Header = () => {
           <div className="hidden md:flex items-center space-x-4">
             {isConnected && !user && (
               <button
-                onClick={() => setChooseRoleOpen(true)}
+                onClick={() => startOnboarding()}
                 className="bg-white text-black font-medium py-1.5 px-4 rounded-lg hover:bg-white/90"
               >
                 Complete Profile
@@ -262,7 +177,7 @@ const Header = () => {
                     </button>
                   ) : null}
                   {/* Only show Connect Wallet for non-talent users */}
-                  {!isConnected && !publicKey && user?.role !== "talent" ? (
+                  {!isConnected && !publicKey && user?.role !== 'talent' ? (
                     <>
                       <button
                         onClick={handleWalletConnect}
@@ -281,7 +196,7 @@ const Header = () => {
                 </div>
               ) : (
                 <button
-                  onClick={() => setShowLogin(true)}
+                  onClick={() => startLogin()}
                   className="bg-white text-black font-medium py-1.5 px-4 rounded-lg hover:bg-white/90"
                 >
                   Login
@@ -314,8 +229,8 @@ const Header = () => {
                   strokeWidth={2}
                   d={
                     isMenuOpen
-                      ? "M6 18L18 6M6 6l12 12"
-                      : "M4 6h16M4 12h16M4 18h16"
+                      ? 'M6 18L18 6M6 6l12 12'
+                      : 'M4 6h16M4 12h16M4 18h16'
                   }
                 />
               </svg>
@@ -337,8 +252,8 @@ const Header = () => {
                 href={link.href}
                 className={`block py-2 font-medium ${
                   pathname === link.href
-                    ? "text-white"
-                    : "text-gray-400 hover:text-white"
+                    ? 'text-white'
+                    : 'text-gray-400 hover:text-white'
                 }`}
                 onClick={toggleMenu}
               >
@@ -347,13 +262,13 @@ const Header = () => {
             ))}
 
             {/* Only show Create link for sponsors */}
-            {user && user.role === "sponsor" && (
+            {user && user.role === 'sponsor' && (
               <Link
                 href={createBountyLink.href}
                 className={`block py-2 font-medium ${
                   pathname === createBountyLink.href
-                    ? "text-white"
-                    : "text-gray-400 hover:text-white"
+                    ? 'text-white'
+                    : 'text-gray-400 hover:text-white'
                 }`}
                 onClick={toggleMenu}
               >
@@ -365,9 +280,9 @@ const Header = () => {
               <Link
                 href="/dashboard"
                 className={`block py-2 font-medium ${
-                  pathname === "/dashboard"
-                    ? "text-white"
-                    : "text-gray-400 hover:text-white"
+                  pathname === '/dashboard'
+                    ? 'text-white'
+                    : 'text-gray-400 hover:text-white'
                 }`}
                 onClick={toggleMenu}
               >
@@ -381,7 +296,7 @@ const Header = () => {
             {isConnected && !user && (
               <button
                 onClick={() => {
-                  setChooseRoleOpen(true);
+                  startOnboarding();
                   setIsMenuOpen(false);
                 }}
                 className="bg-white text-black font-medium py-1.5 w-full mb-2 rounded-lg hover:bg-white/90"
@@ -404,7 +319,7 @@ const Header = () => {
             ) : (
               <button
                 onClick={() => {
-                  setShowLogin(true);
+                  startLogin();
                   setIsMenuOpen(false);
                 }}
                 className="bg-white text-black font-medium py-1.5 px-4 w-full mb-2 rounded-lg hover:bg-white/90"

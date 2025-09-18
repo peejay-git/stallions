@@ -1,12 +1,13 @@
 'use client';
 
+import { AuthFlowProvider } from '@/components/core/auth/AuthFlowProvider';
 import { memo, ReactNode } from 'react';
 import { Toaster } from 'react-hot-toast';
 
 function AppClientWrapper({ children }: { children: ReactNode }) {
   return (
     <>
-      {children}
+      <AuthFlowProvider>{children}</AuthFlowProvider>
       <Toaster
         position="top-right"
         gutter={8}

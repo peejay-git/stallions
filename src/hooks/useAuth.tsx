@@ -2,7 +2,7 @@
 
 import ProfileCompletionModal from '@/components/core/auth/ProfileCompletionModal';
 import useAuthStore from '@/lib/stores/auth.store';
-import {useCallback, useEffect, useState} from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 interface UseAuthOptions {
     requireProfile?: boolean;

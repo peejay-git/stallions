@@ -1,6 +1,7 @@
 "use client";
 
 import { FeaturedBountyCard, ParticlesBackground } from "@/components";
+import { useAuthFlow } from '@/components/core/auth/AuthFlowProvider';
 import { FirebaseBounty, getFeaturedBounties } from "@/lib/bounties";
 import { motion } from "framer-motion";
 import Image from "next/image";
@@ -13,6 +14,7 @@ export default function Home() {
     []
   );
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const { startRegister } = useAuthFlow();
 
   useEffect(() => {
     const loadFeaturedBounties = async () => {
@@ -37,7 +39,7 @@ export default function Home() {
         <motion.div
           className="absolute left-[0%] top-[15%] z-0 pointer-events-none sm:left-[24%] sm:top-[10%]"
           animate={{ x: [0, 5, 0], y: [0, -8, 0] }}
-          transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+          transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
         >
           <Image
             src="/images/moon.svg"
@@ -58,7 +60,7 @@ export default function Home() {
           transition={{
             duration: 12,
             repeat: Infinity,
-            ease: "easeInOut",
+            ease: 'easeInOut',
           }}
         >
           <Image
@@ -75,7 +77,7 @@ export default function Home() {
             className="p-10 text-center mb-2 relative z-10"
             initial={{ opacity: 0, y: 50 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, ease: "easeOut" }}
+            transition={{ duration: 0.6, ease: 'easeOut' }}
           >
             <h1 className="relative text-4xl md:text-6xl font-bold mb-6">
               <span className="text-white hero-text">
@@ -152,19 +154,19 @@ export default function Home() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               {[
                 {
-                  title: "Browse Bounties",
+                  title: 'Browse Bounties',
                   description:
-                    "Explore open opportunities across various projects and skill sets.",
+                    'Explore open opportunities across various projects and skill sets.',
                 },
                 {
-                  title: "Submit Work",
+                  title: 'Submit Work',
                   description:
-                    "Complete tasks and submit your work for review.",
+                    'Complete tasks and submit your work for review.',
                 },
                 {
-                  title: "Get Rewarded",
+                  title: 'Get Rewarded',
                   description:
-                    "Receive payment directly to your Stellar wallet upon approval.",
+                    'Receive payment directly to your Stellar wallet upon approval.',
                 },
               ].map((step, index) => (
                 <motion.div
@@ -174,10 +176,10 @@ export default function Home() {
                   whileHover={{
                     scale: 1.05,
                     y: -4,
-                    backgroundColor: "rgba(255, 255, 255, 0.2)",
+                    backgroundColor: 'rgba(255, 255, 255, 0.2)',
                   }}
                   transition={{
-                    type: "spring",
+                    type: 'spring',
                     stiffness: 120,
                     damping: 14,
                     delay: index * 0.15,
@@ -271,12 +273,12 @@ export default function Home() {
               working on cutting-edge Web3 projects on the Stellar blockchain.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link
-                href="/register"
+              <button
+                onClick={() => startRegister()}
                 className="bg-white text-black font-medium py-2 px-6 rounded-lg hover:bg-white/90 transition-colors"
               >
                 Create Account
-              </Link>
+              </button>
               <Link
                 href="/bounties"
                 className="backdrop-blur-xl bg-white/10 text-white font-medium py-2 px-6 rounded-lg border border-white/20 hover:bg-white/20 transition-colors"

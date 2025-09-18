@@ -1,14 +1,15 @@
 'use client';
 
 import { CreateBountyForm } from '@/components';
+import { useAuthFlow } from '@/components/core/auth/AuthFlowProvider';
 import { useProtectedRoute } from '@/hooks/useProtectedRoute';
 import useAuthStore from '@/lib/stores/auth.store';
-import Link from 'next/link';
 import { IoInformationCircleOutline } from 'react-icons/io5';
 
 export default function CreateBountyPage() {
   useProtectedRoute();
   const user = useAuthStore((state) => state.user);
+  const { startRegister } = useAuthFlow();
 
   if (!user || user.role !== 'sponsor') {
     return (
@@ -25,14 +26,14 @@ export default function CreateBountyPage() {
                   Only sponsors can create bounties. Please register as a
                   sponsor to continue.
                 </p>
-                <Link
-                  href={`/register?role=sponsor&redirect=${encodeURIComponent(
-                    '/create'
-                  )}`}
+                <button
+                  onClick={() =>
+                    startRegister({ role: 'sponsor', redirect: '/create' })
+                  }
                   className="bg-red-500 hover:bg-red-600 text-white font-medium py-2 px-4 rounded-lg transition-colors"
                 >
                   Register as Sponsor
-                </Link>
+                </button>
               </div>
             </div>
           </div>

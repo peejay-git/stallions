@@ -27,7 +27,7 @@ export default function DistributionEditor({
     
     const validation = validateDistribution(newDistribution);
     if (!validation.isValid) {
-      setError(validation.error);
+      setError(validation.error || null);
     } else {
       setError(null);
       onChange(newDistribution);
@@ -50,7 +50,7 @@ export default function DistributionEditor({
 
     const validation = validateDistribution(newDistribution);
     if (!validation.isValid) {
-      setError(validation.error);
+      setError(validation.error || null);
     } else {
       setError(null);
       onChange(newDistribution);
@@ -79,7 +79,7 @@ export default function DistributionEditor({
 
     const validation = validateDistribution(newDistribution);
     if (!validation.isValid) {
-      setError(validation.error);
+      setError(validation.error || null);
     } else {
       setError(null);
       onChange(newDistribution);

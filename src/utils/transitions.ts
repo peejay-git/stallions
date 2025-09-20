@@ -118,35 +118,39 @@ export const staggerContainer: Variants = {
 };
 
 // Hover animation variants
-export const hoverScale = {
+export const hoverScale: Variants = {
   hover: {
-    scale: 1.02,
+    scale: [1, 1.02],
     transition: {
       duration: 0.2,
       ease: 'easeInOut',
     },
-  },
+  } as any,
   tap: {
-    scale: 0.98,
-  },
-};
-
-// Button press animation variants
-export const buttonPress = {
-  hover: {
-    scale: 1.02,
-    transition: {
-      duration: 0.2,
-      ease: 'easeInOut',
-    },
-  },
-  tap: {
-    scale: 0.95,
+    scale: [1, 0.98],
     transition: {
       duration: 0.1,
       ease: 'easeInOut',
     },
-  },
+  } as any,
+};
+
+// Button press animation variants
+export const buttonPress: Variants = {
+  hover: {
+    scale: [1, 1.02],
+    transition: {
+      duration: 0.2,
+      ease: 'easeInOut',
+    },
+  } as any,
+  tap: {
+    scale: [1, 0.95],
+    transition: {
+      duration: 0.1,
+      ease: 'easeInOut',
+    },
+  } as any,
 };
 
 // List item animation variants

@@ -23,15 +23,19 @@ export default function AnimatedContainer({
   const variants = transitions[animation] as Variants;
 
   // Modify the variants if custom duration or delay is provided
+  const baseTransition = typeof variants.visible === 'object' && 'transition' in variants.visible
+    ? variants.visible.transition as { duration?: number; ease?: string }
+    : {};
+
   const customVariants = {
     ...variants,
     visible: {
-      ...(variants.visible as any),
+      ...(typeof variants.visible === 'object' ? variants.visible : {}),
       transition: {
-        duration: duration || variants.visible?.transition?.duration,
+        duration: duration || baseTransition.duration,
         delay,
-        type: "tween",
-        ease: variants.visible?.transition?.ease || "easeOut",
+        type: "tween" as const,
+        ease: baseTransition.ease || "easeOut",
       },
     },
   } as Variants;

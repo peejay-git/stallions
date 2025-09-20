@@ -28,9 +28,10 @@ export default function AnimatedContainer({
     visible: {
       ...variants.visible,
       transition: {
-        ...variants.visible?.transition,
-        delay: delay,
         duration: duration || variants.visible?.transition?.duration,
+        delay,
+        type: "tween",
+        ease: variants.visible?.transition?.ease || "easeOut",
       },
     },
   };

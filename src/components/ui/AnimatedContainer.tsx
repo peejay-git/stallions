@@ -22,23 +22,21 @@ export default function AnimatedContainer({
   // Get the animation variants from our transitions
   const variants = transitions[animation] as Variants;
 
-  // Modify the variants if custom duration or delay is provided
-  const baseTransition = typeof variants.visible === 'object' && 'transition' in variants.visible
-    ? variants.visible.transition as { duration?: number; ease?: string }
-    : {};
-
-  const customVariants = {
-    ...variants,
+  // Create a new variant object with the modified transition
+  const customVariants: Variants = {
+    hidden: variants.hidden,
+    exit: variants.exit,
     visible: {
-      ...(typeof variants.visible === 'object' ? variants.visible : {}),
+      opacity: 1,
+      y: 0,
       transition: {
-        duration: duration || baseTransition.duration,
+        duration: duration || 0.4,
         delay,
-        type: "tween" as const,
-        ease: baseTransition.ease || "easeOut",
+        type: "tween",
+        ease: "easeOut",
       },
     },
-  } as Variants;
+  };
 
   return (
     <motion.div

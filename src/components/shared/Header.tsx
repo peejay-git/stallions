@@ -1,13 +1,13 @@
 "use client";
 
-import { useAuthFlow } from '@/components/core/auth/AuthFlowProvider';
-import { useAuth } from '@/hooks/useAuth';
-import { useWallet } from '@/hooks/useWallet';
-import useAuthStore from '@/lib/stores/auth.store';
-import Image from 'next/image';
-import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
-import { useCallback, useEffect, useState } from 'react';
+import { useAuthFlow } from "@/components/core/auth/AuthFlowProvider";
+import { useAuth } from "@/hooks/useAuth";
+import { useWallet } from "@/hooks/useWallet";
+import useAuthStore from "@/lib/stores/auth.store";
+import Image from "next/image";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import { useCallback, useEffect, useState } from "react";
 
 // Pre-defined nav links to avoid recreation on render
 const navLinks = [
@@ -43,14 +43,14 @@ const Header = () => {
 
   const handleLogout = useCallback(() => {
     // Confirm logout
-    const confirmLogout = window.confirm('Are you sure you want to log out?');
+    const confirmLogout = window.confirm("Are you sure you want to log out?");
     if (!confirmLogout) return;
 
     logout();
     if (isConnected) {
       disconnect();
     }
-    router.push('/');
+    router.push("/");
   }, [logout, isConnected, disconnect, router]);
 
   // When Google auth results in a new user without onboarding, open onboarding flow
@@ -62,7 +62,7 @@ const Header = () => {
 
   useEffect(() => {
     // Reset role selection when closing the modal
-    if (user && !user?.isOnboarded && user?.authProvider === 'google') {
+    if (user && !user?.isOnboarded && user?.authProvider === "google") {
       startOnboarding();
     }
   }, [user]);
@@ -81,7 +81,7 @@ const Header = () => {
             <Link href="/" className="flex items-center">
               <div className="flex items-center space-x-2">
                 <Image
-                  src="/images/unicorn-logo.svg"
+                  src="/images/unicorn-logo.png"
                   alt="Stallion Logo"
                   width={32}
                   height={32}
@@ -101,8 +101,8 @@ const Header = () => {
                 href={link.href}
                 className={`font-medium whitespace-nowrap nav-txt p-3 rounded-[10px] ${
                   pathname === link.href
-                    ? 'text-white bg-white/10'
-                    : 'text-[#797C86] hover:bg-white/10 hover:text-white'
+                    ? "text-white bg-white/10"
+                    : "text-[#797C86] hover:bg-white/10 hover:text-white"
                 }`}
               >
                 {link.name}
@@ -110,13 +110,13 @@ const Header = () => {
             ))}
 
             {/* Only show Create link for sponsors */}
-            {user && user.role === 'sponsor' && (
+            {user && user.role === "sponsor" && (
               <Link
                 href={createBountyLink.href}
                 className={`font-medium whitespace-nowrap nav-txt p-3 rounded-[10px] ${
                   pathname === createBountyLink.href
-                    ? 'text-white bg-white/10'
-                    : 'text-[#797C86] hover:bg-white/10 hover:text-white'
+                    ? "text-white bg-white/10"
+                    : "text-[#797C86] hover:bg-white/10 hover:text-white"
                 }`}
               >
                 {createBountyLink.name}
@@ -127,9 +127,9 @@ const Header = () => {
               <Link
                 href="/dashboard"
                 className={`font-medium whitespace-nowrap nav-txt p-3 rounded-[10px] ${
-                  pathname === '/dashboard'
-                    ? 'text-white bg-white/10'
-                    : 'text-[#797C86] hover:bg-white/10 hover:text-white'
+                  pathname === "/dashboard"
+                    ? "text-white bg-white/10"
+                    : "text-[#797C86] hover:bg-white/10 hover:text-white"
                 }`}
               >
                 Dashboard
@@ -177,7 +177,7 @@ const Header = () => {
                     </button>
                   ) : null}
                   {/* Only show Connect Wallet for non-talent users */}
-                  {!isConnected && !publicKey && user?.role !== 'talent' ? (
+                  {!isConnected && !publicKey && user?.role !== "talent" ? (
                     <>
                       <button
                         onClick={handleWalletConnect}
@@ -229,8 +229,8 @@ const Header = () => {
                   strokeWidth={2}
                   d={
                     isMenuOpen
-                      ? 'M6 18L18 6M6 6l12 12'
-                      : 'M4 6h16M4 12h16M4 18h16'
+                      ? "M6 18L18 6M6 6l12 12"
+                      : "M4 6h16M4 12h16M4 18h16"
                   }
                 />
               </svg>
@@ -252,8 +252,8 @@ const Header = () => {
                 href={link.href}
                 className={`block py-2 font-medium ${
                   pathname === link.href
-                    ? 'text-white'
-                    : 'text-gray-400 hover:text-white'
+                    ? "text-white"
+                    : "text-gray-400 hover:text-white"
                 }`}
                 onClick={toggleMenu}
               >
@@ -262,13 +262,13 @@ const Header = () => {
             ))}
 
             {/* Only show Create link for sponsors */}
-            {user && user.role === 'sponsor' && (
+            {user && user.role === "sponsor" && (
               <Link
                 href={createBountyLink.href}
                 className={`block py-2 font-medium ${
                   pathname === createBountyLink.href
-                    ? 'text-white'
-                    : 'text-gray-400 hover:text-white'
+                    ? "text-white"
+                    : "text-gray-400 hover:text-white"
                 }`}
                 onClick={toggleMenu}
               >
@@ -280,9 +280,9 @@ const Header = () => {
               <Link
                 href="/dashboard"
                 className={`block py-2 font-medium ${
-                  pathname === '/dashboard'
-                    ? 'text-white'
-                    : 'text-gray-400 hover:text-white'
+                  pathname === "/dashboard"
+                    ? "text-white"
+                    : "text-gray-400 hover:text-white"
                 }`}
                 onClick={toggleMenu}
               >

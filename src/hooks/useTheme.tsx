@@ -7,6 +7,7 @@ import {
   useEffect,
   useState,
 } from 'react';
+import { cssVariables } from '@/utils/theme';
 
 type Theme = 'dark' | 'light';
 
@@ -37,11 +38,21 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    // Update document class when theme changes
+    // Update document class and CSS variables when theme changes
+    const root = document.documentElement;
+    
     if (theme === 'dark') {
-      document.documentElement.classList.add('dark');
+      root.classList.add('dark');
+      // Apply dark mode CSS variables
+      Object.entries(cssVariables.dark).forEach(([property, value]) => {
+        root.style.setProperty(property, value);
+      });
     } else {
-      document.documentElement.classList.remove('dark');
+      root.classList.remove('dark');
+      // Apply light mode CSS variables
+      Object.entries(cssVariables.light).forEach(([property, value]) => {
+        root.style.setProperty(property, value);
+      });
     }
 
     // Save preference to localStorage

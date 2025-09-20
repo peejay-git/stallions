@@ -22,7 +22,8 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { FiAward, FiBriefcase, FiClock, FiUser } from "react-icons/fi";
+import { FiAward, FiBriefcase, FiClock, FiDownload, FiUser } from "react-icons/fi";
+import { exportSubmissionsToCSV } from "@/utils/exportSubmissions";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
@@ -246,13 +247,19 @@ export default function BountyDetailPage() {
     return () => unsubscribe(); // Clean up on unmount
   }, []);
 
-  // Check if user can edit this  // Check if the user can edit this bounty
+  // Check if user can edit this bounty and set owner status
   useEffect(() => {
-    const checkEditPermission = async () => {
-      if (!bounty) return;
+    const checkPermissions = async () => {
+      if (!bounty || !publicKey) return;
 
-      // Check if user is the owner of this bounty
-      const isOwnerValue = bounty.owner === user?.wallet?.publicKey;
+      // Check if user is the owner of this bounty (using connected wallet)
+      const isOwnerValue = bounty.owner === publicKey;
+      console.log('Owner check:', {
+        bountyOwner: bounty.owner,
+        publicKey,
+        isOwnerValue,
+        userRole
+      });
       setIsOwner(isOwnerValue);
 
       const hasSubmissionsAlready = await bountyHasSubmissions(bounty.id);
@@ -262,8 +269,8 @@ export default function BountyDetailPage() {
       setHasNoSubmissions(!hasSubmissionsAlready);
     };
 
-    checkEditPermission();
-  }, [bounty]);
+    checkPermissions();
+  }, [bounty, publicKey, userRole]);
 
   // Fetch sponsor profile after bounty is loaded
   useEffect(() => {
@@ -320,24 +327,26 @@ export default function BountyDetailPage() {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${userId}`,
+            "Authorization": `Bearer ${userId}`,
+            "x-user-role": userRole || "",
+            "x-wallet-address": publicKey || "",
           },
           body: JSON.stringify({
             status: BountyStatus.COMPLETED,
           }),
         });
 
+        const result = await response.json();
+        
         if (response.ok) {
           // Update local state
           setBounty({
             ...bounty,
             status: BountyStatus.COMPLETED,
           });
+          console.log('Successfully updated bounty status:', result);
         } else {
-          console.error(
-            "Failed to update bounty status:",
-            await response.text()
-          );
+          throw new Error(result.error || 'Failed to update bounty status');
         }
       } catch (error) {
         console.error("Error updating bounty status:", error);
@@ -352,7 +361,11 @@ export default function BountyDetailPage() {
     submissionId: string,
     ranking: number
   ) => {
-    if (!bounty || !userId) return;
+    if (!bounty || !userId || !publicKey) {
+      toast.error("Please connect your wallet to rank submissions");
+      connect();
+      return;
+    }
 
     try {
       const response = await fetch(
@@ -361,10 +374,13 @@ export default function BountyDetailPage() {
           method: "PATCH",
           headers: {
             "Content-Type": "application/json",
+            "Authorization": `Bearer ${userId}`,
+            "x-user-role": userRole || "",
+            "x-wallet-address": publicKey || "",
           },
           body: JSON.stringify({
             action: "rank",
-            userId: userId, // Use userId instead of senderPublicKey
+            userId: userId,
             ranking,
           }),
         }
@@ -862,7 +878,7 @@ export default function BountyDetailPage() {
       {/* Submissions section (visible to bounty owner) */}
       {canViewSubmissions && (
         <div className="max-w-5xl mx-auto backdrop-blur-xl bg-white/10 border border-white/20 rounded-xl p-8 text-white">
-          <div className="flex justify-between items-center mb-4">
+          <div className="flex justify-between items-start mb-4">
             <div>
               <h2 className="text-xl font-semibold flex items-center gap-2">
                 <FiUser className="text-blue-400" /> Submissions
@@ -881,22 +897,34 @@ export default function BountyDetailPage() {
               </p>
             </div>
 
-            {submissions.length > 0 &&
-              isOwner &&
-              submissions.some((sub) => sub.ranking) &&
-              !rankingsApproved && (
+            <div className="flex items-center gap-3">
+              {submissions.length > 0 && (
                 <button
-                  onClick={handleApproveRankings}
-                  className="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg transition-colors flex items-center gap-2"
+                  onClick={() => exportSubmissionsToCSV(submissions, bounty.title)}
+                  className="bg-white/10 hover:bg-white/20 text-white px-3 py-2 rounded-lg transition-colors border border-white/20 flex items-center gap-2 text-sm"
                 >
-                  <FiAward /> Finalize Winners & Send Payments
+                  <FiDownload className="w-4 h-4" />
+                  Export CSV
                 </button>
               )}
-            {rankingsApproved && (
-              <div className="bg-green-900/40 text-green-300 border border-green-700/30 rounded-lg px-4 py-2 flex items-center gap-2">
-                <FiAward /> Winners Finalized ✓
-              </div>
-            )}
+
+              {submissions.length > 0 &&
+                isOwner &&
+                submissions.some((sub) => sub.ranking) &&
+                !rankingsApproved && (
+                  <button
+                    onClick={handleApproveRankings}
+                    className="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg transition-colors flex items-center gap-2"
+                  >
+                    <FiAward /> Finalize Winners & Send Payments
+                  </button>
+                )}
+              {rankingsApproved && (
+                <div className="bg-green-900/40 text-green-300 border border-green-700/30 rounded-lg px-4 py-2 flex items-center gap-2">
+                  <FiAward /> Winners Finalized ✓
+                </div>
+              )}
+            </div>
           </div>
 
           {loadingSubmissions ? (
@@ -921,85 +949,84 @@ export default function BountyDetailPage() {
                       Applicant
                     </th>
                     <th className="px-4 py-3 bg-black/20 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                      Rank
+                    </th>
+                    <th className="px-4 py-3 bg-black/20 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
                       Submitted
                     </th>
-                    {isOwner &&
-                      new Date(bounty.submissionDeadline) < new Date() && (
-                        <th className="px-4 py-3 bg-black/20 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                          Ranking
-                        </th>
-                      )}
-                    {isOwner && (
-                      <th className="px-4 py-3 bg-black/20 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                        Actions
-                      </th>
-                    )}
                   </tr>
                 </thead>
                 <tbody className="w-full [&>tr]:w-full [&>tr>td]:w-full bg-black/10 divide-y divide-gray-600">
                   {submissions.map((submission) => (
                     <tr key={submission.id}>
                       <td className="px-4 py-4 whitespace-nowrap">
-                        <AddressLink
-                          address={submission.applicant}
-                          truncateLength={8}
-                        />
+                        <div className="flex items-center gap-2">
+                          <span className="text-gray-300">
+                            {submission.applicant.slice(0, 8)}...{submission.applicant.slice(-8)}
+                          </span>
+                          {submission.walletAddress && (
+                            <span className="bg-green-900/30 text-green-300 border border-green-700/30 px-2 py-0.5 rounded-full text-xs">
+                              Verified
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap">
+                        {isOwner ? (
+                          submission.ranking ? (
+                            <div className="flex items-center gap-2">
+                              <span className="text-white font-medium">
+                                {submission.ranking === 1 ? '🥇 1st' :
+                                 submission.ranking === 2 ? '🥈 2nd' :
+                                 submission.ranking === 3 ? '🥉 3rd' :
+                                 `${submission.ranking}th`}
+                              </span>
+                              {!rankingsApproved && (
+                                <button
+                                  onClick={() => handleRankSubmission(submission.id, 0)}
+                                  className="text-red-400 hover:text-red-300 text-xs"
+                                >
+                                  Clear
+                                </button>
+                              )}
+                            </div>
+                          ) : (
+                            <div className="flex gap-2">
+                              {bounty.distribution.map((dist) => (
+                                <button
+                                  key={dist.position}
+                                  onClick={() => handleRankSubmission(submission.id, dist.position)}
+                                  className={`
+                                    px-2 py-1 rounded text-xs
+                                    ${dist.position === 1 ? 'bg-green-600/40 text-green-300 border border-green-600/30 hover:bg-green-600/60' :
+                                      dist.position === 2 ? 'bg-blue-600/40 text-blue-300 border border-blue-600/30 hover:bg-blue-600/60' :
+                                      'bg-amber-900/40 text-amber-300 border border-amber-700/30 hover:bg-amber-900/60'}
+                                  `}
+                                  disabled={submissions.some(sub => sub.ranking === dist.position) || rankingsApproved}
+                                >
+                                  {dist.position === 1 ? '1st' :
+                                   dist.position === 2 ? '2nd' :
+                                   dist.position === 3 ? '3rd' :
+                                   `${dist.position}th`}
+                                </button>
+                              ))}
+                            </div>
+                          )
+                        ) : (
+                          <span className="text-gray-300">
+                            {submission.ranking ? (
+                              submission.ranking === 1 ? '🥇 1st' :
+                              submission.ranking === 2 ? '🥈 2nd' :
+                              submission.ranking === 3 ? '🥉 3rd' :
+                              `${submission.ranking}th`
+                            ) : '-'}
+                          </span>
+                        )}
                       </td>
                       <td className="px-4 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-300">
                           {formatDate(submission.created)}
                         </div>
-                      </td>
-                      {isOwner &&
-                      new Date(bounty.submissionDeadline) < new Date() ? (
-                        <td className="px-4 py-4 whitespace-nowrap">
-                          <div className="flex gap-2">
-                            <button
-                              onClick={() =>
-                                handleRankSubmission(submission.id, 1)
-                              }
-                              className="px-2 py-1 bg-green-600/40 text-green-300 border border-green-600/30 rounded text-xs hover:bg-green-600/60"
-                              title="Set as 1st place"
-                              disabled={submissions.some(
-                                (sub) => sub.ranking === 1
-                              )}
-                            >
-                              1st
-                            </button>
-                            <button
-                              onClick={() =>
-                                handleRankSubmission(submission.id, 2)
-                              }
-                              className="px-2 py-1 bg-blue-600/40 text-blue-300 border border-blue-600/30 rounded text-xs hover:bg-blue-600/60"
-                              title="Set as 2nd place"
-                              disabled={submissions.some(
-                                (sub) => sub.ranking === 2
-                              )}
-                            >
-                              2nd
-                            </button>
-                            <button
-                              onClick={() =>
-                                handleRankSubmission(submission.id, 3)
-                              }
-                              className="px-2 py-1 bg-amber-900/40 text-amber-300 border border-amber-700/30 rounded text-xs hover:bg-amber-900/60"
-                              title="Set as 3rd place"
-                              disabled={submissions.some(
-                                (sub) => sub.ranking === 3
-                              )}
-                            >
-                              3rd
-                            </button>
-                          </div>
-                        </td>
-                      ) : null}
-                      <td className="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <button
-                          onClick={() => openSubmissionModal(submission)}
-                          className="text-blue-400 hover:text-blue-300 mr-4"
-                        >
-                          View Details
-                        </button>
                       </td>
                     </tr>
                   ))}

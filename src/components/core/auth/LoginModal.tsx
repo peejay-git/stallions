@@ -2,7 +2,6 @@
 
 import ModalPortal from '@/components/core/auth/ModalPortal';
 import { PasswordInput } from '@/components/ui';
-import { useWallet } from '@/hooks/useWallet';
 import { forgotPassword, signInWithGoogle } from '@/lib/authService';
 import { auth } from '@/lib/firebase';
 import useAuthStore from '@/lib/stores/auth.store';
@@ -14,7 +13,6 @@ import toast from 'react-hot-toast';
 import { FcGoogle } from 'react-icons/fc';
 import { FiLock, FiMail } from 'react-icons/fi';
 import { IoClose } from 'react-icons/io5';
-import { SiBlockchaindotcom } from 'react-icons/si';
 
 type Props = {
   isOpen: boolean;
@@ -23,7 +21,7 @@ type Props = {
   switchToOnboarding: () => void;
 };
 
-type LoginView = 'main' | 'wallet-selector' | 'forgot-password';
+type LoginView = 'main' | 'forgot-password';
 
 export default function LoginModal({
   isOpen,
@@ -33,13 +31,11 @@ export default function LoginModal({
 }: Props) {
   const router = useRouter();
   const location = usePathname();
-  const { publicKey, isConnected, connect, disconnect } = useWallet();
   const { user } = useAuthStore();
   const [formData, setFormData] = useState({ email: '', password: '' });
   const [fieldErrors, setFieldErrors] = useState({ email: '', password: '' });
   const [formError, setFormError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isWalletSubmitting, setIsWalletSubmitting] = useState(false);
   const [isGoogleSubmitting, setIsGoogleSubmitting] = useState(false);
   const [currentView, setCurrentView] = useState<LoginView>('main');
   const [resetEmail, setResetEmail] = useState('');
@@ -129,58 +125,6 @@ export default function LoginModal({
     }
   };
 
-  const handleWalletConnect = async () => {
-    if (publicKey) {
-      handleWalletLogin(publicKey);
-    } else {
-      await connect({
-        onWalletSelected: async (publicKey: string) => {
-          if (!useAuthStore.getState().user) {
-            handleWalletLogin(publicKey);
-          }
-        },
-      });
-    }
-  };
-
-  const handleWalletLogin = async (publicKey: string) => {
-    if (!publicKey) {
-      toast.error('Wallet not connected. Please connect your wallet first.');
-      return;
-    }
-
-    // Don't check for user here as useWallet hook will attempt to fetch by wallet address
-    // The check below will only run if user is already authenticated via wallet
-
-    try {
-      setIsWalletSubmitting(true);
-
-      // If user is already authenticated (from auth store), just proceed with login
-      if (user) {
-        toast.success('Login successful!');
-        onClose();
-        router.push(`/dashboard?redirect=${encodeURIComponent(location)}`);
-      } else {
-        // Let the useWallet hook handle fetching user by wallet address
-        // It will show a success toast if found
-        // Otherwise, close modal and switch to register
-        setTimeout(() => {
-          if (!useAuthStore.getState().user) {
-            onClose();
-            onSwitchToRegister?.();
-          } else {
-            onClose();
-            router.push(`/dashboard?redirect=${encodeURIComponent(location)}`);
-          }
-        }, 1000); // Short delay to allow wallet auth to complete
-      }
-    } catch (err: any) {
-      console.error(err);
-      toast.error('Wallet login failed. Please try again.');
-    } finally {
-      setIsWalletSubmitting(false);
-    }
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -305,37 +249,6 @@ export default function LoginModal({
   // Main content
   const renderMainContent = () => (
     <>
-      <motion.button
-        onClick={handleWalletConnect}
-        disabled={isWalletSubmitting}
-        className="w-full flex items-center justify-center gap-2 bg-black/40 text-white py-3 px-4 rounded-lg mb-6 hover:bg-black/60 transition-colors border border-white/10"
-        initial={{ y: 20, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ delay: 0.3 }}
-        whileHover={{ scale: 1.03 }}
-        whileTap={{ scale: 0.98 }}
-      >
-        {isConnected ? (
-          <>
-            <SiBlockchaindotcom className="w-5 h-5" />
-            {publicKey?.substring(0, 6)}...
-            {publicKey?.substring(publicKey?.length - 6)}
-          </>
-        ) : (
-          <>
-            <SiBlockchaindotcom className="w-5 h-5" />
-            Connect Wallet
-          </>
-        )}
-      </motion.button>
-
-      <div className="relative flex items-center justify-center mb-6">
-        <div className="absolute left-0 w-full border-t border-white/10"></div>
-        <div className="relative bg-[#070708] px-4 text-sm text-gray-300">
-          or
-        </div>
-      </div>
-
       <form onSubmit={handleSubmit}>
         <motion.div
           className="mb-6"
@@ -581,15 +494,6 @@ export default function LoginModal({
                         </h2>
                         <p className="text-gray-300 text-center mb-8">
                           Sign in to your account
-                        </p>
-                      </>
-                    ) : currentView === 'wallet-selector' ? (
-                      <>
-                        <h2 className="text-3xl font-bold mb-2 text-white text-center">
-                          Select Wallet
-                        </h2>
-                        <p className="text-gray-300 text-center mb-8">
-                          Choose your preferred wallet
                         </p>
                       </>
                     ) : currentView === 'forgot-password' ? (

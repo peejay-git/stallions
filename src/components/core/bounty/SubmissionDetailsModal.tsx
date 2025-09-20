@@ -1,7 +1,8 @@
-import { AddressLink } from '@/components/shared';
+import { AddressLink, RichTextViewer } from '@/components/shared';
 import { Dialog } from '@/components/ui';
 import { Submission } from '@/types/bounty';
-import { FiX } from 'react-icons/fi';
+import { FiCalendar, FiExternalLink, FiStar, FiUser, FiX } from 'react-icons/fi';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface SubmissionDetailsModalProps {
   isOpen: boolean;
@@ -22,8 +23,7 @@ export default function SubmissionDetailsModal({
   rankingsApproved = false,
   otherSubmissions = [],
 }: SubmissionDetailsModalProps) {
-  if (!isOpen) return null;
-  if (!submission) return null;
+  if (!isOpen || !submission) return null;
 
   // Format date to be more readable
   const formatDate = (dateString: string) => {
@@ -36,96 +36,137 @@ export default function SubmissionDetailsModal({
     });
   };
 
-  // Determine content to show
-  const getContentToShow = () => {
-    if (submission.content) return submission.content;
-    return 'No content provided.';
+  const getRankingLabel = (rank: number) => {
+    if (rank === 1) return '1st Place 🥇';
+    if (rank === 2) return '2nd Place 🥈';
+    if (rank === 3) return '3rd Place 🥉';
+    return `${rank}th Place`;
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <Dialog.Content>
-        <Dialog.Header className="flex justify-between items-center border-b border-gray-700 pb-4 mb-4">
-          <Dialog.Title className="text-white">Submission Details</Dialog.Title>
+      <Dialog.Content className="max-w-3xl">
+        {/* Header */}
+        <Dialog.Header className="flex justify-between items-center border-b border-white/10 pb-4 mb-6">
+          <div>
+            <Dialog.Title className="text-2xl font-bold text-white mb-1">
+              Submission Details
+            </Dialog.Title>
+            <p className="text-gray-400 text-sm">
+              Submitted {formatDate(submission.created)}
+            </p>
+          </div>
           <button
             onClick={onClose}
-            className="absolute top-2 right-2 text-gray-300 hover:text-white"
+            className="text-gray-400 hover:text-white transition-colors"
           >
             <FiX className="w-6 h-6" />
           </button>
         </Dialog.Header>
 
-        <div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-            <div>
-              <p className="text-gray-400 text-sm mb-1">Applicant</p>
+        {/* Content */}
+        <div className="space-y-6">
+          {/* Metadata Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Applicant Info */}
+            <div className="bg-white/5 rounded-lg p-4 border border-white/10">
+              <div className="flex items-center gap-2 text-gray-400 mb-2">
+                <FiUser className="w-4 h-4" />
+                <span className="text-sm font-medium">Applicant</span>
+              </div>
               <div className="flex items-center gap-2">
-                <span className="text-white">
-                  <AddressLink address={submission.applicant} />
-                </span>
+                <AddressLink
+                  address={submission.applicant}
+                  className="text-white hover:text-blue-400 transition-colors"
+                />
                 {submission.walletAddress && (
-                  <span className="text-gray-400 bg-gray-700/40 px-2 py-0.5 rounded text-xs ml-2">
-                    Wallet Connected
+                  <span className="bg-green-900/30 text-green-300 border border-green-700/30 px-2 py-0.5 rounded-full text-xs">
+                    Verified Wallet
                   </span>
                 )}
               </div>
             </div>
 
-            <div>
-              <p className="text-gray-400 text-sm mb-1">Submitted</p>
-              <span className="text-white">
-                {formatDate(submission.created)}
-              </span>
-            </div>
-
-            <div>
-              <p className="text-gray-400 text-sm mb-1">Ranking</p>
-              <span className="text-white">
-                {submission.ranking ? `${submission.ranking}st` : 'Not ranked'}
-              </span>
+            {/* Ranking Info */}
+            <div className="bg-white/5 rounded-lg p-4 border border-white/10">
+              <div className="flex items-center gap-2 text-gray-400 mb-2">
+                <FiStar className="w-4 h-4" />
+                <span className="text-sm font-medium">Ranking</span>
+              </div>
+              <AnimatePresence mode="wait">
+                {submission.ranking ? (
+                  <motion.div
+                    key="ranked"
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 10 }}
+                    className="flex items-center gap-2"
+                  >
+                    <span className="text-white font-medium">
+                      {getRankingLabel(submission.ranking)}
+                    </span>
+                    {isOwner && !rankingsApproved && (
+                      <button
+                        onClick={() => onRank?.(submission.id, 0)}
+                        className="text-red-400 hover:text-red-300 text-sm ml-2"
+                      >
+                        Clear Rank
+                      </button>
+                    )}
+                  </motion.div>
+                ) : (
+                  <motion.span
+                    key="unranked"
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 10 }}
+                    className="text-gray-400"
+                  >
+                    Not ranked yet
+                  </motion.span>
+                )}
+              </AnimatePresence>
             </div>
           </div>
 
-          <div className="mb-4">
-            <h3 className="text-lg font-semibold mb-2 text-white">
+          {/* Submission Content */}
+          <div className="bg-white/5 rounded-lg p-6 border border-white/10">
+            <h3 className="text-lg font-semibold text-white mb-4">
               Submission Content
             </h3>
-            <div className="prose prose-invert max-w-none text-white">
-              {getContentToShow()}
+            <div className="prose prose-invert max-w-none">
+              <RichTextViewer content={submission.content || 'No content provided.'} />
             </div>
-            {submission.link && (
-              <div className="mt-4">
-                <h3 className="text-white font-medium mb-2">Link</h3>
-                <a
-                  href={submission.link}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-blue-400 hover:underline"
-                >
-                  {submission.link}
-                </a>
-              </div>
-            )}
           </div>
 
-          <Dialog.Footer className="flex justify-end gap-2">
-            {isOwner && submission.ranking && !rankingsApproved && (
-              <button
-                onClick={() => onRank?.(submission.id, 0)}
-                className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors"
+          {/* External Link */}
+          {submission.link && (
+            <div className="bg-white/5 rounded-lg p-4 border border-white/10">
+              <div className="flex items-center gap-2 text-gray-400 mb-2">
+                <FiExternalLink className="w-4 h-4" />
+                <span className="text-sm font-medium">External Link</span>
+              </div>
+              <a
+                href={submission.link}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-400 hover:text-blue-300 hover:underline transition-colors break-all"
               >
-                Clear Rank
-              </button>
-            )}
-
-            <button
-              onClick={onClose}
-              className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg transition-colors"
-            >
-              Close
-            </button>
-          </Dialog.Footer>
+                {submission.link}
+              </a>
+            </div>
+          )}
         </div>
+
+        {/* Footer */}
+        <Dialog.Footer className="flex justify-end gap-2 mt-6 pt-4 border-t border-white/10">
+          <button
+            onClick={onClose}
+            className="bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg transition-colors border border-white/20"
+          >
+            Close
+          </button>
+        </Dialog.Footer>
       </Dialog.Content>
     </Dialog>
   );

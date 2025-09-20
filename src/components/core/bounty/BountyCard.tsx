@@ -1,3 +1,4 @@
+import StatusBadge, { getEffectiveStatus } from '@/components/ui/StatusBadge';
 import { Bounty, BountyStatus } from "@/types/bounty";
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -161,45 +162,8 @@ export default function BountyCard({ bounty }: BountyCardProps) {
     return nowTime > deadlineTime;
   };
 
-  // Get status badge
-  const getStatusBadge = () => {
-    // If expired, show COMPLETED badge
-    if (isExpired() && bounty.status.toUpperCase() !== BountyStatus.COMPLETED) {
-      return (
-        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-700/40 text-gray-300 border border-gray-600/30">
-          COMPLETED
-        </span>
-      );
-    }
-
-    // Otherwise show regular status badge
-    switch (bounty.status.toUpperCase()) {
-      case BountyStatus.OPEN:
-        return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-900/40 text-green-300 border border-green-700/30">
-            {bounty.status.toUpperCase()}
-          </span>
-        );
-      case BountyStatus.IN_PROGRESS:
-        return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-900/40 text-blue-300 border border-blue-700/30">
-            {bounty.status.toUpperCase()}
-          </span>
-        );
-      case BountyStatus.COMPLETED:
-        return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-700/40 text-gray-300 border border-gray-600/30">
-            {bounty.status.toUpperCase()}
-          </span>
-        );
-      default:
-        return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-900/40 text-yellow-300 border border-yellow-700/30">
-            {bounty.status.toUpperCase()}
-          </span>
-        );
-    }
-  };
+  // Get effective status considering expiration
+  const effectiveStatus = getEffectiveStatus(bounty.status as BountyStatus, bounty.deadline);
 
   const positionToMedal = (position: number) => {
     switch (position) {
@@ -266,7 +230,7 @@ export default function BountyCard({ bounty }: BountyCardProps) {
   };
 
   return (
-    <div className="backdrop-blur-xl bg-white/10 border border-white/20 rounded-xl overflow-hidden hover:shadow-lg transition-all duration-200">
+    <div className="backdrop-blur-xl bg-white/10 border border-white/20 rounded-xl overflow-hidden hover:bg-white/[0.15] transition-all duration-200">
       <div className="p-6">
         {/* Sponsor logo and name */}
         {(safeBounty.sponsorLogo ||
@@ -295,7 +259,7 @@ export default function BountyCard({ bounty }: BountyCardProps) {
         )}
         {/*<div className={"text-gray-300 text-xs mb-4"}>Posted on {formatDate(bounty.createdAt)}</div>*/}
         <div className="flex justify-between items-center mb-4 ">
-          {getStatusBadge()}
+          <StatusBadge status={effectiveStatus} isExpired={isExpired()} />
           <span className="font-medium text-green-300 bg-green-900/30 px-3 py-1 rounded-full border border-green-700/30">
             {assetSymbol}
             {safeBounty.reward.amount} {safeBounty.reward.asset}

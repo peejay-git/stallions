@@ -28,6 +28,14 @@ const quillModules = {
     ['link', 'code-block'],
     ['clean'],
   ],
+  clipboard: {
+    matchVisual: false,
+  },
+  keyboard: {
+    bindings: {
+      tab: false,
+    },
+  },
 };
 
 const quillFormats = [
@@ -37,7 +45,6 @@ const quillFormats = [
   'underline',
   'strike',
   'list',
-  'bullet',
   'indent',
   'link',
   'code-block',

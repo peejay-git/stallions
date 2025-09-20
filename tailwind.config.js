@@ -20,6 +20,8 @@ module.exports = {
       },
       animation: {
         'gradient-x': 'gradient-x 5s ease infinite',
+        'shimmer': 'shimmer 2s linear infinite',
+        'fade-in': 'fade-in 0.5s ease-out',
       },
       keyframes: {
         'gradient-x': {
@@ -30,6 +32,24 @@ module.exports = {
           '50%': {
             'background-size': '200% 200%',
             'background-position': 'right center',
+          },
+        },
+        'shimmer': {
+          '0%': {
+            'background-position': '-1000px 0',
+          },
+          '100%': {
+            'background-position': '1000px 0',
+          },
+        },
+        'fade-in': {
+          '0%': {
+            opacity: '0',
+            transform: 'translateY(10px)',
+          },
+          '100%': {
+            opacity: '1',
+            transform: 'translateY(0)',
           },
         },
       },

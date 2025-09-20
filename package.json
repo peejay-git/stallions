@@ -28,6 +28,7 @@
     "@stellar/freighter-api": "1.7.1",
     "@stellar/stellar-base": "^12.1.1",
     "@stellar/stellar-sdk": "14.0.0-rc.3",
+    "@tanstack/react-query": "^5.89.0",
     "@tsparticles/engine": "^3.8.1",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
@@ -46,6 +47,7 @@
     "react-quill-new": "^3.4.6",
     "react-tsparticles": "^2.12.2",
     "soroban-client": "^1.0.1",
+    "tailwind-merge": "^3.3.1",
     "tsparticles-slim": "^2.12.0",
     "zustand": "^5.0.5"
   },

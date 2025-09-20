@@ -1,4 +1,4 @@
-import { BountyDistribution } from '@/types/bounty';
+import { Distribution } from '@/types/bounty';
 
 export const PLATFORM_FEE_PERCENTAGE = 5; // 5% platform fee
 
@@ -9,7 +9,7 @@ interface DistributionCalculation {
 
 export function calculateDistribution(
   totalAmount: number,
-  distribution: BountyDistribution[]
+  distribution: Distribution[]
 ): DistributionCalculation[] {
   // Calculate platform fee
   const platformFeeAmount = (totalAmount * PLATFORM_FEE_PERCENTAGE) / 100;
@@ -27,7 +27,7 @@ export function calculateDistribution(
   });
 }
 
-export function validateDistribution(distribution: BountyDistribution[]): {
+export function validateDistribution(distribution: Distribution[]): {
   isValid: boolean;
   error?: string;
 } {
@@ -104,7 +104,7 @@ export const defaultDistributions = {
   ],
 } as const;
 
-export function getDistributionLabel(distribution: BountyDistribution[]): string {
+export function getDistributionLabel(distribution: Distribution[]): string {
   if (distribution.length === 1) return 'Winner takes all';
   return `${distribution.length} winners`;
 }

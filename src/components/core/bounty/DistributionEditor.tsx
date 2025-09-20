@@ -87,7 +87,7 @@ export default function DistributionEditor({
   };
 
   const setPresetDistribution = (preset: keyof typeof defaultDistributions) => {
-    onChange(defaultDistributions[preset]);
+    onChange([...defaultDistributions[preset]]);
     setError(null);
   };
 

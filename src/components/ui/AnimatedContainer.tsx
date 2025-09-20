@@ -71,15 +71,15 @@ export function AnimatedList({
       animate="visible"
       exit="exit"
       variants={{
-        ...transitions.staggerContainer,
+        hidden: { opacity: 0 },
         visible: {
-          ...transitions.staggerContainer.visible,
+          opacity: 1,
           transition: {
-            ...transitions.staggerContainer.visible?.transition,
             delayChildren: delay,
             staggerChildren: staggerDelay,
           },
-        },
+        } as any,
+        exit: { opacity: 0 },
       }}
       className={className}
     >

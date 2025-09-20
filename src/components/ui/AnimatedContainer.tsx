@@ -23,10 +23,10 @@ export default function AnimatedContainer({
   const variants = transitions[animation] as Variants;
 
   // Modify the variants if custom duration or delay is provided
-  const customVariants: Variants = {
+  const customVariants = {
     ...variants,
     visible: {
-      ...variants.visible,
+      ...(variants.visible as any),
       transition: {
         duration: duration || variants.visible?.transition?.duration,
         delay,
@@ -34,7 +34,7 @@ export default function AnimatedContainer({
         ease: variants.visible?.transition?.ease || "easeOut",
       },
     },
-  };
+  } as Variants;
 
   return (
     <motion.div

@@ -41,3 +41,4 @@ firebase-service-account.json
 
 #cursor
 .cursor_rules.md
+/src/generated/prisma

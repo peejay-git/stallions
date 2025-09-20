@@ -6,4 +6,4 @@ export { Dialog } from './dialog';
 export { default as FormField } from './FormField';
 export { default as FormButton } from './FormButton';
 export { default as Skeleton } from './Skeleton';
-export { AnimatedContainer, AnimatedList, AnimatedButton, AnimatedCard } from './AnimatedContainer';
+export { default as AnimatedContainer, AnimatedList, AnimatedButton, AnimatedCard } from './AnimatedContainer';

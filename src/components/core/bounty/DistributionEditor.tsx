@@ -1,12 +1,12 @@
-import { BountyDistribution } from '@/types/bounty';
-import { AnimatedContainer } from '@/components/ui/AnimatedContainer';
+import { Distribution } from '@/types/bounty';
+import AnimatedContainer from '@/components/ui/AnimatedContainer';
 import { defaultDistributions, validateDistribution } from '@/utils/distribution';
 import { useState } from 'react';
 import { FiPlus, FiTrash } from 'react-icons/fi';
 
 interface DistributionEditorProps {
-  value: BountyDistribution[];
-  onChange: (distribution: BountyDistribution[]) => void;
+  value: Distribution[];
+  onChange: (distribution: Distribution[]) => void;
   className?: string;
 }
 

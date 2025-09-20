@@ -1,5 +1,5 @@
 import { VerificationLevel } from '@/types/reputation';
-import { AnimatedContainer } from '@/components/ui/AnimatedContainer';
+import AnimatedContainer from '@/components/ui/AnimatedContainer';
 import { FiCheck, FiStar, FiAward, FiAlertCircle } from 'react-icons/fi';
 
 interface TalentVerificationBadgeProps {

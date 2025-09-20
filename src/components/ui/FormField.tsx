@@ -1,4 +1,4 @@
-import { AnimatedContainer } from './AnimatedContainer';
+import AnimatedContainer from './AnimatedContainer';
 import { useEffect, useState } from 'react';
 import { FiAlertCircle, FiCheckCircle, FiInfo } from 'react-icons/fi';
 

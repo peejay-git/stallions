@@ -27,15 +27,15 @@ export default function AnimatedContainer({
     hidden: variants.hidden,
     exit: variants.exit,
     visible: {
-      opacity: 1,
-      y: 0,
+      opacity: [0, 1],
+      y: [10, 0],
       transition: {
         duration: duration || 0.4,
         delay,
         type: "tween",
         ease: "easeOut",
       },
-    },
+    } as any,
   };
 
   return (

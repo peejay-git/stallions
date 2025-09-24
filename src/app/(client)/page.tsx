@@ -345,7 +345,7 @@ export default function Home() {
               </a>
 
               <a
-                href="https://discord.gg/8rKFQHNtb3"
+                href="https://discord.gg/edQcuDsm"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-gray-200 hover:text-white transition-colors"

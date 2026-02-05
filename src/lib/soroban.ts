@@ -73,7 +73,7 @@ export class SorobanService {
       console.error('Error initializing Soroban client:', error);
       throw new BlockchainError(
         'Failed to initialize Soroban client',
-        'CONNECTION_ERROR'
+        'CONNECTION_ERROR',
       );
     }
   }
@@ -126,6 +126,11 @@ export class SorobanService {
         throw new Error('Submission deadline must be in the future');
       }
 
+      // Set judging deadline to 365 days after submission deadline
+      // This effectively means "no deadline" as owners can select winners anytime
+      const calculatedJudgingDeadline =
+        submissionDeadline + 365 * 24 * 60 * 60 * 1000;
+
       try {
         // Prepare transaction
         const tx = await this.sorobanClient.create_bounty({
@@ -137,6 +142,7 @@ export class SorobanService {
             dist.percentage,
           ]),
           submission_deadline: BigInt(submissionDeadline),
+          judging_deadline: BigInt(calculatedJudgingDeadline),
           title: title,
         });
 
@@ -150,7 +156,7 @@ export class SorobanService {
           if (resultAny.simulationError || resultAny.error) {
             const errorDetails = resultAny.simulationError || resultAny.error;
             throw new Error(
-              `Simulation error: ${JSON.stringify(errorDetails)}`
+              `Simulation error: ${JSON.stringify(errorDetails)}`,
             );
           }
 
@@ -184,14 +190,14 @@ export class SorobanService {
           console.error('Transaction failed:', errorMsg);
           throw new BlockchainError(
             `Transaction failed: ${JSON.stringify(errorMsg)}`,
-            'CONTRACT_ERROR'
+            'CONTRACT_ERROR',
           );
         } catch (simulateError: any) {
           console.error('Simulation failed:', simulateError);
           throw new Error(
             `Failed to simulate transaction: ${
               simulateError?.message || JSON.stringify(simulateError)
-            }`
+            }`,
           );
         }
       } catch (contractError: any) {
@@ -199,7 +205,7 @@ export class SorobanService {
         throw new Error(
           `Contract error: ${
             contractError?.message || JSON.stringify(contractError)
-          }`
+          }`,
         );
       }
     } catch (error) {
@@ -219,7 +225,7 @@ export class SorobanService {
       const bounties = await Promise.all(
         bountyIds.map(async (id) => {
           return await this.getBounty(Number(id.toString()));
-        })
+        }),
       );
       return bounties;
     } catch (error) {
@@ -241,7 +247,7 @@ export class SorobanService {
       const bounties = await Promise.all(
         bountyIds.map(async (id) => {
           return await this.getBounty(Number(id.toString()));
-        })
+        }),
       );
       return bounties;
     } catch (error) {
@@ -263,7 +269,7 @@ export class SorobanService {
       const bounties = await Promise.all(
         bountyIds.map(async (id) => {
           return await this.getBounty(Number(id.toString()));
-        })
+        }),
       );
       return bounties;
     } catch (error) {
@@ -285,7 +291,7 @@ export class SorobanService {
       const bounties = await Promise.all(
         bountyIds.map(async (id) => {
           return await this.getBounty(Number(id.toString()));
-        })
+        }),
       );
       return bounties;
     } catch (error) {
@@ -306,7 +312,7 @@ export class SorobanService {
       const bounties = await Promise.all(
         bountyIds.map(async (id) => {
           return await this.getBounty(Number(id.toString()));
-        })
+        }),
       );
 
       return bounties;
@@ -358,7 +364,7 @@ export class SorobanService {
       title?: string;
       distribution?: Array<readonly [number, number]>;
       submissionDeadline?: number;
-    }
+    },
   ): Promise<void> {
     try {
       if (!this.publicKey) {
@@ -448,7 +454,7 @@ export class SorobanService {
   async selectWinners(
     bountyId: number,
     owner: string,
-    winners: string[]
+    winners: string[],
   ): Promise<void> {
     try {
       if (!this.publicKey) {
@@ -500,7 +506,7 @@ export class SorobanService {
         : 'Unknown error';
       throw new BlockchainError(
         `Transaction failed: ${JSON.stringify(errorMsg)}`,
-        'CONTRACT_ERROR'
+        'CONTRACT_ERROR',
       );
     } catch (error) {
       throw error;
